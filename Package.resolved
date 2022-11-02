@@ -14,8 +14,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pxlshpr/PrepDataTypes",
       "state" : {
-        "revision" : "520004e658e715cf90f99687721bfcb700560bfb",
-        "version" : "0.0.76"
+        "revision" : "8668e2c0c9945b3c97b31f0500c004a01c4e3057",
+        "version" : "0.0.79"
       }
     },
     {
@@ -50,8 +50,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pxlshpr/Timeline",
       "state" : {
-        "revision" : "8a95101f42892df9f27bda25003fd9b0df23b463",
-        "version" : "0.0.55"
+        "revision" : "291b1bdac25531e61266f14fc93d964900f99238",
+        "version" : "0.0.56"
       }
     }
   ],
