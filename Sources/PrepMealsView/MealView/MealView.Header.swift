@@ -1,21 +1,27 @@
 import SwiftUI
 import SwiftHaptics
 import SwiftUISugar
+import PrepDataTypes
 
 extension MealView {
     struct Header: View {
         @Environment(\.colorScheme) var colorScheme
         @ObservedObject var viewModel: ViewModel
-        
+
+        var meal: Meal
+
         let namespace: Namespace.ID
     }
 }
 
 extension MealView.Header {
+    
     var body: some View {
         content
         .listRowBackground(
-            ListRowBackground(includeBottomSeparator: true)
+            ListRowBackground(
+                includeBottomSeparator: !meal.foodItems.isEmpty
+            )
         )
         .listRowSeparator(.hidden)
     }

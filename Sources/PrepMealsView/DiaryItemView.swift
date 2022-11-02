@@ -25,8 +25,7 @@ struct DiaryItemView: View {
     
     var listRowBackgroundColor: Color {
         if item.isCompleted {
-            //TODO: Create this color programmatically
-            return Color("CompletedFoodItemBackground")
+            return colorScheme == .light ? Color("EBE9F7") : Color("191331")
         } else {
             return Color(.secondarySystemGroupedBackground)
         }
