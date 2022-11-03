@@ -1,41 +1,40 @@
-//import SwiftUI
-//import Timeline
-//import PrepDataTypes
-//
-//public struct TimelinePage: View {
-//
-//    let didAddMeal = NotificationCenter.default.publisher(for: .didAddMeal)
-//    let didUpdateMeals = NotificationCenter.default.publisher(for: .didUpdateMeals)
-//
-//    let date: Date
-//    let namespace: Namespace.ID
-//    let getMealsHandler: GetMealsHandler
-//    
-//    @State var timelineItems: [TimelineItem] = []
-//
-//    public init(
-//        date: Date = Date(),
-//        getMealsHandler: @escaping GetMealsHandler,
-//        namespace: Namespace.ID
-//    ) {
-//        self.date = date
-//        self.namespace = namespace
-//        self.getMealsHandler = getMealsHandler
-//    }
-//
-//    public var body: some View {
-//        timeline
-//            .onAppear(perform: appeared)
-//            .onReceive(didAddMeal, perform: didAddMeal)
-//            .onReceive(didUpdateMeals, perform: didUpdateMeals)
-//    }
-//
-//    var timeline: some View {
-//        Timeline(items: timelineItems, matchedGeometryNamespace: namespace)
-//            .background(Color(.systemGroupedBackground))
-//    }
-//
-//    //MARK: - Actions
+import SwiftUI
+import Timeline
+import PrepDataTypes
+
+public struct TimelinePage: View {
+
+    @State var timelineItems: [TimelineItem]
+
+    let namespace: Namespace.ID
+    @Binding var namespacePrefix: UUID
+
+    public init(
+        meals: Binding<[DayMeal]>,
+        namespace: Namespace.ID,
+        namespacePrefix: Binding<UUID>
+    ) {
+        let timelineItems = meals.wrappedValue.map { TimelineItem(dayMeal: $0) }
+        _timelineItems = State(initialValue: timelineItems)
+        self.namespace = namespace
+        _namespacePrefix = namespacePrefix
+    }
+
+    public var body: some View {
+        timeline
+            .onAppear(perform: appeared)
+    }
+
+    var timeline: some View {
+        Timeline(
+            items: timelineItems,
+            namespace: namespace,
+            namespacePrefix: $namespacePrefix
+        )
+        .background(Color(.systemGroupedBackground))
+    }
+
+    //MARK: - Actions
 //    func didAddMeal(notification: Notification) {
 //        guard let userInfo = notification.userInfo,
 //              let meal = userInfo[Notification.Keys.meal] as? Meal,
@@ -45,15 +44,15 @@
 //        }
 //        getMeals()
 //    }
-//    
+//
 //    func didUpdateMeals(notification: Notification) {
 //        getMeals()
 //    }
-//    
-//    func appeared() {
+    
+    func appeared() {
 //        getMeals(animated: false)
-//    }
-//    
+    }
+    
 //    func getMeals(animated: Bool = true) {
 //        Task {
 //            do {
@@ -74,7 +73,7 @@
 //            }
 //        }
 //    }
-////    var timelineItems: [TimelineItem] {
-////        Store.timelineItems(for: date)
-////    }
-//}
+//    var timelineItems: [TimelineItem] {
+//        Store.timelineItems(for: date)
+//    }
+}
