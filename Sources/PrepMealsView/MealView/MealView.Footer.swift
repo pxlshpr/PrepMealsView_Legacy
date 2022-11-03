@@ -6,7 +6,7 @@ extension MealView {
     struct Footer: View {
         //TODO: CoreData
 //        @ObservedObject var meal: Meal
-        var meal: Meal
+        var meal: DayMeal
     }
 }
 
@@ -79,47 +79,47 @@ extension MealView.Footer {
     }
 }
 
-struct ListPagerPreview: View {
-    @Namespace var namespace
-    
-    var body: some View {
-        NavigationView {
-            listPage
-                .navigationTitle("List Page")
-        }
-    }
-    
-    var listPage: some View {
-        ListPage(getMealsHandler: { date in
-            meals
-        }, tapAddMealHandler: {
-        }, namespace: namespace)
-    }
-    
-    var meals: [Meal] {
-        [
-            mockMeal("Breakfast", at: Date()),
-            mockMeal("Lunch", at: Date()),
-            mockMeal("Dinner", at: Date())
-        ]
-    }
-    
-    func mockMeal(_ name: String, at time: Date) -> Meal {
-        Meal(id: UUID(), day: day,
-             name: name,
-             time: Date().timeIntervalSince1970,
-             markedAsEatenAt: 0,
-             foodItems: [],
-             syncStatus: .notSynced, updatedAt: 0)
-    }
-    
-    var day: Day {
-        Day(id: "day", calendarDayString: "", addEnergyExpendituresToGoal: false, energyExpenditures: [], meals: [], syncStatus: .notSynced, updatedAt: 0)
-    }
-}
-
-struct ListPager_Previews: PreviewProvider {
-    static var previews: some View {
-        ListPagerPreview()
-    }
-}
+//struct ListPagerPreview: View {
+//    @Namespace var namespace
+//    
+//    var body: some View {
+//        NavigationView {
+//            listPage
+//                .navigationTitle("List Page")
+//        }
+//    }
+//    
+//    var listPage: some View {
+//        ListPage(getMealsHandler: { date in
+//            meals
+//        }, tapAddMealHandler: {
+//        }, namespace: namespace)
+//    }
+//    
+//    var meals: [Meal] {
+//        [
+//            mockMeal("Breakfast", at: Date()),
+//            mockMeal("Lunch", at: Date()),
+//            mockMeal("Dinner", at: Date())
+//        ]
+//    }
+//    
+//    func mockMeal(_ name: String, at time: Date) -> Meal {
+//        Meal(id: UUID(), day: day,
+//             name: name,
+//             time: Date().timeIntervalSince1970,
+//             markedAsEatenAt: 0,
+//             foodItems: [],
+//             syncStatus: .notSynced, updatedAt: 0)
+//    }
+//    
+//    var day: Day {
+//        Day(id: "day", calendarDayString: "", addEnergyExpendituresToGoal: false, energyExpenditures: [], meals: [], syncStatus: .notSynced, updatedAt: 0)
+//    }
+//}
+//
+//struct ListPager_Previews: PreviewProvider {
+//    static var previews: some View {
+//        ListPagerPreview()
+//    }
+//}

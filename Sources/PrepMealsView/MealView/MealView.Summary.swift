@@ -7,7 +7,7 @@ extension MealView {
     struct Summary: View {
         //TODO: CoreData
 //        @ObservedObject var meal: Meal
-        var meal: Meal
+        var meal: DayMeal
         @State var breakdownType: BreakdownType = .energy
         
         //TODO: Rename this if we're still using it
@@ -18,7 +18,7 @@ extension MealView {
         @State private var embeddedInNavigationStack: Bool
         
         //TODO: Remove this if we're not using total anymore
-        init(meal: Meal, embeddedInNavigationStack: Bool = false) {
+        init(meal: DayMeal, embeddedInNavigationStack: Bool = false) {
             //TODO: CoreData
 //            _meal = ObservedObject(initialValue: meal)
             self.meal = meal

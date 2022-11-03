@@ -5,12 +5,14 @@ import PrepDataTypes
 
 extension MealView {
     struct Header: View {
+        
         @Environment(\.colorScheme) var colorScheme
         @ObservedObject var viewModel: ViewModel
+        var meal: DayMeal
 
-        var meal: Meal
-
-        let namespace: Namespace.ID
+        @Namespace var localNamespace
+        var namespace: Binding<Namespace.ID?>
+        @Binding var namespacePrefix: UUID
     }
 }
 
@@ -34,10 +36,20 @@ extension MealView.Header {
                 Group {
                     HStack {
                         Text("**\(viewModel.meal.timeString)**")
-                            .matchedGeometryEffect(id: "date-\(viewModel.animationID)", in: namespace)
+                            .if(namespace.wrappedValue != nil) { view in
+                                view.matchedGeometryEffect(id: "date-\(viewModel.animationID)-\(namespacePrefix.uuidString)", in: namespace.wrappedValue!)
+                            }
+                            .if(namespace.wrappedValue == nil) { view in
+                                view.matchedGeometryEffect(id: "date-\(viewModel.animationID)-\(namespacePrefix.uuidString)", in: localNamespace)
+                            }
                         Text("•")
                         Text(viewModel.meal.name)
-                            .matchedGeometryEffect(id: viewModel.animationID, in: namespace)
+                            .if(namespace.wrappedValue != nil) { view in
+                                view.matchedGeometryEffect(id: "\(viewModel.animationID)-\(namespacePrefix.uuidString)", in: namespace.wrappedValue!)
+                            }
+                            .if(namespace.wrappedValue == nil) { view in
+                                view.matchedGeometryEffect(id: "\(viewModel.animationID)-\(namespacePrefix.uuidString)", in: localNamespace)
+                            }
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .fixedSize(horizontal: false, vertical: true)
                     }

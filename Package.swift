@@ -15,8 +15,8 @@ let package = Package(
             targets: ["PrepMealsView"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/pxlshpr/PrepDataTypes", from: "0.0.80"),
-        .package(url: "https://github.com/pxlshpr/Timeline", from: "0.0.56"),
+        .package(url: "https://github.com/pxlshpr/PrepDataTypes", from: "0.0.85"),
+        .package(url: "https://github.com/pxlshpr/Timeline", from: "0.0.62"),
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.

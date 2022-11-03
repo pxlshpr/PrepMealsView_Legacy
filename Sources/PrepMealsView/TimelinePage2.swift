@@ -5,15 +5,18 @@ import PrepDataTypes
 public struct TimelinePage2: View {
 
     let namespace: Namespace.ID
+    @Binding var namespacePrefix: UUID
     @State var timelineItems: [TimelineItem]
 
     public init(
-        meals: Binding<[Meal]>,
-        namespace: Namespace.ID
+        meals: Binding<[DayMeal]>,
+        namespace: Namespace.ID,
+        namespacePrefix: Binding<UUID>
     ) {
-        let timelineItems = meals.wrappedValue.map { TimelineItem(meal: $0) }
+        let timelineItems = meals.wrappedValue.map { TimelineItem(dayMeal: $0) }
         _timelineItems = State(initialValue: timelineItems)
         self.namespace = namespace
+        _namespacePrefix = namespacePrefix
     }
 
     public var body: some View {
@@ -22,8 +25,12 @@ public struct TimelinePage2: View {
     }
 
     var timeline: some View {
-        Timeline(items: timelineItems, matchedGeometryNamespace: namespace)
-            .background(Color(.systemGroupedBackground))
+        Timeline(
+            items: timelineItems,
+            namespace: namespace,
+            namespacePrefix: $namespacePrefix
+        )
+        .background(Color(.systemGroupedBackground))
     }
 
     //MARK: - Actions

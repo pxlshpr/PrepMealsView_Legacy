@@ -4,10 +4,10 @@ import PrepDataTypes
 extension MealView {
     class ViewModel: ObservableObject {
         
-        @Published var meal: Meal
+        @Published var meal: DayMeal
         @Published var foodItems: [FoodItem]
         
-        init(meal: Meal) {
+        init(meal: DayMeal) {
             self.meal = meal
             self.foodItems = meal.foodItems
             

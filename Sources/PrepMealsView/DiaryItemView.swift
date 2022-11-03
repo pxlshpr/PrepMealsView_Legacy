@@ -11,8 +11,10 @@ struct DiaryItemView: View {
 //    @ObservedObject var item: FoodItem
     var item: FoodItem
 
-    let namespace: Namespace.ID
-
+    @Namespace var localNamespace
+    var namespace: Binding<Namespace.ID?>
+    @Binding var namespacePrefix: UUID
+    
     var body: some View {
         HStack {
             optionalEmojiText
@@ -55,7 +57,12 @@ struct DiaryItemView: View {
     var optionalEmojiText: some View {
         Text(item.food.emoji)
             .font(.body)
-            .matchedGeometryEffect(id: item.id.uuidString, in: namespace)
+            .if(namespace.wrappedValue != nil) { view in
+                view.matchedGeometryEffect(id: "\(item.id.uuidString)-\(namespacePrefix.uuidString)", in: namespace.wrappedValue!)
+            }
+            .if(namespace.wrappedValue == nil) { view in
+                view.matchedGeometryEffect(id: "\(item.id.uuidString)-\(namespacePrefix.uuidString)", in: localNamespace)
+            }
     }
     
     var nameColor: Color {

@@ -5,19 +5,26 @@ import PrepDataTypes
 
 public struct ListPage2: View {
     
-    let namespace: Namespace.ID
     let didAddMeal = NotificationCenter.default.publisher(for: .didAddMeal)
     let didUpdateMeals = NotificationCenter.default.publisher(for: .didUpdateMeals)
     let tapAddMealHandler: EmptyHandler
 
-    @Binding var meals: [Meal]
+    @Binding var meals: [DayMeal]
+
+    var namespace: Binding<Namespace.ID?>
+    @Binding var shouldRefresh: Bool
+    @Binding var namespacePrefix: UUID
 
     public init(
-         meals: Binding<[Meal]>,
+         meals: Binding<[DayMeal]>,
          tapAddMealHandler: @escaping EmptyHandler,
-         namespace: Namespace.ID
+         namespace: Binding<Namespace.ID?>,
+         namespacePrefix: Binding<UUID>,
+         shouldRefresh: Binding<Bool>
     ) {
         _meals = meals
+        _shouldRefresh = shouldRefresh
+        _namespacePrefix = namespacePrefix
         self.namespace = namespace
         self.tapAddMealHandler = tapAddMealHandler
     }
@@ -34,7 +41,9 @@ public struct ListPage2: View {
             ForEach(meals) { meal in
                 MealView(
                     meal: meal,
-                    namespace: namespace
+                    namespace: namespace,
+                    namespacePrefix: $namespacePrefix,
+                    shouldRefresh: $shouldRefresh
                 )
             }
             if !meals.isEmpty {
