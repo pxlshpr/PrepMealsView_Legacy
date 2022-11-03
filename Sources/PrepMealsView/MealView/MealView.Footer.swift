@@ -15,7 +15,7 @@ extension MealView.Footer {
         content
         .listRowBackground(
             ListRowBackground(
-                includeTopSeparator: true
+                includeTopSeparator: !meal.foodItems.isEmpty
             )
         )
         .listRowInsets(.none)

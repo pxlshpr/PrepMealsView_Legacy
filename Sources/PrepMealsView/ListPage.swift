@@ -99,7 +99,76 @@ public struct ListPage: View {
 //        getMeals(animated: false)
 //    }
     
+    @State var hoursAfterLastMeal = 2
+    
     var addMealButton: some View {
+        Section {
+            HStack(spacing: 15) {
+                Button {
+                    
+                } label: {
+                    HStack {
+                        Image(systemName: "note.text.badge.plus")
+                        Text("Now")
+                    }
+                    .padding()
+                    .background(
+                        Capsule(style: .continuous)
+//                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .foregroundColor(Color(.tertiarySystemFill))
+                    )
+                }
+                .buttonStyle(.borderless)
+//                Spacer()
+                HStack(spacing: 15) {
+                    Button {
+                        
+                    } label: {
+                        HStack {
+                            Image(systemName: "note.text.badge.plus")
+                            Text("7 PM")
+                        }
+                        .padding()
+                        .background(
+                            Capsule(style: .continuous)
+    //                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                .foregroundColor(Color(.tertiarySystemFill))
+                        )
+                    }
+                    .buttonStyle(.borderless)
+                    Button {
+                        let hours = max(hoursAfterLastMeal - 1, 1)
+                        hoursAfterLastMeal = hours
+                        //TODO: don't let hoursAfterLastMeal go past wee hours—we'll need the last meal data for this
+                    } label: {
+                        Image(systemName: "gobackward.60")
+                            .imageScale(.large)
+                    }
+                    .buttonStyle(.borderless)
+                    .disabled(hoursAfterLastMeal == 1)
+                    Button {
+                        hoursAfterLastMeal += 1
+                    } label: {
+                        Image(systemName: "goforward.60")
+                            .imageScale(.large)
+                    }
+                    .buttonStyle(.borderless)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .center)
+        }
+        .padding(.vertical, 20)
+        .listRowBackground(
+            ListRowBackground(
+                color: Color(.systemGroupedBackground),
+                includeTopSeparator: true,
+                includeBottomSeparator: false
+            )
+        )
+        .listRowSeparator(.hidden)
+    }
+    
+    var addMealButton_legacy: some View {
         Section {
             HStack {
                 Text("Add Meal")
@@ -117,18 +186,22 @@ public struct ListPage: View {
                 Button {
                     tapAddMealHandler()
                 } label: {
-                    Text("2 hours after Dinner")
+                    Text("\(hoursAfterLastMeal)h after Christmas Dinner")
+                        .lineLimit(1)
                 }
                 .buttonStyle(.borderless)
                 Spacer()
                 Button {
-                    tapAddMealHandler()
+                    let hours = max(hoursAfterLastMeal - 1, 1)
+                    hoursAfterLastMeal = hours
+                    //TODO: don't let hoursAfterLastMeal go past wee hours—we'll need the last meal data for this
                 } label: {
                     Image(systemName: "gobackward.60")
                 }
                 .buttonStyle(.borderless)
+                .disabled(hoursAfterLastMeal == 1)
                 Button {
-                    tapAddMealHandler()
+                    hoursAfterLastMeal += 1
                 } label: {
                     Image(systemName: "goforward.60")
                 }
