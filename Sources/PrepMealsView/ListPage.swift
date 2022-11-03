@@ -48,10 +48,43 @@ public struct ListPage: View {
     }
     
     public var body: some View {
-        list
-//            .onAppear(perform: appeared)
-//            .onReceive(didAddMeal, perform: didAddMeal)
-//            .onReceive(didUpdateMeals, perform: didUpdateMeals)
+        if meals.isEmpty {
+            emptyContent
+        } else {
+            list
+        }
+    }
+    
+    var emptyContent: some View {
+        ZStack {
+            Color(.systemGroupedBackground)
+            VStack {
+                Text("You haven't prepped any meals yet")
+                    .font(.title2)
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(Color(.tertiaryLabel))
+                Button {
+                    tapAddMealHandler()
+                } label: {
+                    Text("Add a Meal")
+                        .font(.title2)
+                        .bold()
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(
+                            Capsule(style: .continuous)
+                                .foregroundColor(.accentColor)
+                        )
+                }
+            }
+            .padding()
+            .padding(.vertical, 15)
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .foregroundColor(Color(.quaternarySystemFill))
+            )
+            .padding(.horizontal, 50)
+        }
     }
     
     var list: some View {
@@ -112,5 +145,27 @@ public struct ListPage: View {
                 )
             )
         }
+    }
+}
+
+struct EmptyListViewPreview: View {
+    
+    @Namespace var namespace
+    
+    var body: some View {
+        ListPage(
+            meals: .constant([]),
+            tapAddMealHandler: {},
+            namespace: .constant(namespace),
+            namespacePrefix: .constant(UUID()),
+            shouldRefresh: .constant(false)
+        )
+    }
+}
+
+struct EmptyViewPreview: PreviewProvider {
+    
+    static var previews: some View {
+        EmptyListViewPreview()
     }
 }
