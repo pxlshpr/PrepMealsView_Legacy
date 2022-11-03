@@ -38,14 +38,15 @@ extension MealView.Footer {
         Button {
             tappedAddFood()
         } label: {
-            Group {
-                if meal.foodItems.isEmpty {
-                    Image(systemName: "plus")
-//                    Text("Add Food")
-                } else {
-                    Text("Add Food")
-                }
-            }
+            Text("Add Food")
+                .font(.caption)
+                .bold()
+//                .foregroundColor(.secondary)
+                .padding(8)
+                .background(
+                    RoundedRectangle(cornerRadius: 5)
+                        .foregroundColor(Color(.tertiarySystemFill))
+                )
         }
         .contentShape(Rectangle())
         .padding(.trailing)
@@ -79,47 +80,3 @@ extension MealView.Footer {
     }
 }
 
-//struct ListPagerPreview: View {
-//    @Namespace var namespace
-//    
-//    var body: some View {
-//        NavigationView {
-//            listPage
-//                .navigationTitle("List Page")
-//        }
-//    }
-//    
-//    var listPage: some View {
-//        ListPage(getMealsHandler: { date in
-//            meals
-//        }, tapAddMealHandler: {
-//        }, namespace: namespace)
-//    }
-//    
-//    var meals: [Meal] {
-//        [
-//            mockMeal("Breakfast", at: Date()),
-//            mockMeal("Lunch", at: Date()),
-//            mockMeal("Dinner", at: Date())
-//        ]
-//    }
-//    
-//    func mockMeal(_ name: String, at time: Date) -> Meal {
-//        Meal(id: UUID(), day: day,
-//             name: name,
-//             time: Date().timeIntervalSince1970,
-//             markedAsEatenAt: 0,
-//             foodItems: [],
-//             syncStatus: .notSynced, updatedAt: 0)
-//    }
-//    
-//    var day: Day {
-//        Day(id: "day", calendarDayString: "", addEnergyExpendituresToGoal: false, energyExpenditures: [], meals: [], syncStatus: .notSynced, updatedAt: 0)
-//    }
-//}
-//
-//struct ListPager_Previews: PreviewProvider {
-//    static var previews: some View {
-//        ListPagerPreview()
-//    }
-//}

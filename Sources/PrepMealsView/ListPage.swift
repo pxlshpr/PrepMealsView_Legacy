@@ -11,39 +11,11 @@ public struct ListPage: View {
 
     @Binding var meals: [DayMeal]
 
-    @Binding var shouldRefresh: Bool
-
-    var namespace: Binding<Namespace.ID?>
-    /// This is to mitigate an issue where `SwiftUIPager` would mess up the geometries of the adjacent pages
-    /// by causing the items to have their original positions (with a horizontal offset placing them out of the screen) after a page,
-    /// resulting in the matched geometry animation to animate them from the far edge of the screen.
-    ///
-    /// This immediately gets fixed after the first transition animation occurs, indicating that a redraw of the views refreshes their positions as well.
-    /// The solution was to therefore detect once a page finished transitioning, and toggle a `Bool` that was attached to the `.id()`
-    /// property of all the individual items within the page, forcing them to redraw.
-    ///
-    /// The issue however, was that this would cause the repeated assignments of the matched geometry identifiers to result in a warning that
-    /// multiple views were using the same identifier. So to mitigate that, this `id` is added to the identifiers, giving them unique identifiers
-    /// (while still matching them to their counterpart views) with each redraw.
-    ///
-    /// Furthermore, it must be noted that in order for the matched geometries to truly be reset—we must first use a conditional modifier on the
-    /// view to change the namespace to a local one (not the one included in this struct)—effectively removing it from the global database.
-    /// That is why the `namespace` is an optional—as we set it to nil as soon as the page transition occurs,
-    /// and conditionally set the namespace to a local one as soon as that happens. We then reset it back to the namespace shared
-    /// with the `TimelineView` (or any other views) after a tiny delay and this stops the warnings of the multiple views using the same id.
-    @Binding var namespacePrefix: UUID
-
     public init(
          meals: Binding<[DayMeal]>,
-         tapAddMealHandler: @escaping EmptyHandler,
-         namespace: Binding<Namespace.ID?>,
-         namespacePrefix: Binding<UUID>,
-         shouldRefresh: Binding<Bool>
+         tapAddMealHandler: @escaping EmptyHandler
     ) {
         _meals = meals
-        _shouldRefresh = shouldRefresh
-        _namespacePrefix = namespacePrefix
-        self.namespace = namespace
         self.tapAddMealHandler = tapAddMealHandler
     }
     
@@ -91,10 +63,10 @@ public struct ListPage: View {
         List {
             ForEach(meals) { meal in
                 MealView(
-                    meal: meal,
-                    namespace: namespace,
-                    namespacePrefix: $namespacePrefix,
-                    shouldRefresh: $shouldRefresh
+                    meal: meal
+//                    namespace: namespace,
+//                    namespacePrefix: $namespacePrefix,
+//                    shouldRefresh: $shouldRefresh
                 )
             }
             if !meals.isEmpty {
@@ -129,13 +101,39 @@ public struct ListPage: View {
     
     var addMealButton: some View {
         Section {
-            Button {
-                tapAddMealHandler()
-            } label: {
+            HStack {
                 Text("Add Meal")
+                    .foregroundColor(.secondary)
+                Text("•")
+                    .foregroundColor(Color(.quaternaryLabel))
+                Button {
+                    tapAddMealHandler()
+                } label: {
+                    Text("Now")
+                }
+                .buttonStyle(.borderless)
+                Text("•")
+                    .foregroundColor(Color(.quaternaryLabel))
+                Button {
+                    tapAddMealHandler()
+                } label: {
+                    Text("2 hours after Dinner")
+                }
+                .buttonStyle(.borderless)
                 Spacer()
+                Button {
+                    tapAddMealHandler()
+                } label: {
+                    Image(systemName: "gobackward.60")
+                }
+                .buttonStyle(.borderless)
+                Button {
+                    tapAddMealHandler()
+                } label: {
+                    Image(systemName: "goforward.60")
+                }
+                .buttonStyle(.borderless)
             }
-            .buttonStyle(.borderless)
             .listRowSeparator(.hidden)
             .listRowBackground(
                 ListRowBackground(
@@ -155,10 +153,7 @@ struct EmptyListViewPreview: View {
     var body: some View {
         ListPage(
             meals: .constant([]),
-            tapAddMealHandler: {},
-            namespace: .constant(namespace),
-            namespacePrefix: .constant(UUID()),
-            shouldRefresh: .constant(false)
+            tapAddMealHandler: {}
         )
     }
 }
@@ -167,5 +162,60 @@ struct EmptyViewPreview: PreviewProvider {
     
     static var previews: some View {
         EmptyListViewPreview()
+    }
+}
+
+struct ListPagerPreview: View {
+    @Namespace var namespace
+    
+    var body: some View {
+        NavigationView {
+            listPage
+                .navigationTitle("List Page")
+        }
+    }
+    
+    var listPage: some View {
+        ListPage(meals: .constant(meals.map { DayMeal(from: $0) })) {
+            /// Tapped Add meal
+        }
+    }
+    
+    var meals: [Meal] {
+        [
+            mockMeal("Breakfast", at: Date()),
+            mockMeal("Lunch", at: Date()),
+            mockMeal("Dinner", at: Date())
+        ]
+    }
+    
+    func mockMeal(_ name: String, at time: Date) -> Meal {
+        Meal(id: UUID(), day: day,
+             name: name,
+             time: Date().timeIntervalSince1970,
+             markedAsEatenAt: 0,
+             foodItems: [],
+             syncStatus: .notSynced, updatedAt: 0)
+    }
+    
+    var day: Day {
+        Day(id: "day", calendarDayString: "", addEnergyExpendituresToGoal: false, energyExpenditures: [], meals: [], syncStatus: .notSynced, updatedAt: 0)
+    }
+}
+
+struct ListPager_Previews: PreviewProvider {
+    static var previews: some View {
+        ListPagerPreview()
+    }
+}
+
+extension DayMeal {
+    init(from meal: Meal) {
+        self.init(
+            id: meal.id,
+            name: meal.name,
+            time: meal.time,
+            foodItems: meal.foodItems
+        )
     }
 }

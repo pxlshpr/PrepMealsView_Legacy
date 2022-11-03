@@ -10,16 +10,17 @@ extension MealView {
         @ObservedObject var viewModel: ViewModel
         var meal: DayMeal
 
-        @Namespace var localNamespace
-        var namespace: Binding<Namespace.ID?>
-        @Binding var namespacePrefix: UUID
+//        @Namespace var localNamespace
+//        var namespace: Binding<Namespace.ID?>
+//        @Binding var namespacePrefix: UUID
     }
 }
 
 extension MealView.Header {
     
     var body: some View {
-        content
+//        let _ = Self._printChanges()
+        return content
         .listRowBackground(
             ListRowBackground(
                 includeBottomSeparator: !meal.foodItems.isEmpty
@@ -36,20 +37,20 @@ extension MealView.Header {
                 Group {
                     HStack {
                         Text("**\(viewModel.meal.timeString)**")
-                            .if(namespace.wrappedValue != nil) { view in
-                                view.matchedGeometryEffect(id: "date-\(viewModel.animationID)-\(namespacePrefix.uuidString)", in: namespace.wrappedValue!)
-                            }
-                            .if(namespace.wrappedValue == nil) { view in
-                                view.matchedGeometryEffect(id: "date-\(viewModel.animationID)-\(namespacePrefix.uuidString)", in: localNamespace)
-                            }
+//                            .if(namespace.wrappedValue != nil) { view in
+//                                view.matchedGeometryEffect(id: "date-\(viewModel.animationID)-\(namespacePrefix.uuidString)", in: namespace.wrappedValue!)
+//                            }
+//                            .if(namespace.wrappedValue == nil) { view in
+//                                view.matchedGeometryEffect(id: "date-\(viewModel.animationID)-\(namespacePrefix.uuidString)", in: localNamespace)
+//                            }
                         Text("•")
                         Text(viewModel.meal.name)
-                            .if(namespace.wrappedValue != nil) { view in
-                                view.matchedGeometryEffect(id: "\(viewModel.animationID)-\(namespacePrefix.uuidString)", in: namespace.wrappedValue!)
-                            }
-                            .if(namespace.wrappedValue == nil) { view in
-                                view.matchedGeometryEffect(id: "\(viewModel.animationID)-\(namespacePrefix.uuidString)", in: localNamespace)
-                            }
+//                            .if(namespace.wrappedValue != nil) { view in
+//                                view.matchedGeometryEffect(id: "\(viewModel.animationID)-\(namespacePrefix.uuidString)", in: namespace.wrappedValue!)
+//                            }
+//                            .if(namespace.wrappedValue == nil) { view in
+//                                view.matchedGeometryEffect(id: "\(viewModel.animationID)-\(namespacePrefix.uuidString)", in: localNamespace)
+//                            }
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .fixedSize(horizontal: false, vertical: true)
                     }

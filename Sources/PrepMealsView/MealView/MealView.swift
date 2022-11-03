@@ -7,40 +7,44 @@ struct MealView: View {
     
     var meal: DayMeal
     
-    var namespace: Binding<Namespace.ID?>
-    @Binding var namespacePrefix: UUID
-    @Binding var shouldRefresh: Bool
+//    var namespace: Binding<Namespace.ID?>
+//    @Binding var namespacePrefix: UUID
+//    @Binding var shouldRefresh: Bool
     
     init(
-        meal: DayMeal,
-        namespace: Binding<Namespace.ID?>,
-        namespacePrefix: Binding<UUID>,
-        shouldRefresh: Binding<Bool>
+        meal: DayMeal
+//        namespace: Binding<Namespace.ID?>,
+//        namespacePrefix: Binding<UUID>,
+//        shouldRefresh: Binding<Bool>
     ) {
         _viewModel = StateObject(wrappedValue: ViewModel(meal: meal))
         self.meal = meal
-        self.namespace = namespace
-        _shouldRefresh = shouldRefresh
-        _namespacePrefix = namespacePrefix
+//        self.namespace = namespace
+//        _shouldRefresh = shouldRefresh
+//        _namespacePrefix = namespacePrefix
     }
 
     var body: some View {
-        Section {
+        let _ = Self._printChanges()
+        return Section {
             Header(
                 viewModel: viewModel,
-                meal: meal,
-                namespace: namespace,
-                namespacePrefix: $namespacePrefix
+                meal: meal
+//                namespace: namespace,
+//                namespacePrefix: $namespacePrefix
             )
-            .id(shouldRefresh)
+//            .id(shouldRefresh)
             ForEach(viewModel.foodItems) { item in
                 DiaryItemView(
-                    item: item,
-                    namespace: namespace,
-                    namespacePrefix: $namespacePrefix
+                    item: item
+//                    namespace: namespace,
+//                    namespacePrefix: $namespacePrefix
                 )
             }
             Footer(meal: viewModel.meal)
         }
+//        .onChange(of: shouldRefresh) { newValue in
+//            print("shouldRefresh was toggled")
+//        }
     }
 }
