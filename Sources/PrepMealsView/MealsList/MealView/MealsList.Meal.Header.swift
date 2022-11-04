@@ -8,7 +8,6 @@ extension MealsList.Meal {
         @Environment(\.colorScheme) var colorScheme
         @ObservedObject var viewModel: ViewModel
         var meal: DayMeal
-        let onTapMealMenu: (DayMeal) -> ()
     }
 }
 
@@ -60,15 +59,51 @@ extension MealsList.Meal.Header {
     //MARK: - Menu
     
     var mealMenuButton: some View {
-        Button {
-//            if viewModel.shouldShowAddFoodActionInMenu {
-//                addFoodMenuButton
-//            }
-//            if viewModel.shouldShowCompleteActionInMenu {
-//                completeButton
-//            }
-//            deleteButton
-            onTapMealMenu(meal)
+        Menu {
+            Button {
+                
+            } label: {
+                Label("Add Food", systemImage: "plus")
+            }
+
+            Button {
+                
+            } label: {
+                Label("Mark as Eaten", systemImage: "checkmark.circle")
+            }
+
+            
+            Divider()
+
+            
+            Button {
+                
+            } label: {
+                Label("Summary", systemImage: "chart.bar.xaxis")
+            }
+
+            Button {
+                
+            } label: {
+                Label("Food Label", systemImage: "chart.bar.doc.horizontal")
+            }
+            
+
+            Divider()
+
+            
+            Button {
+                
+            } label: {
+                Label("Edit", systemImage: "pencil")
+            }
+
+            Button(role: .destructive) {
+                
+            } label: {
+                Label("Remove", systemImage: "trash")
+            }
+            
         } label: {
             Image(systemName: "ellipsis")
                 .foregroundColor(.accentColor)
@@ -76,7 +111,10 @@ extension MealsList.Meal.Header {
                 .padding(.bottom, 5)
                 .padding(.leading)
         }
-        .buttonStyle(.borderless)
+        .contentShape(Rectangle())
+        .simultaneousGesture(TapGesture().onEnded {
+            Haptics.feedback(style: .soft)
+        })
     }
     
     var addFoodMenuButton: some View {

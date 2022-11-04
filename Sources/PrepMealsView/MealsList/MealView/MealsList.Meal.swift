@@ -7,12 +7,10 @@ extension MealsList {
         @StateObject var viewModel: ViewModel
         
         var meal: DayMeal
-        let onTapMealMenu: (DayMeal) -> ()
 
-        init(meal: DayMeal, onTapMealMenu: @escaping (DayMeal) -> ()) {
+        init(meal: DayMeal) {
             _viewModel = StateObject(wrappedValue: ViewModel(meal: meal))
             self.meal = meal
-            self.onTapMealMenu = onTapMealMenu
         }
     }
 }
@@ -22,8 +20,7 @@ extension MealsList.Meal {
         Section {
             Header(
                 viewModel: viewModel,
-                meal: meal,
-                onTapMealMenu: onTapMealMenu
+                meal: meal
             )
             ForEach(viewModel.foodItems) { item in
                 DiaryItemView(item: item)

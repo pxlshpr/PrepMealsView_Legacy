@@ -6,7 +6,7 @@ extension MealsList {
     var list: some View {
         List {
             ForEach(meals) { meal in
-                Meal(meal: meal, onTapMealMenu: onTapMealMenu)
+                Meal(meal: meal)
             }
             quickAddButtons
         }

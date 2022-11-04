@@ -8,7 +8,6 @@ public struct MealsList: View {
     let didAddMeal = NotificationCenter.default.publisher(for: .didAddMeal)
     let didUpdateMeals = NotificationCenter.default.publisher(for: .didUpdateMeals)
     let onTapAddMeal: ((Date?) -> ())
-    let onTapMealMenu: ((DayMeal) -> ())
     
     let date: Date
     @Binding var meals: [DayMeal]
@@ -16,13 +15,11 @@ public struct MealsList: View {
     public init(
         date: Date,
         meals: Binding<[DayMeal]>,
-        onTapAddMeal: @escaping ((Date?) -> ()),
-        onTapMealMenu: @escaping ((DayMeal) -> ())
+        onTapAddMeal: @escaping ((Date?) -> ())
     ) {
         self.date = date
         _meals = meals
         self.onTapAddMeal = onTapAddMeal
-        self.onTapMealMenu = onTapMealMenu
     }
     
     public var body: some View {

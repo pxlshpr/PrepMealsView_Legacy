@@ -17,8 +17,7 @@ struct ListPagePreview: View {
         MealsList(
             date: Date(),
             meals: .constant(meals.map { DayMeal(from: $0) }),
-            onTapAddMeal: { _ in },
-            onTapMealMenu: { _ in }
+            onTapAddMeal: { _ in }
         )
     }
     
@@ -60,8 +59,7 @@ struct EmptyListViewPreview: View {
         MealsList(
             date: Date(),
             meals: .constant([]),
-            onTapAddMeal: { _ in },
-            onTapMealMenu: { _ in }
+            onTapAddMeal: { _ in }
         )
     }
 }
