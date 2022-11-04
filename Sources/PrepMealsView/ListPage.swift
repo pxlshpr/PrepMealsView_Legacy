@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftUISugar
 import SwiftHaptics
 import PrepDataTypes
+import SwiftSugar
 
 public struct ListPage: View {
     
@@ -52,7 +53,7 @@ public struct ListPage: View {
     
     var emptyText: String {
         isBeforeToday
-        ? "You hadn't logged any meals"
+        ? "No meals had been logged on this day"
         : "You haven't prepped any meals yet"
     }
     var emptyContent: some View {
@@ -84,7 +85,7 @@ public struct ListPage: View {
 //        }
 //        getMeals()
 //    }
-    
+//    
 //    func didUpdateMeals(notification: Notification) {
 //        getMeals()
 //    }
@@ -92,8 +93,6 @@ public struct ListPage: View {
 //    func appeared() {
 //        getMeals(animated: false)
 //    }
-    
-    @State var hoursAfterLastMeal = 2
     
     var addMealEmptyButton: some View {
         let string = isBeforeToday ? "Log a Meal" : "Prep a Meal"
@@ -119,14 +118,15 @@ public struct ListPage: View {
     var addMealButton: some View {
         Button {
             onTapAddMeal(nil)
+            Haptics.feedback(style: .soft)
         } label: {
             HStack {
                 Image(systemName: "note.text.badge.plus")
             }
             .padding(.horizontal)
-            .padding(.vertical, 12)
+            .padding(.vertical, 10)
             .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                RoundedRectangle(cornerRadius: 15, style: .continuous)
                     .foregroundColor(Color(.tertiarySystemFill))
             )
         }
@@ -136,18 +136,19 @@ public struct ListPage: View {
     func addMealAtTimeButton(at time: Date? = nil) -> some View {
         Button {
             onTapAddMeal(time ?? Date())
+            Haptics.successFeedback()
         } label: {
             HStack {
                 if let time {
                     Text(time.hourString)
                 } else {
-                    Text("NOW")
+                    Text("Now")
                 }
             }
             .padding(.horizontal)
-            .padding(.vertical, 12)
+            .padding(.vertical, 10)
             .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                RoundedRectangle(cornerRadius: 15, style: .continuous)
                     .foregroundColor(Color(.tertiarySystemFill))
             )
         }
@@ -187,6 +188,14 @@ public struct ListPage: View {
     }
 }
 
+struct AddMealButtonItem {
+    let isQuickAdd: Bool
+    let time: Date?
+    init(isQuickAdd: Bool = true, time: Date? = nil) {
+        self.isQuickAdd = isQuickAdd
+        self.time = time
+    }
+}
 struct EmptyListViewPreview: View {
     
     @Namespace var namespace
@@ -244,59 +253,6 @@ struct ListRowBackground: View {
             .frame(height: 0.18)
             .background(Color(.separator))
             .opacity(colorScheme == .light ? 0.225 : 0.225)
-    }
-}
-
-import PrepDataTypes
-
-extension Date {
-    var hourString: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "h a"
-        return formatter.string(from: self)
-    }
-    
-    func h(_ hour: Int, r randomizeComponents: Bool = false) -> Date {
-        let minute: Int = randomizeComponents ? Int.random(in: 0...59) : 0
-        let second: Int = randomizeComponents ? Int.random(in: 0...59) : 0
-        let date = Calendar.current.date(
-            bySettingHour: hour,
-            minute: minute,
-            second: second,
-            of: self)!
-        return date
-    }
-    func h(_ h: Int, m: Int, s: Int) -> Date {
-        Calendar.current.date(bySettingHour: h, minute: m, second: s, of: self)!
-    }
-}
-
-
-//** New **
-extension Date {
-    var d: Int { day }
-    var h: Int { hour }
-    var m: Int { minute }
-    var atCurrentHour: Date {
-        Calendar.current.date(bySettingHour: hour, minute: 0, second: 0, of: self)!
-    }
-    
-    var atNextHour: Date {
-        Calendar.current.date(bySettingHour: hour + 1, minute: 0, second: 0, of: self)!
-    }
-    
-    var atClosestHour: Date {
-        if m < 30 {
-            return atCurrentHour
-        } else {
-            return atNextHour
-        }
-    }
-    
-    func movingHourBy(_ increment: Int) -> Date {
-        var components = DateComponents()
-        components.hour = increment
-        return Calendar.current.date(byAdding: components, to: self)!
     }
 }
 
