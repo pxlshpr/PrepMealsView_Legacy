@@ -3,28 +3,21 @@ import SwiftHaptics
 import SwiftUISugar
 import PrepDataTypes
 
-extension MealView {
+extension MealsList.Meal {
     struct Header: View {
-        
         @Environment(\.colorScheme) var colorScheme
         @ObservedObject var viewModel: ViewModel
         var meal: DayMeal
-
-//        @Namespace var localNamespace
-//        var namespace: Binding<Namespace.ID?>
-//        @Binding var namespacePrefix: UUID
+        let onTapMealMenu: (DayMeal) -> ()
     }
 }
 
-extension MealView.Header {
+extension MealsList.Meal.Header {
     
     var body: some View {
-//        let _ = Self._printChanges()
-        return content
+        content
         .listRowBackground(
-            ListRowBackground(
-                includeBottomSeparator: !meal.foodItems.isEmpty
-            )
+            ListRowBackground(includeBottomSeparator: !meal.foodItems.isEmpty)
         )
         .listRowSeparator(.hidden)
     }
@@ -37,20 +30,8 @@ extension MealView.Header {
                 Group {
                     HStack {
                         Text("**\(viewModel.meal.timeString)**")
-//                            .if(namespace.wrappedValue != nil) { view in
-//                                view.matchedGeometryEffect(id: "date-\(viewModel.animationID)-\(namespacePrefix.uuidString)", in: namespace.wrappedValue!)
-//                            }
-//                            .if(namespace.wrappedValue == nil) { view in
-//                                view.matchedGeometryEffect(id: "date-\(viewModel.animationID)-\(namespacePrefix.uuidString)", in: localNamespace)
-//                            }
                         Text("•")
                         Text(viewModel.meal.name)
-//                            .if(namespace.wrappedValue != nil) { view in
-//                                view.matchedGeometryEffect(id: "\(viewModel.animationID)-\(namespacePrefix.uuidString)", in: namespace.wrappedValue!)
-//                            }
-//                            .if(namespace.wrappedValue == nil) { view in
-//                                view.matchedGeometryEffect(id: "\(viewModel.animationID)-\(namespacePrefix.uuidString)", in: localNamespace)
-//                            }
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -72,27 +53,30 @@ extension MealView.Header {
             }
             .buttonStyle(.plain)
             Spacer()
-            mealMenu
+            mealMenuButton
         }
     }
     
     //MARK: - Menu
     
-    var mealMenu: some View {
-        Menu {
-            if viewModel.shouldShowAddFoodActionInMenu {
-                addFoodMenuButton
-            }
-            if viewModel.shouldShowCompleteActionInMenu {
-                completeButton
-            }
-            deleteButton
+    var mealMenuButton: some View {
+        Button {
+//            if viewModel.shouldShowAddFoodActionInMenu {
+//                addFoodMenuButton
+//            }
+//            if viewModel.shouldShowCompleteActionInMenu {
+//                completeButton
+//            }
+//            deleteButton
+            onTapMealMenu(meal)
         } label: {
             Image(systemName: "ellipsis")
+                .foregroundColor(.accentColor)
                 .padding(.top, 10)
                 .padding(.bottom, 5)
                 .padding(.leading)
         }
+        .buttonStyle(.borderless)
     }
     
     var addFoodMenuButton: some View {

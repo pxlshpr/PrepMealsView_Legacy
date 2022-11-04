@@ -1,12 +1,12 @@
 import SwiftUI
 import SwiftHaptics
 
-extension ListPage {
+extension MealsList {
 
     var list: some View {
         List {
             ForEach(meals) { meal in
-                MealView(meal: meal)
+                Meal(meal: meal, onTapMealMenu: onTapMealMenu)
             }
             quickAddButtons
         }

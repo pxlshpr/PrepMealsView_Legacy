@@ -14,12 +14,12 @@ struct ListPagePreview: View {
     }
     
     var listPage: some View {
-        ListPage(
+        MealsList(
             date: Date(),
-            meals: .constant(meals.map { DayMeal(from: $0) })
-        ) { _ in
-            /// Tapped Add meal
-        }
+            meals: .constant(meals.map { DayMeal(from: $0) }),
+            onTapAddMeal: { _ in },
+            onTapMealMenu: { _ in }
+        )
     }
     
     var meals: [Meal] {
@@ -57,10 +57,11 @@ struct EmptyListViewPreview: View {
     @Namespace var namespace
     
     var body: some View {
-        ListPage(
+        MealsList(
             date: Date(),
             meals: .constant([]),
-            onTapAddMeal: { _ in }
+            onTapAddMeal: { _ in },
+            onTapMealMenu: { _ in }
         )
     }
 }

@@ -1,6 +1,6 @@
 import Foundation
 
-extension ListPage {
+extension MealsList {
  
     var isToday: Bool {
         date.startOfDay == Date().startOfDay

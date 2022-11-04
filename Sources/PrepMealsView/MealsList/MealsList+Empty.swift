@@ -1,6 +1,6 @@
 import SwiftUI
 
-extension ListPage {
+extension MealsList {
 
     var emptyContent: some View {
         ZStack {

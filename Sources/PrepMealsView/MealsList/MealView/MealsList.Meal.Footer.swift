@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftHaptics
 import PrepDataTypes
 
-extension MealView {
+extension MealsList.Meal {
     struct Footer: View {
         //TODO: CoreData
 //        @ObservedObject var meal: Meal
@@ -10,7 +10,7 @@ extension MealView {
     }
 }
 
-extension MealView.Footer {
+extension MealsList.Meal.Footer {
     var body: some View {
         content
         .listRowBackground(
