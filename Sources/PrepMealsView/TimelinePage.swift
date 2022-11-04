@@ -6,18 +6,11 @@ public struct TimelinePage: View {
 
     @State var timelineItems: [TimelineItem]
 
-    let namespace: Namespace.ID
-    @Binding var namespacePrefix: UUID
-
     public init(
-        meals: Binding<[DayMeal]>,
-        namespace: Namespace.ID,
-        namespacePrefix: Binding<UUID>
+        meals: Binding<[DayMeal]>
     ) {
         let timelineItems = meals.wrappedValue.map { TimelineItem(dayMeal: $0) }
         _timelineItems = State(initialValue: timelineItems)
-        self.namespace = namespace
-        _namespacePrefix = namespacePrefix
     }
 
     public var body: some View {
@@ -27,9 +20,7 @@ public struct TimelinePage: View {
 
     var timeline: some View {
         Timeline(
-            items: timelineItems,
-            namespace: namespace,
-            namespacePrefix: $namespacePrefix
+            items: timelineItems
         )
         .background(Color(.systemGroupedBackground))
     }

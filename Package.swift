@@ -16,7 +16,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/pxlshpr/PrepDataTypes", from: "0.0.85"),
-        .package(url: "https://github.com/pxlshpr/Timeline", from: "0.0.62"),
+        .package(url: "https://github.com/pxlshpr/Timeline", from: "0.0.64"),
         .package(url: "https://github.com/pxlshpr/SwiftSugar", from: "0.0.84"),
     ],
     targets: [
