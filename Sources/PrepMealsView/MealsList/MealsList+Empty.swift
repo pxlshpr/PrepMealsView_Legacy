@@ -19,6 +19,7 @@ extension MealsList {
                     .foregroundColor(Color(.quaternarySystemFill))
             )
             .padding(.horizontal, 50)
+            .offset(y: 0)
         }
     }
     
@@ -41,5 +42,20 @@ extension MealsList {
             )
         }
         .buttonStyle(.borderless)
+    }
+}
+
+struct MealsListEmptyPreview: View {
+    var body: some View {
+        MealsList(date: Date(),
+                  meals: .constant([]),
+                  didTapAddFood: { _ in },
+                  onTapAddMeal: { _ in })
+    }
+}
+
+struct MealsListEmpty_Previews: PreviewProvider {
+    static var previews: some View {
+        MealsListEmptyPreview()
     }
 }

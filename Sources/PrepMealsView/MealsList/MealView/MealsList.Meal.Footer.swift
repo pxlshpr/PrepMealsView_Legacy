@@ -7,6 +7,8 @@ extension MealsList.Meal {
         //TODO: CoreData
 //        @ObservedObject var meal: Meal
         var meal: DayMeal
+        
+        let didTapAddFood: (DayMeal) -> ()
     }
 }
 
@@ -70,8 +72,8 @@ extension MealsList.Meal.Footer {
     
     //MARK: - Actions
     func tappedAddFood() {
-        //TODO: Callback for this
         Haptics.feedback(style: .soft)
+        didTapAddFood(meal)
     }
     
     func tappedEnergy() {
