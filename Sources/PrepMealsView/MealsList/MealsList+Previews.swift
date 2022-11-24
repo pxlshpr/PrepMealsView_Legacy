@@ -40,7 +40,13 @@ struct ListPagePreview: View {
     }
     
     var day: Day {
-        Day(id: "day", calendarDayString: "", addEnergyExpendituresToGoal: false, energyExpenditures: [], meals: [], syncStatus: .notSynced, updatedAt: 0)
+        Day(
+            id: "day",
+            calendarDayString: "",
+            meals: [],
+            syncStatus: .notSynced,
+            updatedAt: 0
+        )
     }
 }
 
