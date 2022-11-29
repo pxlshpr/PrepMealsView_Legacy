@@ -5,7 +5,7 @@ extension MealsList.Meal {
     class ViewModel: ObservableObject {
         
         @Published var meal: DayMeal
-        @Published var foodItems: [MealFoodItem]
+        @Published var   foodItems: [MealFoodItem]
         
         init(meal: DayMeal) {
             self.meal = meal
@@ -31,10 +31,8 @@ extension MealsList.Meal.ViewModel {
             return
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            withAnimation {
-                self.foodItems.append(MealFoodItem(from: foodItem))
-            }
+        withAnimation {
+            self.foodItems.append(MealFoodItem(from: foodItem))
         }
     }
 }
