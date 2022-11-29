@@ -28,9 +28,8 @@ extension MealsList.Meal {
                 viewModel: viewModel,
                 meal: meal
             )
-            ForEach(viewModel.foodItems) { item in
-                Text("Todo")
-//                DiaryItemView(item: item)
+            ForEach(viewModel.foodItems) { mealFoodItem in
+                DiaryItemView(item: mealFoodItem)
             }
             Footer(
                 meal: viewModel.meal,

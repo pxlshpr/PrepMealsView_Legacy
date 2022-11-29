@@ -31,11 +31,11 @@ extension MealsList.Meal.ViewModel {
             return
         }
 
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-//            withAnimation {
-//                self.foodItems.append(foodItem)
-//            }
-//        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            withAnimation {
+                self.foodItems.append(MealFoodItem(from: foodItem))
+            }
+        }
     }
 }
 

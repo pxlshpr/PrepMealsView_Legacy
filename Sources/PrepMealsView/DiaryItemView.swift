@@ -3,13 +3,20 @@ import SwiftHaptics
 import SwiftUISugar
 import PrepDataTypes
 
+extension MealFoodItem {
+    var isCompleted: Bool {
+        guard let markedAsEatenAt else { return false }
+        return markedAsEatenAt > 0
+    }
+}
+
 struct DiaryItemView: View {
     
     @Environment(\.colorScheme) var colorScheme
 
     //TODO: CoreData
 //    @ObservedObject var item: FoodItem
-    var item: FoodItem
+    var item: MealFoodItem
 
 //    @Namespace var localNamespace
 //    var namespace: Binding<Namespace.ID?>
@@ -66,17 +73,21 @@ struct DiaryItemView: View {
     }
     
     var nameColor: Color {
-        guard let meal = item.meal else {
-            return Color(.secondaryLabel)
-        }
-        return meal.isNextPlannedMeal ? Color(.label) : Color(.secondaryLabel)
+        return Color(.label)
+        //TODO: Bring this back
+//        guard let meal = item.meal else {
+//            return Color(.secondaryLabel)
+//        }
+//        return meal.isNextPlannedMeal ? Color(.label) : Color(.secondaryLabel)
     }
     
     var amountColor: Color {
-        guard let meal = item.meal else {
-            return Color(.quaternaryLabel)
-        }
-        return meal.isNextPlannedMeal ? Color(.secondaryLabel) : Color(.quaternaryLabel)
+        return Color(.secondaryLabel)
+        //TODO: Bring this back
+//        guard let meal = item.meal else {
+//            return Color(.quaternaryLabel)
+//        }
+//        return meal.isNextPlannedMeal ? Color(.secondaryLabel) : Color(.quaternaryLabel)
     }
     
     var nameTexts: some View {
@@ -84,7 +95,7 @@ struct DiaryItemView: View {
             .font(.body)
             .fontWeight(.semibold)
             .foregroundColor(nameColor)
-        if let detail = item.food.detail {
+        if let detail = item.food.detail, !detail.isEmpty {
             view = view
             + Text(", ")
                 .font(.callout)
@@ -93,7 +104,7 @@ struct DiaryItemView: View {
                 .font(.callout)
                 .foregroundColor(Color(.secondaryLabel))
         }
-        if let brand = item.food.brand {
+        if let brand = item.food.brand, !brand.isEmpty {
             view = view
             + Text(", ")
                 .font(.callout)
@@ -104,7 +115,9 @@ struct DiaryItemView: View {
         }
         view = view
         + Text(" • ").foregroundColor(Color(.secondaryLabel))
-        + Text(item.amountString(withDetails: false, parentMultiplier: 1))
+        + Text(" g")
+        //TODO: Bring this back
+//        + Text(item.amountString(withDetails: false, parentMultiplier: 1))
 
         .font(.callout)
         .fontWeight(.semibold)
