@@ -46,11 +46,17 @@ extension MealsList.Meal.ViewModel {
         let mealFoodItem = MealFoodItem(from: foodItem)
         print("Adding foodItem with animation, place it at: \(foodItem.sortPosition)")
         withAnimation(.interactiveSpring()) {
-            guard foodItem.sortPosition < meal.foodItems.count else {
-                self.meal.foodItems.append(mealFoodItem)
-                return
-            }
-            self.meal.foodItems.insert(mealFoodItem, at: foodItem.sortPosition)
+//            guard foodItem.sortPosition < meal.foodItems.count else {
+//                self.meal.foodItems.append(mealFoodItem)
+//                return
+//            }
+            self.meal.foodItems.append(mealFoodItem)
+
+            //TODO: Try simply appending it and then re-sorting it for that item
+            // It should take the sort position, insert it correctly, and then reset all the numbers
+            /// Re-sort the `foodItems` in case we moved an item within a meal
+            self.meal.foodItems.resetSortPositions(for: foodItem)
+            self.meal.foodItems.sort { $0.sortPosition < $1.sortPosition }
         }
     }
     
@@ -58,7 +64,7 @@ extension MealsList.Meal.ViewModel {
         guard let userInfo = notification.userInfo as? [String: AnyObject],
               let updatedFoodItem = userInfo[Notification.Keys.foodItem] as? FoodItem
         else {
-            return`
+            return
         }
 
         /// Make sure this is the `MealView.ViewModel` for the `Meal` that the `FoodItem` belongs to before proceeding
@@ -73,7 +79,8 @@ extension MealsList.Meal.ViewModel {
             /// Replace the existing `MealFoodItem` with the updated one
             self.meal.foodItems[existingIndex] = MealFoodItem(from: updatedFoodItem)
             
-            /// Resort the `foodItems` in case we moved an item within a meal
+            /// Re-sort the `foodItems` in case we moved an item within a meal
+            self.meal.foodItems.resetSortPositions(for: updatedFoodItem)
             self.meal.foodItems.sort { $0.sortPosition < $1.sortPosition }
         }
     }
@@ -90,6 +97,49 @@ extension MealsList.Meal.ViewModel {
         }
     }
 }
+
+import PrepDataTypes
+
+extension Array where Element == MealFoodItem {
+    
+    var hasValidSortPositions: Bool {
+        for i in self.indices {
+            guard self[i].sortPosition == i + 1 else {
+                return false
+            }
+        }
+        return true
+    }
+    
+    mutating func resetSortPositions(for foodItem: FoodItem) {
+        
+        /// Don't continue if the sort positions are valid
+        guard !hasValidSortPositions else {
+            return
+        }
+        
+        /// First get the index and remove the `foodItem`
+        guard let currentIndex = self.firstIndex(where: { $0.id == foodItem.id }) else {
+            return
+        }
+        let removed = self.remove(at: currentIndex)
+        
+        /// Now insert it where it actually belongs
+        self.insert(removed, at: removed.sortPosition - 1)
+        
+        /// Finally, renumber all the items for the array just to be safe (can be optimised later)
+        for i in self.indices {
+            self[i].sortPosition = i + 1
+        }
+        
+        //TODO: ⚠️ **** CRUCIAL ****
+        /// We now (or after calling this), need to
+        /// [ ] Update any of the `FoodItem`'s that have had their `sortPosition` changed with the backend,
+        /// [ ] modifying the `updatedAt` flags, and
+        /// [ ] reseting the `syncStatus`.
+    }
+}
+
 
 extension MealsList.Meal.ViewModel {
     
