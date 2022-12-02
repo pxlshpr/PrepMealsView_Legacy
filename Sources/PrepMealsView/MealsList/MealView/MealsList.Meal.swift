@@ -119,8 +119,8 @@ extension MealsList.Meal {
         .transition(
             .asymmetric(
                 insertion: .move(edge: .top),
-                removal: .move(edge: .top)
-//                removal: .scale
+//                removal: .move(edge: .top)
+                removal: .scale
             )
         )
     }

@@ -54,12 +54,37 @@ struct MealItemCell: View {
             return Color(.secondarySystemGroupedBackground)
         }
     }
-    var listRowBackground: some View {
-        Color.white
-            .colorMultiply(listRowBackgroundColor)
-            .animation(.default, value: item.isCompleted)
-    }
     
+    var listRowBackground: some View {
+        var isLastCell: Bool {
+            viewModel.meal.foodItems.last?.id == item.id
+        }
+        
+        var separator: some View {
+            Rectangle()
+                .frame(height: 0.18)
+                .background(Color(.separator))
+                .opacity(colorScheme == .light ? 0.225 : 0.225)
+        }
+        
+        var background: some View {
+            Color.white
+                .colorMultiply(listRowBackgroundColor)
+                .animation(.default, value: item.isCompleted)
+        }
+
+        return ZStack {
+            background
+            VStack {
+                Spacer()
+                separator
+                    .if(!isLastCell, transform: { view in
+                        view
+                            .padding(.leading, 52)
+                    })
+            }
+        }
+    }
     
     var isEatenToggle: some View {
         Button {

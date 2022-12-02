@@ -55,8 +55,7 @@ extension MealsList.Meal.ViewModel {
             //TODO: Try simply appending it and then re-sorting it for that item
             // It should take the sort position, insert it correctly, and then reset all the numbers
             /// Re-sort the `foodItems` in case we moved an item within a meal
-            self.meal.foodItems.resetSortPositions(for: foodItem)
-            self.meal.foodItems.sort { $0.sortPosition < $1.sortPosition }
+            resetSortPositions(aroundFoodItemWithId: foodItem.id)
         }
     }
     
@@ -80,20 +79,47 @@ extension MealsList.Meal.ViewModel {
             self.meal.foodItems[existingIndex] = MealFoodItem(from: updatedFoodItem)
             
             /// Re-sort the `foodItems` in case we moved an item within a meal
-            self.meal.foodItems.resetSortPositions(for: updatedFoodItem)
-            self.meal.foodItems.sort { $0.sortPosition < $1.sortPosition }
+            resetSortPositions(aroundFoodItemWithId: updatedFoodItem.id)
+        }
+    }
+    
+    func resetSortPositions(aroundFoodItemWithId id: UUID?) {
+        let before = self.meal.foodItems
+        
+        self.meal.foodItems.resetSortPositions(aroundFoodItemWithId: id)
+        self.meal.foodItems.sort { $0.sortPosition < $1.sortPosition }
+        
+        //TODO: ⚠️ **** CRUCIAL ****
+        /// We now (or after calling this), need to
+        /// [x] Update any of the `FoodItem`'s that have had their `sortPosition` changed with the backend,
+        /// [x] modifying the `updatedAt` flags, and
+        /// [x] reseting the `syncStatus`.
+        for oldItem in before {
+            guard let newItem = self.meal.foodItems.first(where: { $0.id == oldItem.id }) else {
+                /// We shouldn't get here
+                continue
+            }
+            if newItem.sortPosition != oldItem.sortPosition {
+                do {
+                    try DataManager.shared.silentlyUpdateSortPosition(for: newItem)
+                } catch {
+                    print("Error updating sort position: \(error)")
+                }
+            }
         }
     }
     
     @objc func didDeleteFoodItemFromMeal(notification: Notification) {
         guard let userInfo = notification.userInfo as? [String: AnyObject],
-              let id = userInfo[Notification.Keys.uuid] as? UUID
+              let id = userInfo[Notification.Keys.uuid] as? UUID,
+              meal.foodItems.contains(where: { $0.id == id })
         else {
             return
         }
 
         withAnimation(.interactiveSpring()) {
             self.meal.foodItems.removeAll(where: { $0.id == id })
+            resetSortPositions(aroundFoodItemWithId: nil)
         }
     }
 }
@@ -111,32 +137,31 @@ extension Array where Element == MealFoodItem {
         return true
     }
     
-    mutating func resetSortPositions(for foodItem: FoodItem) {
+    mutating func resetSortPositions(aroundFoodItemWithId id: UUID?) {
         
         /// Don't continue if the sort positions are valid
         guard !hasValidSortPositions else {
             return
         }
         
-        /// First get the index and remove the `foodItem`
-        guard let currentIndex = self.firstIndex(where: { $0.id == foodItem.id }) else {
-            return
+        if let id {
+            /// First get the index and remove the `foodItem`
+            guard let currentIndex = self.firstIndex(where: { $0.id == id }) else {
+                return
+            }
+            let removed = self.remove(at: currentIndex)
+            
+            //TODO: ⚠️ **** CRUCIAL ****
+            /// [ ] Have a failsafe that makes sure we don't insert this out of range (or with a negative index)
+
+            /// Now insert it where it actually belongs
+            self.insert(removed, at: removed.sortPosition - 1)
         }
-        let removed = self.remove(at: currentIndex)
-        
-        /// Now insert it where it actually belongs
-        self.insert(removed, at: removed.sortPosition - 1)
         
         /// Finally, renumber all the items for the array just to be safe (can be optimised later)
         for i in self.indices {
             self[i].sortPosition = i + 1
         }
-        
-        //TODO: ⚠️ **** CRUCIAL ****
-        /// We now (or after calling this), need to
-        /// [ ] Update any of the `FoodItem`'s that have had their `sortPosition` changed with the backend,
-        /// [ ] modifying the `updatedAt` flags, and
-        /// [ ] reseting the `syncStatus`.
     }
 }
 
@@ -171,10 +196,15 @@ extension MealsList.Meal.ViewModel {
         !meal.isCompleted
     }
     
+    func resetDrop() {
+        droppedFoodItem = nil
+        dropRecipient = nil
+    }
     func tappedMoveForDrop() {
         guard let droppedFoodItem else { return }
         do {
             try DataManager.shared.moveMealItem(droppedFoodItem, to: meal, after: dropRecipient)
+            resetDrop()
         } catch {
             print("Error moving dropped food item: \(error)")
         }
@@ -184,6 +214,7 @@ extension MealsList.Meal.ViewModel {
         guard let droppedFoodItem else { return }
         do {
             try DataManager.shared.duplicateMealItem(droppedFoodItem, to: meal, after: dropRecipient)
+            resetDrop()
         } catch {
             print("Error moving dropped food item: \(error)")
         }
