@@ -5,15 +5,21 @@ extension MealsList.Meal {
     class ViewModel: ObservableObject {
         
         @Published var meal: DayMeal
-        @Published var   foodItems: [MealFoodItem]
         
         init(meal: DayMeal) {
             self.meal = meal
-            self.foodItems = meal.foodItems
             
             NotificationCenter.default.addObserver(
                 self, selector: #selector(didAddFoodItemToMeal),
                 name: .didAddFoodItemToMeal, object: nil)
+
+            NotificationCenter.default.addObserver(
+                self, selector: #selector(didUpdateMealFoodItem),
+                name: .didUpdateMealFoodItem, object: nil)
+
+            NotificationCenter.default.addObserver(
+                self, selector: #selector(didDeleteFoodItemFromMeal),
+                name: .didDeleteFoodItemFromMeal, object: nil)
         }
     }
 }
@@ -30,9 +36,41 @@ extension MealsList.Meal.ViewModel {
         guard foodItem.meal?.id == meal.id else {
             return
         }
+        
+        withAnimation {
+            self.meal.foodItems.append(MealFoodItem(from: foodItem))
+        }
+    }
+    
+    @objc func didUpdateMealFoodItem(notification: Notification) {
+        guard let userInfo = notification.userInfo as? [String: AnyObject],
+              let updatedFoodItem = userInfo[Notification.Keys.foodItem] as? FoodItem
+        else {
+            return
+        }
+
+        /// Make sure this is the `MealView.ViewModel` for the `Meal` that the `FoodItem` belongs to before proceeding
+        guard
+            updatedFoodItem.meal?.id == meal.id,
+            let existingIndex = meal.foodItems.firstIndex(where: { $0.id == updatedFoodItem.id })
+        else {
+            return
+        }
+        
+        withAnimation {
+            self.meal.foodItems[existingIndex] = MealFoodItem(from: updatedFoodItem)
+        }
+    }
+    
+    @objc func didDeleteFoodItemFromMeal(notification: Notification) {
+        guard let userInfo = notification.userInfo as? [String: AnyObject],
+              let id = userInfo[Notification.Keys.uuid] as? UUID
+        else {
+            return
+        }
 
         withAnimation {
-            self.foodItems.append(MealFoodItem(from: foodItem))
+            self.meal.foodItems.removeAll(where: { $0.id == id })
         }
     }
 }

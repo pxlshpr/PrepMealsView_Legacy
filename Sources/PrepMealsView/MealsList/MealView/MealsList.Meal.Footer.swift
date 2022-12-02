@@ -4,33 +4,49 @@ import PrepDataTypes
 
 extension MealsList.Meal {
     struct Footer: View {
+        @EnvironmentObject var viewModel: MealsList.Meal.ViewModel
+        
+//        @State var refreshBool = false
         //TODO: CoreData
 //        @ObservedObject var meal: Meal
-        var meal: DayMeal
+//        @Binding var meal: DayMeal
         
         let didTapAddFood: (DayMeal) -> ()
+        
+        let didDeleteFoodItemFromMeal = NotificationCenter.default.publisher(for: .didDeleteFoodItemFromMeal)
     }
 }
 
 extension MealsList.Meal.Footer {
     var body: some View {
         content
-        .listRowBackground(
-            ListRowBackground(
-                includeTopSeparator: !meal.foodItems.isEmpty
-            )
-        )
+        .listRowBackground(listRowBackground)
+//        .id(refreshBool)
         .listRowInsets(.none)
         .listRowSeparator(.hidden)
+        .onReceive(didDeleteFoodItemFromMeal, perform: didDeleteFoodItemFromMeal)
+    }
+    
+    var listRowBackground: some View {
+        let includeTopSeparator = Binding<Bool>(
+            get: { !viewModel.meal.foodItems.isEmpty },
+            set: { _ in }
+        )
+        return ListRowBackground(includeTopSeparator: includeTopSeparator)
+    }
+    
+    func didDeleteFoodItemFromMeal(notification: Notification) {
+        print("We here with: \(viewModel.meal.foodItems.count)")
+//        refreshBool.toggle()
     }
     
     var content: some View {
         HStack(spacing: 0) {
-            if !meal.isCompleted {
+            if !viewModel.meal.isCompleted {
                 addFoodButton
             }
             Spacer()
-            if !meal.foodItems.isEmpty {
+            if !viewModel.meal.foodItems.isEmpty {
                 energyButton
             }
         }
@@ -60,7 +76,7 @@ extension MealsList.Meal.Footer {
         Button {
             tappedEnergy()
         } label: {
-            Text("\(Int(meal.energyAmount)) kcal")
+            Text("\(Int(viewModel.meal.energyAmount)) kcal")
                 .font(.footnote)
                 .foregroundColor(Color(.secondaryLabel))
         }
@@ -73,7 +89,7 @@ extension MealsList.Meal.Footer {
     //MARK: - Actions
     func tappedAddFood() {
         Haptics.feedback(style: .soft)
-        didTapAddFood(meal)
+        didTapAddFood(viewModel.meal)
     }
     
     func tappedEnergy() {

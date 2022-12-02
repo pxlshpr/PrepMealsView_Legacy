@@ -8,7 +8,19 @@ extension MealFoodItem {
         guard let markedAsEatenAt else { return false }
         return markedAsEatenAt > 0
     }
+    
+    var quantityDescription: String {
+        amount.description(with: food)
+    }
 }
+
+extension FoodValue {
+    func description(with food: Food) -> String {
+        "\(value.cleanAmount) \(unitDescription(sizes: food.info.sizes))"
+    }
+}
+
+
 
 struct DiaryItemView: View {
     
@@ -115,9 +127,7 @@ struct DiaryItemView: View {
         }
         view = view
         + Text(" • ").foregroundColor(Color(.secondaryLabel))
-        + Text(" g")
-        //TODO: Bring this back
-//        + Text(item.amountString(withDetails: false, parentMultiplier: 1))
+        + Text(item.quantityDescription)
 
         .font(.callout)
         .fontWeight(.semibold)

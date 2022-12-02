@@ -8,7 +8,8 @@ extension MealsList {
             ForEach(meals) { meal in
                 Meal(
                     meal: meal,
-                    didTapAddFood: didTapAddFood
+                    didTapAddFood: didTapAddFood,
+                    didTapMealFoodItem: didTapMealFoodItem
                 )
             }
             quickAddButtons
@@ -39,7 +40,19 @@ extension MealsList {
     }
 
     var quickAddButtons: some View {
-        Section {
+        
+        var listRowBackground: some View {
+            ZStack {
+                ListRowBackground(
+                    color: .constant(Color(.systemGroupedBackground)),
+                    includeTopSeparator: .constant(false),
+                    includeBottomSeparator: .constant(false),
+                    includeTopPadding: .constant(true)
+                )
+            }
+        }
+        
+        return Section {
             HStack(spacing: 15) {
                 addMealButton
                 if isToday {
@@ -52,16 +65,7 @@ extension MealsList {
             .frame(maxWidth: .infinity, alignment: .center)
         }
         .padding(.vertical, 15)
-        .listRowBackground(
-            ZStack {
-                ListRowBackground(
-                    color: Color(.systemGroupedBackground),
-                    includeTopSeparator: false,
-                    includeBottomSeparator: false,
-                    includeTopPadding: true
-                )
-            }
-        )
+        .listRowBackground(listRowBackground)
         .listRowSeparator(.hidden)
     }
     

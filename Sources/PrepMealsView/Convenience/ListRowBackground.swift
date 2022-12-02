@@ -3,11 +3,24 @@ import SwiftUI
 struct ListRowBackground: View {
     
     @Environment(\.colorScheme) var colorScheme
-    @State var color: Color = .clear
     @State var separatorColor: Color? = nil
-    @State var includeTopSeparator: Bool = false
-    @State var includeBottomSeparator: Bool = false
-    @State var includeTopPadding: Bool = false
+    
+    @Binding var color: Color
+    @Binding var includeTopPadding: Bool
+    @Binding var includeTopSeparator: Bool
+    @Binding var includeBottomSeparator: Bool
+
+    init(
+        color: Binding<Color> = .constant(.clear),
+        includeTopSeparator: Binding<Bool> = .constant(false),
+        includeBottomSeparator: Binding<Bool> = .constant(false),
+        includeTopPadding: Binding<Bool> = .constant(false)
+    ) {
+        _color = color
+        _includeTopPadding = includeTopPadding
+        _includeTopSeparator = includeTopSeparator
+        _includeBottomSeparator = includeBottomSeparator
+    }
     
     var body: some View {
         ZStack {

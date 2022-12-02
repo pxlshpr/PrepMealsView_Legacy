@@ -10,12 +10,21 @@
       }
     },
     {
+      "identity" : "prepcoredatastack",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pxlshpr/PrepCoreDataStack",
+      "state" : {
+        "revision" : "a603ea39eaa0cdc2c4c96c24eca2e4e2193a73af",
+        "version" : "0.0.25"
+      }
+    },
+    {
       "identity" : "prepdatatypes",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pxlshpr/PrepDataTypes",
       "state" : {
-        "revision" : "bec26f48fd76dd62fdc64132d5fffcfc245c88cf",
-        "version" : "0.0.199"
+        "revision" : "3c7f418e472abfd3bf42863a5c9d2ddadaed52bb",
+        "version" : "0.0.210"
       }
     },
     {

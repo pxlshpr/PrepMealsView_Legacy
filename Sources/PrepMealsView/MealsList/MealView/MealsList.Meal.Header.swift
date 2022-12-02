@@ -2,12 +2,13 @@ import SwiftUI
 import SwiftHaptics
 import SwiftUISugar
 import PrepDataTypes
+import PrepCoreDataStack
 
 extension MealsList.Meal {
+    
     struct Header: View {
+        @EnvironmentObject var viewModel: ViewModel
         @Environment(\.colorScheme) var colorScheme
-        @ObservedObject var viewModel: ViewModel
-        var meal: DayMeal
     }
 }
 
@@ -15,10 +16,16 @@ extension MealsList.Meal.Header {
     
     var body: some View {
         content
-        .listRowBackground(
-            ListRowBackground(includeBottomSeparator: !meal.foodItems.isEmpty)
-        )
+        .listRowBackground(listRowBackground)
         .listRowSeparator(.hidden)
+    }
+    
+    var listRowBackground: some View {
+        let includeBottomSeparator = Binding<Bool>(
+            get: { !viewModel.meal.foodItems.isEmpty },
+            set: { _ in }
+        )
+        return ListRowBackground(includeBottomSeparator: includeBottomSeparator)
     }
     
     var content: some View {
@@ -99,9 +106,13 @@ extension MealsList.Meal.Header {
             }
 
             Button(role: .destructive) {
-                
+                do {
+                    try DataManager.shared.deleteMeal(viewModel.meal)
+                } catch {
+                    print("Couldn't delete meal: \(error)")
+                }
             } label: {
-                Label("Remove", systemImage: "trash")
+                Label("Delete", systemImage: "trash")
             }
             
         } label: {
