@@ -58,7 +58,7 @@ extension MealsList.Meal.ViewModel {
         guard let userInfo = notification.userInfo as? [String: AnyObject],
               let updatedFoodItem = userInfo[Notification.Keys.foodItem] as? FoodItem
         else {
-            return
+            return`
         }
 
         /// Make sure this is the `MealView.ViewModel` for the `Meal` that the `FoodItem` belongs to before proceeding
@@ -70,7 +70,11 @@ extension MealsList.Meal.ViewModel {
         }
         
         withAnimation(.interactiveSpring()) {
+            /// Replace the existing `MealFoodItem` with the updated one
             self.meal.foodItems[existingIndex] = MealFoodItem(from: updatedFoodItem)
+            
+            /// Resort the `foodItems` in case we moved an item within a meal
+            self.meal.foodItems.sort { $0.sortPosition < $1.sortPosition }
         }
     }
     
