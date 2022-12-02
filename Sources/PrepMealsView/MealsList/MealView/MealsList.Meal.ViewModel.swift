@@ -1,11 +1,17 @@
 import SwiftUI
 import PrepDataTypes
+import PrepCoreDataStack
 
 extension MealsList.Meal {
     class ViewModel: ObservableObject {
         
         @Published var meal: DayMeal
         
+        @Published var dragTargetFoodItemId: UUID? = nil
+        
+        @Published var droppedFoodItem: MealFoodItem? = nil
+        @Published var dropRecipient: MealFoodItem? = nil
+
         init(meal: DayMeal) {
             self.meal = meal
             
@@ -37,9 +43,14 @@ extension MealsList.Meal.ViewModel {
             return
         }
         
-        print("Adding foodItem with animation")
+        let mealFoodItem = MealFoodItem(from: foodItem)
+        print("Adding foodItem with animation, place it at: \(foodItem.sortPosition)")
         withAnimation(.interactiveSpring()) {
-            self.meal.foodItems.append(MealFoodItem(from: foodItem))
+            guard foodItem.sortPosition < meal.foodItems.count else {
+                self.meal.foodItems.append(mealFoodItem)
+                return
+            }
+            self.meal.foodItems.insert(mealFoodItem, at: foodItem.sortPosition)
         }
     }
     
@@ -82,6 +93,10 @@ extension MealsList.Meal.ViewModel {
         meal.id.uuidString
     }
     
+    var isEmpty: Bool {
+        meal.foodItems.isEmpty
+    }
+    
     var headerString: String {
         "**\(meal.timeString)** • \(meal.name)"
     }
@@ -100,6 +115,24 @@ extension MealsList.Meal.ViewModel {
     
     var shouldShowCompleteActionInMenu: Bool {
         !meal.isCompleted
+    }
+    
+    func tappedMoveForDrop() {
+        guard let droppedFoodItem else { return }
+        do {
+            try DataManager.shared.moveMealItem(droppedFoodItem, to: meal, after: dropRecipient)
+        } catch {
+            print("Error moving dropped food item: \(error)")
+        }
+    }
+    
+    func tappedDuplicateForDrop() {
+        guard let droppedFoodItem else { return }
+        do {
+            try DataManager.shared.duplicateMealItem(droppedFoodItem, to: meal, after: dropRecipient)
+        } catch {
+            print("Error moving dropped food item: \(error)")
+        }
     }
     
     func tappedComplete() {

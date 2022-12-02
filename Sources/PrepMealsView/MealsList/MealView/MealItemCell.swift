@@ -6,14 +6,16 @@ import PrepDataTypes
 struct MealItemCell: View {
     
     @Environment(\.colorScheme) var colorScheme
-
+    
+    @EnvironmentObject var viewModel: MealsList.Meal.ViewModel
+    
     //TODO: CoreData
-//    @ObservedObject var item: FoodItem
+    //    @ObservedObject var item: FoodItem
     var item: MealFoodItem
-
-//    @Namespace var localNamespace
-//    var namespace: Binding<Namespace.ID?>
-//    @Binding var namespacePrefix: UUID
+    
+    //    @Namespace var localNamespace
+    //    var namespace: Binding<Namespace.ID?>
+    //    @Binding var namespacePrefix: UUID
     
     var body: some View {
         HStack {
@@ -25,6 +27,24 @@ struct MealItemCell: View {
         .padding(.vertical, 12)
         .padding(.horizontal, 20)
         .background(listRowBackground)
+        .dropDestination(
+            for: MealFoodItem.self,
+            action: handleDrop,
+            isTargeted: handleDropIsTargeted
+        )
+    }
+    
+    func handleDrop(_ items: [MealFoodItem], location: CGPoint) -> Bool {
+        viewModel.droppedFoodItem = items.first
+        viewModel.dropRecipient = item
+        return true
+    }
+    
+    func handleDropIsTargeted(_ isTargeted: Bool) {
+        Haptics.selectionFeedback()
+        withAnimation(.interactiveSpring()) {
+            viewModel.dragTargetFoodItemId = isTargeted ? item.id : nil
+        }
     }
     
     var listRowBackgroundColor: Color {
@@ -45,7 +65,7 @@ struct MealItemCell: View {
         Button {
             withAnimation {
                 //TODO: Bring this back
-//                Store.shared.toggleCompletionForFoodItem(item)
+                //                Store.shared.toggleCompletionForFoodItem(item)
             }
             Haptics.feedback(style: .soft)
         } label: {
@@ -59,30 +79,30 @@ struct MealItemCell: View {
     var optionalEmojiText: some View {
         Text(item.food.emoji)
             .font(.body)
-//            .if(namespace.wrappedValue != nil) { view in
-//                view.matchedGeometryEffect(id: "\(item.id.uuidString)-\(namespacePrefix.uuidString)", in: namespace.wrappedValue!)
-//            }
-//            .if(namespace.wrappedValue == nil) { view in
-//                view.matchedGeometryEffect(id: "\(item.id.uuidString)-\(namespacePrefix.uuidString)", in: localNamespace)
-//            }
+        //            .if(namespace.wrappedValue != nil) { view in
+        //                view.matchedGeometryEffect(id: "\(item.id.uuidString)-\(namespacePrefix.uuidString)", in: namespace.wrappedValue!)
+        //            }
+        //            .if(namespace.wrappedValue == nil) { view in
+        //                view.matchedGeometryEffect(id: "\(item.id.uuidString)-\(namespacePrefix.uuidString)", in: localNamespace)
+        //            }
     }
     
     var nameColor: Color {
         return Color(.label)
         //TODO: Bring this back
-//        guard let meal = item.meal else {
-//            return Color(.secondaryLabel)
-//        }
-//        return meal.isNextPlannedMeal ? Color(.label) : Color(.secondaryLabel)
+        //        guard let meal = item.meal else {
+        //            return Color(.secondaryLabel)
+        //        }
+        //        return meal.isNextPlannedMeal ? Color(.label) : Color(.secondaryLabel)
     }
     
     var amountColor: Color {
         return Color(.secondaryLabel)
         //TODO: Bring this back
-//        guard let meal = item.meal else {
-//            return Color(.quaternaryLabel)
-//        }
-//        return meal.isNextPlannedMeal ? Color(.secondaryLabel) : Color(.quaternaryLabel)
+        //        guard let meal = item.meal else {
+        //            return Color(.quaternaryLabel)
+        //        }
+        //        return meal.isNextPlannedMeal ? Color(.secondaryLabel) : Color(.quaternaryLabel)
     }
     
     var nameTexts: some View {
@@ -111,10 +131,10 @@ struct MealItemCell: View {
         view = view
         + Text(" • ").foregroundColor(Color(.secondaryLabel))
         + Text(item.quantityDescription)
-
-        .font(.callout)
-        .fontWeight(.semibold)
-        .foregroundColor(amountColor)
+        
+            .font(.callout)
+            .fontWeight(.semibold)
+            .foregroundColor(amountColor)
         
         return view
     }
@@ -145,11 +165,11 @@ extension FoodValue {
 import UniformTypeIdentifiers
 
 extension MealFoodItem: Transferable {
-
+    
     public static var transferRepresentation: some TransferRepresentation {
         CodableRepresentation(for: MealFoodItem.self, contentType: .mealFoodItem)
-//        CodableRepresentation(contentType: .mealFoodItem)
-//        ProxyRepresentation(exporting: \.id.uuidString)
+        //        CodableRepresentation(contentType: .mealFoodItem)
+        //        ProxyRepresentation(exporting: \.id.uuidString)
     }
 }
 
