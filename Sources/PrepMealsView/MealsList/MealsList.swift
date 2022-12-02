@@ -16,6 +16,8 @@ public struct MealsList: View {
     let date: Date
     @Binding var meals: [DayMeal]
 
+    @State var animation: Animation? = .none
+    
     public init(
         date: Date,
         meals: Binding<[DayMeal]>,
@@ -34,7 +36,8 @@ public struct MealsList: View {
         if meals.isEmpty {
             emptyContent
         } else {
-            list
+//            list
+            scrollView
         }
     }
 }

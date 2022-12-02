@@ -5,6 +5,7 @@ import PrepDataTypes
 extension MealsList {
     struct Meal: View {
         @StateObject var viewModel: ViewModel
+        @State var draggedMealFoodItem: MealFoodItem? = nil
         
         let didTapAddFood: (DayMeal) -> ()
         let didTapMealFoodItem: (MealFoodItem, DayMeal) -> ()
@@ -27,24 +28,54 @@ extension MealsList {
 extension MealsList.Meal {
     var body: some View {
         Section {
-            Header(
-//                viewModel: viewModel,
-//                meal: meal
-            )
+            header
+            dropDestination
+            items
+            footer
+        }
+    }
+    
+    var header: some View {
+        Header()
             .environmentObject(viewModel)
-            ForEach(viewModel.meal.foodItems) { mealFoodItem in
-                Button {
-                    didTapMealFoodItem(mealFoodItem, meal)
-                } label: {
-                    DiaryItemView(item: mealFoodItem)
+    }
+    
+    var footer: some View {
+        Footer(didTapAddFood: didTapAddFood)
+            .environmentObject(viewModel)
+    }
+    
+    @ViewBuilder
+    var dropDestination: some View {
+        ZStack {
+            Color.yellow
+            VStack {
+                if let draggedMealFoodItem {
+                    Text(draggedMealFoodItem.food.name)
+                } else {
+                    Text("Drag and Drop a food item here here!")
+                        .foregroundColor(.secondary)
                 }
             }
-            Footer(
-//                meal: $viewModel.meal,
-                didTapAddFood: didTapAddFood
-            )
-            .environmentObject(viewModel)
+        }
+        .frame(height: 100)
+        .dropDestination(for: String.self) { items, location in
+            print(location)
+//            draggedMealFoodItem = items.first
+            return true
+        } isTargeted: { inDropArea in
+            print("In drop area", inDropArea)
+        }
+    }
+    
+    var items: some View {
+        ForEach(viewModel.meal.foodItems) { mealFoodItem in
+            Button {
+                didTapMealFoodItem(mealFoodItem, meal)
+            } label: {
+                DiaryItemView(item: mealFoodItem)
+            }
+            .draggable("test")
         }
     }
 }
-

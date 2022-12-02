@@ -19,6 +19,29 @@ extension MealsList {
         .background(Color(.systemGroupedBackground))
     }
     
+    var scrollView: some View {
+        ScrollView {
+            LazyVStack {
+                ForEach(meals) { meal in
+                    MealNew(
+                        meal: meal,
+                        didTapAddFood: didTapAddFood,
+                        didTapMealFoodItem: didTapMealFoodItem
+                    )
+                }
+                quickAddButtons
+            }
+        }
+//        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Color(.systemGroupedBackground))
+//        .onAppear {
+//            DispatchQueue.main.async {
+//                self.animation = .none
+//            }
+//        }
+    }
+    
     //MARK: - Buttons
     
     var addMealButton: some View {

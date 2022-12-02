@@ -37,7 +37,8 @@ extension MealsList.Meal.ViewModel {
             return
         }
         
-        withAnimation {
+        print("Adding foodItem with animation")
+        withAnimation(.interactiveSpring()) {
             self.meal.foodItems.append(MealFoodItem(from: foodItem))
         }
     }
@@ -57,7 +58,7 @@ extension MealsList.Meal.ViewModel {
             return
         }
         
-        withAnimation {
+        withAnimation(.interactiveSpring()) {
             self.meal.foodItems[existingIndex] = MealFoodItem(from: updatedFoodItem)
         }
     }
@@ -69,7 +70,7 @@ extension MealsList.Meal.ViewModel {
             return
         }
 
-        withAnimation {
+        withAnimation(.interactiveSpring()) {
             self.meal.foodItems.removeAll(where: { $0.id == id })
         }
     }
