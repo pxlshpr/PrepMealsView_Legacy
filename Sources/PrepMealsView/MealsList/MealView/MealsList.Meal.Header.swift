@@ -25,7 +25,9 @@ extension MealsList.Meal.Header {
     
     var listRowBackground: some View {
         let includeBottomSeparator = Binding<Bool>(
-            get: { !viewModel.meal.foodItems.isEmpty },
+            get: {
+                !viewModel.meal.foodItems.isEmpty && !viewModel.targetingDropOverHeader
+            },
             set: { _ in }
         )
         return ListRowBackground(includeBottomSeparator: includeBottomSeparator)

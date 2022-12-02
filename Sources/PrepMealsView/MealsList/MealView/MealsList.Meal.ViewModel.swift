@@ -12,6 +12,8 @@ extension MealsList.Meal {
         @Published var droppedFoodItem: MealFoodItem? = nil
         @Published var dropRecipient: MealFoodItem? = nil
 
+        @Published var targetId: UUID? = nil
+
         init(meal: DayMeal) {
             self.meal = meal
             
@@ -168,6 +170,9 @@ extension Array where Element == MealFoodItem {
 
 extension MealsList.Meal.ViewModel {
     
+    var targetingDropOverHeader: Bool {
+        targetId == meal.id
+    }
     var animationID: String {
         meal.id.uuidString
     }

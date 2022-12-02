@@ -23,7 +23,6 @@ extension MealsList {
             self.didTapMealFoodItem = didTapMealFoodItem
         }
         
-        @State var targetId: UUID? = nil
         @State var showingDropOptions: Bool = false
 //        @State var droppedFoodItem: MealFoodItem? = nil
     }
@@ -129,7 +128,7 @@ extension MealsList.Meal {
     
     @ViewBuilder
     var dropTargetForMeal: some View {
-        if let targetId, targetId == meal.id {
+        if viewModel.targetId == meal.id {
             dropTargetView
                 .if(!viewModel.isEmpty) { view in
                     view.padding(.bottom, 12)
@@ -185,7 +184,7 @@ extension MealsList.Meal {
     func handleDropIsTargeted(_ isTargeted: Bool) {
         Haptics.selectionFeedback()
         withAnimation(.interactiveSpring()) {
-            self.targetId = isTargeted ? viewModel.meal.id : nil
+            viewModel.targetId = isTargeted ? viewModel.meal.id : nil
         }
     }
 }
