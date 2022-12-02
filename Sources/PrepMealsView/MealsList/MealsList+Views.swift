@@ -23,7 +23,7 @@ extension MealsList {
         ScrollView {
             LazyVStack {
                 ForEach(meals) { meal in
-                    MealNew(
+                    Meal(
                         meal: meal,
                         didTapAddFood: didTapAddFood,
                         didTapMealFoodItem: didTapMealFoodItem

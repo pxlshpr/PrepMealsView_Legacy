@@ -16,8 +16,11 @@ extension MealsList.Meal.Header {
     
     var body: some View {
         content
-        .listRowBackground(listRowBackground)
-        .listRowSeparator(.hidden)
+            .background(
+                listRowBackground
+            )
+//            .listRowBackground(listRowBackground)
+//            .listRowSeparator(.hidden)
     }
     
     var listRowBackground: some View {
@@ -30,37 +33,64 @@ extension MealsList.Meal.Header {
     
     var content: some View {
         HStack {
-            Button {
-                tappedEditMeal()
-            } label: {
-                Group {
-                    HStack {
-                        Text("**\(viewModel.meal.timeString)**")
-                        Text("•")
-                        Text(viewModel.meal.name)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    if viewModel.shouldShowUpcomingLabel {
-                        Text("UPCOMING")
-                            .foregroundColor(.white)
-//                            .font(.footnote)
-                            .padding(.vertical, 3)
-                            .padding(.horizontal, 5)
-                            .background(
-                                RoundedRectangle(cornerRadius: 4)
-                                    .foregroundColor(Color.accentColor)
-                            )
-                    }
-                }
-                .textCase(.uppercase)
-                .font(.footnote)
-                .foregroundColor(Color(.secondaryLabel))
-            }
-            .buttonStyle(.plain)
+            titleButton
             Spacer()
             mealMenuButton
         }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
+    }
+    
+    var titleButton: some View {
+        var label: some View {
+            
+            @ViewBuilder
+            var upcomingLabel: some View {
+                if viewModel.shouldShowUpcomingLabel {
+                    Text("UPCOMING")
+                        .foregroundColor(.white)
+                    //                            .font(.footnote)
+                        .padding(.vertical, 3)
+                        .padding(.horizontal, 5)
+                        .background(
+                            RoundedRectangle(cornerRadius: 4)
+                                .foregroundColor(Color.accentColor)
+                        )
+                }
+            }
+            
+            var timeText: some View {
+                Text("**\(viewModel.meal.timeString)**")
+            }
+            
+            var separatorText: some View {
+                Text("•")
+            }
+            var nameText: some View {
+                Text(viewModel.meal.name)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            
+            return Group {
+                HStack {
+                    timeText
+                    separatorText
+                    nameText
+                }
+                upcomingLabel
+            }
+            .textCase(.uppercase)
+            .font(.footnote)
+            .foregroundColor(Color(.secondaryLabel))
+        }
+        
+        return Button {
+            tappedEditMeal()
+        } label: {
+            label
+        }
+        .buttonStyle(.plain)
     }
     
     //MARK: - Menu
@@ -72,39 +102,39 @@ extension MealsList.Meal.Header {
             } label: {
                 Label("Add Food", systemImage: "plus")
             }
-
+            
             Button {
                 
             } label: {
                 Label("Mark as Eaten", systemImage: "checkmark.circle")
             }
-
+            
             
             Divider()
-
+            
             
             Button {
                 
             } label: {
                 Label("Summary", systemImage: "chart.bar.xaxis")
             }
-
+            
             Button {
                 
             } label: {
                 Label("Food Label", systemImage: "chart.bar.doc.horizontal")
             }
             
-
+            
             Divider()
-
+            
             
             Button {
                 
             } label: {
                 Label("Edit", systemImage: "pencil")
             }
-
+            
             Button(role: .destructive) {
                 do {
                     try DataManager.shared.deleteMeal(viewModel.meal)
@@ -173,5 +203,5 @@ extension MealsList.Meal.Header {
         Haptics.feedback(style: .rigid)
         viewModel.tappedDelete()
     }
-
+    
 }

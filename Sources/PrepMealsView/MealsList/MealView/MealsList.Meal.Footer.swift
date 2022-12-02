@@ -20,11 +20,8 @@ extension MealsList.Meal {
 extension MealsList.Meal.Footer {
     var body: some View {
         content
-        .listRowBackground(listRowBackground)
-//        .id(refreshBool)
-        .listRowInsets(.none)
-        .listRowSeparator(.hidden)
-        .onReceive(didDeleteFoodItemFromMeal, perform: didDeleteFoodItemFromMeal)
+            .background(listRowBackground)
+            .onReceive(didDeleteFoodItemFromMeal, perform: didDeleteFoodItemFromMeal)
     }
     
     var listRowBackground: some View {
@@ -50,6 +47,8 @@ extension MealsList.Meal.Footer {
                 energyButton
             }
         }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
     }
     
     var addFoodButton: some View {

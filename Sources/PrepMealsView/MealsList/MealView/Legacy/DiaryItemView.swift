@@ -3,38 +3,6 @@ import SwiftHaptics
 import SwiftUISugar
 import PrepDataTypes
 
-extension MealFoodItem {
-    var isCompleted: Bool {
-        guard let markedAsEatenAt else { return false }
-        return markedAsEatenAt > 0
-    }
-    
-    var quantityDescription: String {
-        amount.description(with: food)
-    }
-}
-
-extension FoodValue {
-    func description(with food: Food) -> String {
-        "\(value.cleanAmount) \(unitDescription(sizes: food.info.sizes))"
-    }
-}
-
-import UniformTypeIdentifiers
-
-extension MealFoodItem: Transferable {
-
-    public static var transferRepresentation: some TransferRepresentation {
-        CodableRepresentation(for: MealFoodItem.self, contentType: .mealFoodItem)
-//        CodableRepresentation(contentType: .mealFoodItem)
-//        ProxyRepresentation(exporting: \.id.uuidString)
-    }
-}
-
-extension UTType {
-    static var mealFoodItem: UTType { .init(exportedAs: "com.pxlshpr.Prep.mealFoodItem") }
-}
-
 struct DiaryItemView: View {
     
     @Environment(\.colorScheme) var colorScheme
