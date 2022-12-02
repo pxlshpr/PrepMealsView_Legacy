@@ -45,6 +45,7 @@ extension MealsList.Meal {
             .confirmationDialog(
                 dropConfirmationTitle,
                 isPresented: $isPresentingConfirm,
+                titleVisibility: .visible,
                 actions: dropConfirmationActions
             )
     }
@@ -55,32 +56,6 @@ extension MealsList.Meal {
             dropTargetView
             items
             footer
-        }
-    }
-    
-    @ViewBuilder
-    var dropTargetView: some View {
-        if isTargeted {
-            Text("Drop food here")
-                .bold()
-                .foregroundColor(.primary)
-                .padding(.vertical, 12)
-                .frame(maxWidth: .infinity)
-                .padding(.horizontal, 20)
-                .background(
-                    RoundedRectangle(cornerRadius: 15, style: .continuous)
-                        .foregroundColor(
-                            Color.accentColor.opacity(0.4)
-                        )
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 15, style: .continuous)
-                        .stroke(
-                            Color.primary.opacity(0.7),
-                            style: StrokeStyle(lineWidth: 1, dash: [5])
-                        )
-                )
-                .padding(.horizontal, 12)
         }
     }
     
@@ -116,6 +91,32 @@ extension MealsList.Meal {
     }
     
     //MARK: - Drag and Drop related
+    @ViewBuilder
+    var dropTargetView: some View {
+        if isTargeted {
+            Text("Drop food here")
+                .bold()
+                .foregroundColor(.secondary)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 20)
+                .background(
+                    RoundedRectangle(cornerRadius: 15, style: .continuous)
+                        .foregroundColor(
+                            Color.accentColor.opacity(0.4)
+                        )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 15, style: .continuous)
+                        .stroke(
+                            Color(.tertiaryLabel),
+                            style: StrokeStyle(lineWidth: 1, dash: [5])
+                        )
+                )
+                .padding(.horizontal, 12)
+        }
+    }
+    
     var dropConfirmationTitle: String {
         guard let droppedFoodItem else { return "" }
         return droppedFoodItem.description
@@ -124,9 +125,12 @@ extension MealsList.Meal {
     @ViewBuilder
     func dropConfirmationActions() -> some View {
         Button("Move") {
-            print("Time to ")
+            guard let droppedFoodItem else { return }
+            print("Time to move \(droppedFoodItem.description) to \(self.meal.name)")
         }
         Button("Duplicate") {
+            guard let droppedFoodItem else { return }
+            print("Time to move \(droppedFoodItem.description) to \(self.meal.name)")
         }
     }
     
@@ -137,6 +141,7 @@ extension MealsList.Meal {
     }
     
     func handleDropIsTargeted(_ isTargeted: Bool) {
+        Haptics.selectionFeedback()
         withAnimation(.interactiveSpring()) {
             self.isTargeted = isTargeted
         }
