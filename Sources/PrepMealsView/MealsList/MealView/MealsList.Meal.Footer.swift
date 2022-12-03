@@ -7,6 +7,8 @@ extension MealsList.Meal {
     struct Footer: View {
         @EnvironmentObject var viewModel: MealsList.Meal.ViewModel
         
+        @AppStorage(UserDefaultsKeys.showingFoodMacros) private var showingFoodMacros = false
+
 //        @State var refreshBool = false
         //TODO: CoreData
 //        @ObservedObject var meal: Meal
@@ -110,7 +112,10 @@ extension MealsList.Meal.Footer {
             tappedEnergy()
         } label: {
             HStack {
-                macrosIndicator
+                if !showingFoodMacros {
+                    macrosIndicator
+                        .transition(.scale)
+                }
                 energyLabel
             }
         }

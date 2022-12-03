@@ -10,6 +10,8 @@ struct MealItemCell: View {
     
     @EnvironmentObject var viewModel: MealsList.Meal.ViewModel
     
+    @AppStorage(UserDefaultsKeys.showingFoodMacros) private var showingFoodMacros = false
+    
     //TODO: CoreData
     //    @ObservedObject var item: FoodItem
     var item: MealFoodItem
@@ -23,7 +25,10 @@ struct MealItemCell: View {
             optionalEmojiText
             nameTexts
             Spacer()
-            macrosIndicator
+            if showingFoodMacros {
+                macrosIndicator
+                    .transition(.scale)
+            }
             isEatenToggle
         }
         .padding(.vertical, 12)
