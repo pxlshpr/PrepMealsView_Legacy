@@ -32,6 +32,10 @@ extension MealsList {
                     )
                 }
                 quickAddButtons
+                    .safeAreaInset(edge: .bottom) {
+                        Color.clear
+                            .frame(height: 60)
+                    }
             }
         }
 //        .listStyle(.plain)

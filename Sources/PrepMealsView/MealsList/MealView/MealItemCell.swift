@@ -4,6 +4,58 @@ import SwiftUISugar
 import PrepDataTypes
 import PrepViews
 
+
+extension MealsList.Meal.ViewModel {
+    var isTargetingLastCell: Bool {
+        dragTargetFoodItemId == meal.foodItems.last?.id
+    }
+    
+    var shouldShowFooterTopSeparatorBinding: Binding<Bool> {
+        Binding<Bool>(
+            get: {
+                /// if we're currently targeting last cell, don't show it
+                guard !self.isTargetingLastCell else { return false }
+                
+                /// Otherwise only show it if we're not empty
+                return !self.meal.foodItems.isEmpty
+            },
+            set: { _ in }
+        )
+    }
+    
+    func shouldShowTopSeparator(for item: MealFoodItem) -> Bool {
+        /// if the meal header is being targeted on and this is the first cell
+//        if targetId == meal.id, item.id == meal.foodItems.first?.id {
+//            return true
+//        }
+        
+        return false
+    }
+    
+    func shouldShowBottomSeparator(for item: MealFoodItem) -> Bool {
+        /// If this cell is being targeted,  and its the last one, show it
+//        if item.id == meal.foodItems.last?.id, dragTargetFoodItemId == item.id {
+//            return true
+//        }
+        
+        return false
+    }
+
+    func shouldShowDivider(for item: MealFoodItem) -> Bool {
+        /// if this is the last cell, never show it
+        if item.id == meal.foodItems.last?.id {
+            return false
+        }
+        
+        /// If this cell is being targeted, don't show it
+        if dragTargetFoodItemId == item.id {
+            return false
+        }
+        
+        return true
+    }
+}
+
 struct MealItemCell: View {
     
     @Environment(\.colorScheme) var colorScheme
@@ -80,13 +132,16 @@ struct MealItemCell: View {
             viewModel.meal.foodItems.last?.id == item.id
         }
         
-        var separator: some View {
-            Rectangle()
+        var divider: some View {
+            Color(hex: colorScheme == .light ? DiaryDividerLineColor.light : DiaryDividerLineColor.dark)
                 .frame(height: 0.18)
-                .background(Color(.separator))
-                .opacity(colorScheme == .light ? 0.225 : 0.225)
         }
-        
+
+        var separator: some View {
+            Color(hex: colorScheme == .light ? DiarySeparatorLineColor.light : DiarySeparatorLineColor.dark)
+                .frame(height: 0.18)
+        }
+
         var background: some View {
             Color.white
                 .colorMultiply(listRowBackgroundColor)
@@ -96,12 +151,17 @@ struct MealItemCell: View {
         return ZStack {
             background
             VStack {
+                if viewModel.shouldShowTopSeparator(for: item) {
+                    separator
+                }
                 Spacer()
-                separator
-                    .if(!isLastCell, transform: { view in
-                        view
-                            .padding(.leading, 52)
-                    })
+                if viewModel.shouldShowDivider(for: item) {
+                    divider
+                        .padding(.leading, 52)
+                }
+                if viewModel.shouldShowBottomSeparator(for: item) {
+                    separator
+                }
             }
         }
     }

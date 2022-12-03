@@ -28,12 +28,7 @@ extension MealsList.Meal.Footer {
     }
     
     var listRowBackground: some View {
-        let includeTopSeparator = Binding<Bool>(
-//            get: { !viewModel.meal.foodItems.isEmpty },
-            get: { false },
-            set: { _ in }
-        )
-        return ListRowBackground(includeTopSeparator: includeTopSeparator)
+        ListRowBackground(includeTopSeparator: viewModel.shouldShowFooterTopSeparatorBinding)
     }
     
     func didDeleteFoodItemFromMeal(notification: Notification) {

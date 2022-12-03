@@ -51,16 +51,6 @@ extension MealsList.Meal {
 }
 
 extension MealsList.Meal.ViewModel {
-//    @objc func diaryWillChangeDate(notification: Notification) {
-//        print("🌈 dateIsChanging is true")
-//        dateIsChanging = true
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-//            print("🌈 dateIsChanging is false")
-//            self.dateIsChanging = false
-//        }
-//    }
-}
-extension MealsList.Meal.ViewModel {
     @objc func didAddFoodItemToMeal(notification: Notification) {
         guard let userInfo = notification.userInfo as? [String: AnyObject],
               let foodItem = userInfo[Notification.Keys.foodItem] as? FoodItem

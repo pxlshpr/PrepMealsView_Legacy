@@ -1,5 +1,15 @@
 import SwiftUI
 
+struct DiarySeparatorLineColor {
+    static var light = "B3B3B6"
+    static var dark = "424242"
+}
+
+struct DiaryDividerLineColor {
+    static var light = "D6D6D7"
+    static var dark = "3a3a3a"  //"333333"
+}
+
 struct ListRowBackground: View {
     
     @Environment(\.colorScheme) var colorScheme
@@ -44,9 +54,11 @@ struct ListRowBackground: View {
     }
     
     var separator: some View {
-        Rectangle()
+        Color(hex: colorScheme == .light ? DiarySeparatorLineColor.light : DiarySeparatorLineColor.dark)
             .frame(height: 0.18)
-            .background(Color(.separator))
-            .opacity(colorScheme == .light ? 0.225 : 0.225)
+//        Rectangle()
+//            .frame(height: 0.18)
+//            .background(Color(.separator))
+//            .opacity(colorScheme == .light ? 0.225 : 0.225)
     }
 }
