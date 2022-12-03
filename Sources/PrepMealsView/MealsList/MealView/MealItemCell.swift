@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftHaptics
 import SwiftUISugar
 import PrepDataTypes
+import PrepViews
 
 struct MealItemCell: View {
     
@@ -22,6 +23,7 @@ struct MealItemCell: View {
             optionalEmojiText
             nameTexts
             Spacer()
+            macrosIndicator
             isEatenToggle
         }
         .padding(.vertical, 12)
@@ -31,6 +33,19 @@ struct MealItemCell: View {
             for: MealFoodItem.self,
             action: handleDrop,
             isTargeted: handleDropIsTargeted
+        )
+    }
+    
+    var macrosIndicator: some View {
+        let widthBinding = Binding<CGFloat>(
+            get: { viewModel.calculateMacrosIndicatorWidth(of: item) },
+            set: { _ in }
+        )
+        return MacrosIndicator(
+            c: item.food.info.nutrients.carb,
+            f: item.food.info.nutrients.fat,
+            p: item.food.info.nutrients.protein,
+            width: widthBinding
         )
     }
     
@@ -162,6 +177,7 @@ struct MealItemCell: View {
             .foregroundColor(amountColor)
         
         return view
+            .multilineTextAlignment(.leading)
     }
 }
 

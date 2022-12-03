@@ -6,7 +6,8 @@ extension MealsList.Meal {
     class ViewModel: ObservableObject {
         
         @Published var meal: DayMeal
-        
+        @Published var meals: [DayMeal]
+
         @Published var dragTargetFoodItemId: UUID? = nil
         
         @Published var droppedFoodItem: MealFoodItem? = nil
@@ -14,8 +15,13 @@ extension MealsList.Meal {
 
         @Published var targetId: UUID? = nil
 
-        init(meal: DayMeal) {
+        @Published var macrosIndicatorWidth: CGFloat = MacrosIndicator.DefaultWidth
+        
+        @Published var dateIsChanging: Bool = false
+        
+        init(meal: DayMeal, meals: [DayMeal]) {
             self.meal = meal
+            self.meals = meals
             
             NotificationCenter.default.addObserver(
                 self, selector: #selector(didAddFoodItemToMeal),
@@ -28,10 +34,32 @@ extension MealsList.Meal {
             NotificationCenter.default.addObserver(
                 self, selector: #selector(didDeleteFoodItemFromMeal),
                 name: .didDeleteFoodItemFromMeal, object: nil)
+            
+//            NotificationCenter.default.addObserver(
+//                self, selector: #selector(diaryWillChangeDate),
+//                name: .weekPagerWillChangeDate, object: nil)
+//            NotificationCenter.default.addObserver(
+//                self, selector: #selector(diaryWillChangeDate),
+//                name: .didPickDateOnDayView, object: nil)
+//            NotificationCenter.default.addObserver(
+//                self, selector: #selector(diaryWillChangeDate),
+//                name: .dayPagerWillChangeDate, object: nil)
+
+            self.macrosIndicatorWidth = calculateMacrosIndicatorWidth
         }
     }
 }
 
+extension MealsList.Meal.ViewModel {
+//    @objc func diaryWillChangeDate(notification: Notification) {
+//        print("🌈 dateIsChanging is true")
+//        dateIsChanging = true
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+//            print("🌈 dateIsChanging is false")
+//            self.dateIsChanging = false
+//        }
+//    }
+}
 extension MealsList.Meal.ViewModel {
     @objc func didAddFoodItemToMeal(notification: Notification) {
         guard let userInfo = notification.userInfo as? [String: AnyObject],
@@ -39,25 +67,36 @@ extension MealsList.Meal.ViewModel {
         else {
             return
         }
-
-        /// Make sure this is the `MealView.ViewModel` for the `Meal` that the `FoodItem` belongs to before proceeding
-        guard foodItem.meal?.id == meal.id else {
-            return
-        }
+        
         
         let mealFoodItem = MealFoodItem(from: foodItem)
+        
+        withAnimation(Bounce) {
+            /// Update our local array used to calculate macro indicator widths first
+            self.meals.addFoodItem(foodItem)
+
+        }
+
         print("Adding foodItem with animation, place it at: \(foodItem.sortPosition)")
         withAnimation(.interactiveSpring()) {
-//            guard foodItem.sortPosition < meal.foodItems.count else {
-//                self.meal.foodItems.append(mealFoodItem)
-//                return
-//            }
+            
+            /// Make sure this is the `MealView.ViewModel` for the `Meal` that the `FoodItem` belongs to before proceeding
+            guard foodItem.meal?.id == meal.id else {
+                self.macrosIndicatorWidth = calculateMacrosIndicatorWidth
+                return
+            }
+            
             self.meal.foodItems.append(mealFoodItem)
 
             //TODO: Try simply appending it and then re-sorting it for that item
             // It should take the sort position, insert it correctly, and then reset all the numbers
             /// Re-sort the `foodItems` in case we moved an item within a meal
             resetSortPositions(aroundFoodItemWithId: foodItem.id)
+        }
+        
+        withAnimation(Bounce) {
+            print("🔥 Calculating after ADD \(meal.name)")
+            self.macrosIndicatorWidth = calculateMacrosIndicatorWidth
         }
     }
     
@@ -67,23 +106,67 @@ extension MealsList.Meal.ViewModel {
         else {
             return
         }
-
-        /// Make sure this is the `MealView.ViewModel` for the `Meal` that the `FoodItem` belongs to before proceeding
-        guard
-            updatedFoodItem.meal?.id == meal.id,
-            let existingIndex = meal.foodItems.firstIndex(where: { $0.id == updatedFoodItem.id })
-        else {
-            return
-        }
         
+        withAnimation(Bounce) {
+            /// Update our local array used to calculate macro indicator widths first
+            self.meals.updateFoodItem(updatedFoodItem)
+        }
+
         withAnimation(.interactiveSpring()) {
+            
+            /// Make sure this is the `MealView.ViewModel` for the `Meal` that the `FoodItem` belongs to before proceeding
+            guard
+                updatedFoodItem.meal?.id == meal.id,
+                let existingIndex = meal.foodItems.firstIndex(where: { $0.id == updatedFoodItem.id })
+            else {
+                self.macrosIndicatorWidth = calculateMacrosIndicatorWidth
+                return
+            }
+            
             /// Replace the existing `MealFoodItem` with the updated one
             self.meal.foodItems[existingIndex] = MealFoodItem(from: updatedFoodItem)
             
             /// Re-sort the `foodItems` in case we moved an item within a meal
             resetSortPositions(aroundFoodItemWithId: updatedFoodItem.id)
         }
+        
+        withAnimation(Bounce) {
+            print("🔥 Calculating after UPDATE \(meal.name)")
+            self.macrosIndicatorWidth = calculateMacrosIndicatorWidth
+        }
     }
+
+    @objc func didDeleteFoodItemFromMeal(notification: Notification) {
+        guard let userInfo = notification.userInfo as? [String: AnyObject],
+              let id = userInfo[Notification.Keys.uuid] as? UUID
+        else {
+            return
+        }
+
+        withAnimation(Bounce) {
+            self.meals.deleteFoodItem(with: id)
+        }
+
+        guard meal.foodItems.contains(where: { $0.id == id }) else {
+            print("🔥 Calculating after DELETE \(meal.name)")
+            self.macrosIndicatorWidth = calculateMacrosIndicatorWidth
+            return
+        }
+        
+        withAnimation(.interactiveSpring()) {
+            /// Update our local array used to calculate macro indicator widths first
+
+            self.meal.foodItems.removeAll(where: { $0.id == id })
+            resetSortPositions(aroundFoodItemWithId: nil)
+        }
+        withAnimation(Bounce) {
+            print("🔥 Calculating after DELETE \(meal.name)")
+            self.macrosIndicatorWidth = calculateMacrosIndicatorWidth
+        }
+    }
+}
+
+extension MealsList.Meal.ViewModel {
     
     func resetSortPositions(aroundFoodItemWithId id: UUID?) {
         let before = self.meal.foodItems
@@ -111,23 +194,44 @@ extension MealsList.Meal.ViewModel {
         }
     }
     
-    @objc func didDeleteFoodItemFromMeal(notification: Notification) {
-        guard let userInfo = notification.userInfo as? [String: AnyObject],
-              let id = userInfo[Notification.Keys.uuid] as? UUID,
-              meal.foodItems.contains(where: { $0.id == id })
-        else {
-            return
-        }
-
-        withAnimation(.interactiveSpring()) {
-            self.meal.foodItems.removeAll(where: { $0.id == id })
-            resetSortPositions(aroundFoodItemWithId: nil)
-        }
-    }
 }
+
+let Bounce: Animation = .interactiveSpring(response: 0.35, dampingFraction: 0.66, blendDuration: 0.35)
 
 import PrepDataTypes
 
+extension Array where Element == DayMeal {
+    
+    mutating func addFoodItem(_ foodItem: FoodItem) {
+        guard let mealIndex = firstIndex(where: { $0.id == foodItem.meal?.id }) else {
+            return
+        }
+        self[mealIndex].foodItems.append(MealFoodItem(from: foodItem))
+    }
+    
+    mutating func updateFoodItem(_ foodItem: FoodItem) {
+        guard let mealIndex = firstIndex(where: { $0.id == foodItem.meal?.id }),
+              let foodItemIndex = self[mealIndex].foodItems.firstIndex(where: { $0.id == foodItem.id })
+        else {
+            return
+        }
+        self[mealIndex].foodItems[foodItemIndex] = MealFoodItem(from: foodItem)
+    }
+    
+    mutating func deleteFoodItem(with id: UUID) {
+        var mealIndex: Int? = nil
+        var f: Int? = nil
+        for i in indices {
+            if let foodItemIndex = self[i].foodItems.firstIndex(where: { $0.id == id }) {
+                mealIndex = i
+                f = foodItemIndex
+            }
+        }
+        guard let mealIndex, let f else { return }
+        self[mealIndex].foodItems.remove(at: f)
+    }
+
+}
 extension Array where Element == MealFoodItem {
     
     var hasValidSortPositions: Bool {
@@ -247,5 +351,92 @@ extension MealsList.Meal.ViewModel {
 //            NotificationCenter.default.post(name: .updateStatsView, object: nil)
 ////            NotificationCenter.default.post(name: .statsViewShouldShowPlanned, object: nil)
 //        }
+    }
+}
+
+import PrepViews
+
+extension MealsList.Meal.ViewModel {
+    
+    var energyValuesInKcalDecreasing: [Double] {
+        meals
+            .filter { !$0.foodItems.isEmpty }
+            .map { $0.energyValueInKcal }
+            .sorted { $0 > $1 }
+    }
+    var largestEnergyInKcal: Double {
+        energyValuesInKcalDecreasing.first ?? 0
+    }
+    
+    var smallestEnergyInKcal: Double {
+        energyValuesInKcalDecreasing.last ?? 0
+    }
+    
+    var calculateMacrosIndicatorWidth: CGFloat {
+        calculateMacrosIndicatorWidth(for: meal.energyValueInKcal, largest: largestEnergyInKcal, smallest: smallestEnergyInKcal)
+//
+//        let min = MacrosIndicator.DefaultWidth
+//        let max: CGFloat = 100
+//        let largest = largestEnergyInKcal
+//        let smallest = smallestEnergyInKcal
+//
+//        guard largest > 0, smallest > 0 else {
+//            return MacrosIndicator.DefaultWidth
+//        }
+//
+//        /// First try and scale values such that smallest value gets the DefaultWidth and everything else scales accordingly
+//        /// But first see if this results in the largest value crossing the MaxWidth, and if so
+//        guard (largest/smallest) * min <= max else {
+//            /// scale values such that largest value gets the MaxWidth and everything else scales accordingly
+//            let percent = meal.energyValueInKcal/largest
+//            return percent * max
+//        }
+//
+//        let percent = meal.energyValueInKcal/smallest
+//        return percent * min
+    }
+
+    func calculateMacrosIndicatorWidth(for value: Double, largest: Double, smallest: Double) -> CGFloat {
+        let min = MacrosIndicator.DefaultWidth
+        let max: CGFloat = 100
+        
+        guard largest > 0, smallest > 0 else {
+            return MacrosIndicator.DefaultWidth
+        }
+        
+        /// First try and scale values such that smallest value gets the DefaultWidth and everything else scales accordingly
+        /// But first see if this results in the largest value crossing the MaxWidth, and if so
+        guard (largest/smallest) * min <= max else {
+            /// scale values such that largest value gets the MaxWidth and everything else scales accordingly
+            let percent = value/largest
+            return percent * max
+        }
+        
+        let percent = value/smallest
+        return percent * min
+    }
+
+    func calculateMacrosIndicatorWidth(of foodItem: MealFoodItem) -> CGFloat {
+        calculateMacrosIndicatorWidth(
+            for: foodItem.scaledValueForEnergyInKcal,
+            largest: meal.largestEnergyInKcal,
+            smallest: meal.smallestEnergyInKcal
+        )
+    }
+    
+}
+
+extension DayMeal {
+    var energyValuesInKcalDecreasing: [Double] {
+        foodItems
+            .map { $0.scaledValueForEnergyInKcal }
+            .sorted { $0 > $1 }
+    }
+    var largestEnergyInKcal: Double {
+        energyValuesInKcalDecreasing.first ?? 0
+    }
+    
+    var smallestEnergyInKcal: Double {
+        energyValuesInKcalDecreasing.last ?? 0
     }
 }

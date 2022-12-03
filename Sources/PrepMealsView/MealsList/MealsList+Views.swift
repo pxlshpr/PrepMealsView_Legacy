@@ -8,6 +8,7 @@ extension MealsList {
             ForEach(meals) { meal in
                 Meal(
                     meal: meal,
+                    meals: meals,
                     didTapAddFood: didTapAddFood,
                     didTapMealFoodItem: didTapMealFoodItem
                 )
@@ -25,6 +26,7 @@ extension MealsList {
                 ForEach(meals) { meal in
                     Meal(
                         meal: meal,
+                        meals: meals,
                         didTapAddFood: didTapAddFood,
                         didTapMealFoodItem: didTapMealFoodItem
                     )

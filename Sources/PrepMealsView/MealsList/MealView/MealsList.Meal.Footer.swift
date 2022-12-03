@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftHaptics
 import PrepDataTypes
+import PrepViews
 
 extension MealsList.Meal {
     struct Footer: View {
@@ -45,7 +46,7 @@ extension MealsList.Meal.Footer {
             }
             Spacer()
             if !viewModel.meal.foodItems.isEmpty {
-                energyButton
+                nutrientsButton
             }
         }
         .padding(.horizontal, 20)
@@ -72,13 +73,46 @@ extension MealsList.Meal.Footer {
         .frame(maxHeight: .infinity)
     }
 
-    var energyButton: some View {
-        Button {
+    var nutrientsButton: some View {
+        var energyLabel: some View {
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text("\(Int(viewModel.meal.energyValueInKcal))")
+                    .foregroundColor(Color(.secondaryLabel))
+                Text("kcal")
+                    .foregroundColor(Color(.tertiaryLabel))
+                    .font(.caption2)
+            }
+            .font(.footnote)
+        }
+        
+        //TODO: Look into why this binding of the width still doesn't fix it? Maybe the calculation is wrong
+        var macrosIndicator: some View {
+            
+            let binding = Binding<CGFloat>(
+                get: {
+//                    let width = viewModel.calculateMacrosIndicatorWidth
+                    let width = viewModel.macrosIndicatorWidth
+                    print("    🔥 \(viewModel.meal.name): \(width)")
+                    return width
+                },
+                set: { _ in }
+            )
+            return MacrosIndicator(
+                c: viewModel.meal.scaledValueForMacro(.carb),
+                f: viewModel.meal.scaledValueForMacro(.fat),
+                p: viewModel.meal.scaledValueForMacro(.protein),
+                width: binding
+//                width: $viewModel.macrosIndicatorWidth
+            )
+        }
+        
+        return Button {
             tappedEnergy()
         } label: {
-            Text("\(Int(viewModel.meal.energyAmount)) kcal")
-                .font(.footnote)
-                .foregroundColor(Color(.secondaryLabel))
+            HStack {
+                macrosIndicator
+                energyLabel
+            }
         }
         .contentShape(Rectangle())
         .padding(.leading)

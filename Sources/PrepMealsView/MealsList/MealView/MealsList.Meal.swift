@@ -14,10 +14,15 @@ extension MealsList {
         
         init(
             meal: DayMeal,
+            meals: [DayMeal],
             didTapAddFood: @escaping (DayMeal) -> (),
             didTapMealFoodItem: @escaping (MealFoodItem, DayMeal) -> ()
         ) {
-            _viewModel = StateObject(wrappedValue: MealsList.Meal.ViewModel(meal: meal))
+            let viewModel = MealsList.Meal.ViewModel(
+                meal: meal,
+                meals: meals
+            )
+            _viewModel = StateObject(wrappedValue: viewModel)
             self.meal = meal
             self.didTapAddFood = didTapAddFood
             self.didTapMealFoodItem = didTapMealFoodItem
