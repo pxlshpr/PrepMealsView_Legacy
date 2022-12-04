@@ -10,8 +10,10 @@ extension MealsList {
         let didTapAddFood: (DayMeal) -> ()
         let didTapMealFoodItem: (MealFoodItem, DayMeal) -> ()
         
-        var meal: DayMeal
+//        var meal: DayMeal
         
+        let didUpdateFoodItems = NotificationCenter.default.publisher(for: .didUpdateFoodItems)
+
         init(
             meal: DayMeal,
             meals: [DayMeal],
@@ -23,10 +25,11 @@ extension MealsList {
                 meals: meals
             )
             _viewModel = StateObject(wrappedValue: viewModel)
-            self.meal = meal
+//            self.meal = meal
             self.didTapAddFood = didTapAddFood
             self.didTapMealFoodItem = didTapMealFoodItem
         }
+
         
         @State var showingDropOptions: Bool = false
 //        @State var droppedFoodItem: MealFoodItem? = nil
@@ -34,9 +37,37 @@ extension MealsList {
 }
 
 extension MealsList.Meal {
+    func didUpdateFoodItems(notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let foodItems = userInfo[Notification.Keys.foodItems] as? [FoodItem]
+        else {
+            return
+        }
+        
+        withAnimation {
+            for foodItem in foodItems {
+                if foodItem.meal?.id == viewModel.meal.id {
+                    let mealFoodItem = MealFoodItem(from: foodItem)
+                    if let index = viewModel.meal.foodItems.firstIndex(where: { $0.id == foodItem.id }) {
+                        viewModel.meal.foodItems[index] = mealFoodItem
+                        viewModel.meal.foodItems.sort { $0.sortPosition < $1.sortPosition }
+                    } else {
+                        viewModel.meal.foodItems.append(mealFoodItem)
+                        viewModel.meal.foodItems.sort { $0.sortPosition < $1.sortPosition }
+                    }
+                }
+            }
+        }
+        
+        print("we're here with \(foodItems.count) updated food items")
+    }
+}
+
+extension MealsList.Meal {
     var body: some View {
         content
             .contentShape(Rectangle())
+            .onReceive(didUpdateFoodItems, perform: didUpdateFoodItems)
             .onChange(of: viewModel.droppedFoodItem, perform: droppedFoodItemChanged)
             .if(viewModel.isEmpty) { view in
                 view
@@ -114,7 +145,7 @@ extension MealsList.Meal {
     
     func cell(for mealFoodItem: MealFoodItem) -> some View {
         Button {
-            didTapMealFoodItem(mealFoodItem, meal)
+            didTapMealFoodItem(mealFoodItem, viewModel.meal)
         } label: {
             MealItemCell(item: mealFoodItem)
                 .environmentObject(viewModel)
@@ -133,7 +164,7 @@ extension MealsList.Meal {
     
     @ViewBuilder
     var dropTargetForMeal: some View {
-        if viewModel.targetId == meal.id {
+        if viewModel.targetId == viewModel.meal.id {
             dropTargetView
                 .if(!viewModel.isEmpty) { view in
                     view.padding(.bottom, 12)
