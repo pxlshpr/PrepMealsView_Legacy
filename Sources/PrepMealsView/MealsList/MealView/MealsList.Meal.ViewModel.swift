@@ -66,6 +66,10 @@ extension MealsList.Meal.ViewModel {
             return
         }
         
+        /// Make sure we don't have it already so we don't double add it
+        guard meal.foodItems.contains(where: { $0.id == foodItem.id }) else {
+            return
+        }
         
         let mealFoodItem = MealFoodItem(from: foodItem)
         
@@ -182,6 +186,14 @@ extension MealsList.Meal.ViewModel {
                 guard foodItem.meal?.id == meal.id else {
                     continue
                 }
+                
+                if let deletedAt = foodItem.deletedAt, deletedAt > 0 {
+                    guard let index = meal.foodItems.firstIndex(where: { $0.id == foodItem.id }) else {
+                        continue
+                    }
+                    meal.foodItems.remove(at: index)
+                }
+
                 
                 /// Either add or update it dending on if it exists or not
                 let mealFoodItem = MealFoodItem(from: foodItem)
