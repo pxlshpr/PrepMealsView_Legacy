@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftHaptics
 import PrepDataTypes
+import SwiftUISugar
 
 extension MealsList {
     struct Meal: View {
@@ -12,8 +13,6 @@ extension MealsList {
         
 //        var meal: DayMeal
         
-        let didUpdateFoodItems = NotificationCenter.default.publisher(for: .didUpdateFoodItems)
-
         init(
             meal: DayMeal,
             meals: [DayMeal],
@@ -37,38 +36,11 @@ extension MealsList {
 }
 
 extension MealsList.Meal {
-    func didUpdateFoodItems(notification: Notification) {
-        guard let userInfo = notification.userInfo,
-              let foodItems = userInfo[Notification.Keys.foodItems] as? [FoodItem]
-        else {
-            return
-        }
-        
-        withAnimation {
-            for foodItem in foodItems {
-                if foodItem.meal?.id == viewModel.meal.id {
-                    let mealFoodItem = MealFoodItem(from: foodItem)
-                    if let index = viewModel.meal.foodItems.firstIndex(where: { $0.id == foodItem.id }) {
-                        viewModel.meal.foodItems[index] = mealFoodItem
-                        viewModel.meal.foodItems.sort { $0.sortPosition < $1.sortPosition }
-                    } else {
-                        viewModel.meal.foodItems.append(mealFoodItem)
-                        viewModel.meal.foodItems.sort { $0.sortPosition < $1.sortPosition }
-                    }
-                }
-            }
-        }
-        
-        print("we're here with \(foodItems.count) updated food items")
-    }
-}
-
-extension MealsList.Meal {
     var body: some View {
         content
             .contentShape(Rectangle())
-            .onReceive(didUpdateFoodItems, perform: didUpdateFoodItems)
             .onChange(of: viewModel.droppedFoodItem, perform: droppedFoodItemChanged)
+            .onChange(of: showingDropOptions, perform: showingDropOptionsChanged)
             .if(viewModel.isEmpty) { view in
                 view
                     .dropDestination(
@@ -87,6 +59,12 @@ extension MealsList.Meal {
     
     func droppedFoodItemChanged(to droppedFoodItem: MealFoodItem?) {
         showingDropOptions = droppedFoodItem != nil
+    }
+    
+    func showingDropOptionsChanged(to newValue: Bool) {
+        if !showingDropOptions {
+            viewModel.resetDrop()
+        }
     }
     
     var content: some View {

@@ -33,7 +33,6 @@ extension MealsList.Meal.Footer {
     }
     
     func didDeleteFoodItemFromMeal(notification: Notification) {
-        print("We here with: \(viewModel.meal.foodItems.count)")
 //        refreshBool.toggle()
     }
     
@@ -45,6 +44,7 @@ extension MealsList.Meal.Footer {
             Spacer()
             if !viewModel.meal.foodItems.isEmpty {
                 nutrientsButton
+                    .fixedSize()
             }
         }
         .padding(.horizontal, 20)
@@ -90,7 +90,7 @@ extension MealsList.Meal.Footer {
                 get: {
 //                    let width = viewModel.calculateMacrosIndicatorWidth
                     let width = viewModel.macrosIndicatorWidth
-                    print("    🔥 \(viewModel.meal.name): \(width)")
+//                    print("    📐 \(viewModel.meal.name): \(width)")
                     return width
                 },
                 set: { _ in }

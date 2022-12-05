@@ -21,7 +21,7 @@ extension MealsList {
     }
     
     var scrollView: some View {
-        ScrollView {
+        ScrollView(showsIndicators: false) {
             LazyVStack {
                 ForEach(meals) { meal in
                     Meal(

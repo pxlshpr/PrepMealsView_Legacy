@@ -34,7 +34,15 @@ extension MealsList.Meal {
             NotificationCenter.default.addObserver(
                 self, selector: #selector(didDeleteFoodItemFromMeal),
                 name: .didDeleteFoodItemFromMeal, object: nil)
-            
+
+            NotificationCenter.default.addObserver(
+                self, selector: #selector(didUpdateFoodItems),
+                name: .didUpdateFoodItems, object: nil)
+
+            NotificationCenter.default.addObserver(
+                self, selector: #selector(didUpdateMeal),
+                name: .didUpdateMeal, object: nil)
+
 //            NotificationCenter.default.addObserver(
 //                self, selector: #selector(diaryWillChangeDate),
 //                name: .weekPagerWillChangeDate, object: nil)
@@ -67,7 +75,6 @@ extension MealsList.Meal.ViewModel {
 
         }
 
-        print("Adding foodItem with animation, place it at: \(foodItem.sortPosition)")
         withAnimation(.interactiveSpring()) {
             
             /// Make sure this is the `MealView.ViewModel` for the `Meal` that the `FoodItem` belongs to before proceeding
@@ -85,7 +92,7 @@ extension MealsList.Meal.ViewModel {
         }
         
         withAnimation(Bounce) {
-            print("🔥 Calculating after ADD \(meal.name)")
+//            print("🔥 Calculating after ADD \(meal.name)")
             self.macrosIndicatorWidth = calculateMacrosIndicatorWidth
         }
     }
@@ -121,7 +128,7 @@ extension MealsList.Meal.ViewModel {
         }
         
         withAnimation(Bounce) {
-            print("🔥 Calculating after UPDATE \(meal.name)")
+//            print("🔥 Calculating after UPDATE \(meal.name)")
             self.macrosIndicatorWidth = calculateMacrosIndicatorWidth
         }
     }
@@ -138,7 +145,7 @@ extension MealsList.Meal.ViewModel {
         }
 
         guard meal.foodItems.contains(where: { $0.id == id }) else {
-            print("🔥 Calculating after DELETE \(meal.name)")
+//            print("🔥 Calculating after DELETE \(meal.name)")
             self.macrosIndicatorWidth = calculateMacrosIndicatorWidth
             return
         }
@@ -150,10 +157,82 @@ extension MealsList.Meal.ViewModel {
             resetSortPositions(aroundFoodItemWithId: nil)
         }
         withAnimation(Bounce) {
-            print("🔥 Calculating after DELETE \(meal.name)")
+//            print("🔥 Calculating after DELETE \(meal.name)")
             self.macrosIndicatorWidth = calculateMacrosIndicatorWidth
         }
     }
+    
+    @objc func didUpdateFoodItems(notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let foodItems = userInfo[Notification.Keys.foodItems] as? [FoodItem]
+        else {
+            return
+        }
+        
+        let initialMeal = meal
+        withAnimation {
+            for foodItem in foodItems {
+                
+                /// If food item previously belong to this meal, remove it
+                if let index = meal.foodItems.firstIndex(where: { $0.id == foodItem.id }) {
+                    meal.foodItems.remove(at: index)
+                }
+                
+                /// We're only interesting in items that belong to this meal
+                guard foodItem.meal?.id == meal.id else {
+                    continue
+                }
+                
+                /// Either add or update it dending on if it exists or not
+                let mealFoodItem = MealFoodItem(from: foodItem)
+                if let index = meal.foodItems.firstIndex(where: { $0.id == foodItem.id }) {
+                    meal.foodItems[index] = mealFoodItem
+                } else {
+                    meal.foodItems.append(mealFoodItem)
+                }
+            }
+            
+            /// Update our local meals array so that the meter calculations will be correct
+//            if let index = meals.firstIndex(where: { $0.id == meal.id }) {
+//                meals[index] = meal
+//            }
+            meal.foodItems.sort { $0.sortPosition < $1.sortPosition }
+        }
+        
+        if initialMeal != meal {
+            print("\(meal.name) Sending didUpdateMeal")
+            NotificationCenter.default.post(
+                name: .didUpdateMeal,
+                object: nil,
+                userInfo: [Notification.Keys.meal : meal]
+            )
+        }
+    }
+    
+    @objc func didUpdateMeal(notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let updatedMeal = userInfo[Notification.Keys.meal] as? DayMeal else {
+            return
+        }
+        
+        print("\(meal.name) received")
+        if let index = meals.firstIndex(where: { $0.id == updatedMeal.id }) {
+            print("\(meal.name) is changing meal at index: \(index)")
+            meals[index] = updatedMeal
+        } else {
+            print("\(meal.name) does not have meal? within \(meals.count)")
+        }
+        
+        withAnimation(.interactiveSpring()) {
+            self.macrosIndicatorWidth = self.calculateMacrosIndicatorWidth
+            print("\(meal.name) now has width: \(macrosIndicatorWidth)")
+        }
+    }
+}
+
+
+extension Notification.Name {
+    static var didUpdateMeal: Notification.Name { return .init("didUpdateMeal") }
 }
 
 extension MealsList.Meal.ViewModel {
@@ -303,7 +382,7 @@ extension MealsList.Meal.ViewModel {
         guard let droppedFoodItem else { return }
         do {
             try DataManager.shared.moveMealItem(droppedFoodItem, to: meal, after: dropRecipient)
-            resetDrop()
+//            resetDrop()
         } catch {
             print("Error moving dropped food item: \(error)")
         }
@@ -313,7 +392,7 @@ extension MealsList.Meal.ViewModel {
         guard let droppedFoodItem else { return }
         do {
             try DataManager.shared.duplicateMealItem(droppedFoodItem, to: meal, after: dropRecipient)
-            resetDrop()
+//            resetDrop()
         } catch {
             print("Error moving dropped food item: \(error)")
         }
@@ -386,11 +465,11 @@ extension MealsList.Meal.ViewModel {
 //        return percent * min
     }
 
-    func calculateMacrosIndicatorWidth(for value: Double, largest: Double, smallest: Double) -> CGFloat {
+    func calculateMacrosIndicatorWidth(for value: Double, largest: Double, smallest: Double, maxWidth: CGFloat = 150) -> CGFloat {
         let min = MacrosIndicator.DefaultWidth
-        let max: CGFloat = 100
+        let max: CGFloat = maxWidth
         
-        guard largest > 0, smallest > 0 else {
+        guard largest > 0, smallest > 0, value <= largest, value >= smallest else {
             return MacrosIndicator.DefaultWidth
         }
         
@@ -399,18 +478,21 @@ extension MealsList.Meal.ViewModel {
         guard (largest/smallest) * min <= max else {
             /// scale values such that largest value gets the MaxWidth and everything else scales accordingly
             let percent = value/largest
-            return percent * max
+            let width = percent * max
+            return width
         }
         
         let percent = value/smallest
-        return percent * min
+        let width = percent * min
+        return width
     }
 
     func calculateMacrosIndicatorWidth(of foodItem: MealFoodItem) -> CGFloat {
         calculateMacrosIndicatorWidth(
             for: foodItem.scaledValueForEnergyInKcal,
             largest: meal.largestEnergyInKcal,
-            smallest: meal.smallestEnergyInKcal
+            smallest: meal.smallestEnergyInKcal,
+            maxWidth: 100
         )
     }
     
