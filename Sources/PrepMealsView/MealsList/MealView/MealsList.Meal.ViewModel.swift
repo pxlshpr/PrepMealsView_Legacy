@@ -67,7 +67,7 @@ extension MealsList.Meal.ViewModel {
         }
         
         /// Make sure we don't have it already so we don't double add it
-        guard meal.foodItems.contains(where: { $0.id == foodItem.id }) else {
+        guard !meal.foodItems.contains(where: { $0.id == foodItem.id }) else {
             return
         }
         
