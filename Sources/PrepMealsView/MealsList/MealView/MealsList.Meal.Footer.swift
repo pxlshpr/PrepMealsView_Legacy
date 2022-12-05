@@ -8,7 +8,7 @@ extension MealsList.Meal {
         @EnvironmentObject var viewModel: MealsList.Meal.ViewModel
         
 //        @AppStorage(UserDefaultsKeys.showingMealMacros) private var showingMealMacros = false
-        @AppStorage(UserDefaultsKeys.showingFoodMacros) private var showingFoodMacros = false
+        @AppStorage(UserDefaultsKeys.showingFoodDetails) private var showingFoodDetails = false
 
 //        @State var refreshBool = false
         //TODO: CoreData
@@ -109,7 +109,7 @@ extension MealsList.Meal.Footer {
         } label: {
             HStack {
 //                if showingMealMacros {
-                if !showingFoodMacros {
+                if !showingFoodDetails {
                     macrosIndicator
                         .transition(.scale)
                 }

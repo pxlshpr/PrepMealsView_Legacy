@@ -62,7 +62,7 @@ struct MealItemCell: View {
     
     @EnvironmentObject var viewModel: MealsList.Meal.ViewModel
     
-    @AppStorage(UserDefaultsKeys.showingFoodMacros) private var showingFoodMacros = false
+    @AppStorage(UserDefaultsKeys.showingFoodDetails) private var showingFoodDetails = false
     
     //TODO: CoreData
     //    @ObservedObject var item: FoodItem
@@ -77,7 +77,7 @@ struct MealItemCell: View {
             optionalEmojiText
             nameTexts
             Spacer()
-            if showingFoodMacros {
+            if showingFoodDetails {
                 macrosIndicator
                     .transition(.scale)
             }
@@ -215,23 +215,25 @@ struct MealItemCell: View {
             .font(.body)
             .fontWeight(.semibold)
             .foregroundColor(nameColor)
-        if let detail = item.food.detail, !detail.isEmpty {
-            view = view
-            + Text(", ")
-                .font(.callout)
-                .foregroundColor(Color(.secondaryLabel))
-            + Text(detail)
-                .font(.callout)
-                .foregroundColor(Color(.secondaryLabel))
-        }
-        if let brand = item.food.brand, !brand.isEmpty {
-            view = view
-            + Text(", ")
-                .font(.callout)
-                .foregroundColor(Color(.tertiaryLabel))
-            + Text(brand)
-                .font(.callout)
-                .foregroundColor(Color(.tertiaryLabel))
+        if showingFoodDetails {
+            if let detail = item.food.detail, !detail.isEmpty {
+                view = view
+                + Text(", ")
+                    .font(.callout)
+                    .foregroundColor(Color(.secondaryLabel))
+                + Text(detail)
+                    .font(.callout)
+                    .foregroundColor(Color(.secondaryLabel))
+            }
+            if let brand = item.food.brand, !brand.isEmpty {
+                view = view
+                + Text(", ")
+                    .font(.callout)
+                    .foregroundColor(Color(.tertiaryLabel))
+                + Text(brand)
+                    .font(.callout)
+                    .foregroundColor(Color(.tertiaryLabel))
+            }
         }
         view = view
         + Text(" • ").foregroundColor(Color(.secondaryLabel))
