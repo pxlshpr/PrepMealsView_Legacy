@@ -124,8 +124,9 @@ extension MealsList.Meal.Footer {
     
     //MARK: - Actions
     func tappedAddFood() {
-        Haptics.feedback(style: .soft)
-        viewModel.didTapAddFood(viewModel.meal)
+//        Haptics.feedback(style: .soft)
+        viewModel.actionHandler(.addFood(viewModel.meal))
+//        viewModel.didTapAddFood(viewModel.meal)
     }
     
     func tappedEnergy() {

@@ -66,7 +66,7 @@ struct MealItemCell: View {
     
     //TODO: CoreData
     //    @ObservedObject var item: FoodItem
-    var item: MealFoodItem
+    @Binding var item: MealFoodItem
     
     //    @Namespace var localNamespace
     //    var namespace: Binding<Namespace.ID?>
@@ -121,7 +121,7 @@ struct MealItemCell: View {
     
     var listRowBackgroundColor: Color {
         if item.isCompleted {
-            return colorScheme == .light ? Color("EBE9F7") : Color("191331")
+            return colorScheme == .light ? Color(hex: "EBE9F7") : Color(hex: "191331")
         } else {
             return Color(.secondarySystemGroupedBackground)
         }
@@ -169,8 +169,8 @@ struct MealItemCell: View {
     var isEatenToggle: some View {
         Button {
             withAnimation {
-                //TODO: Bring this back
-                //                Store.shared.toggleCompletionForFoodItem(item)
+                viewModel.actionHandler(.toggleCompletion(item, viewModel.meal))
+                item.markedAsEatenAt = item.isCompleted ? nil : Date().timeIntervalSince1970
             }
             Haptics.feedback(style: .soft)
         } label: {

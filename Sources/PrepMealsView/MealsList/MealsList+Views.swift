@@ -7,11 +7,13 @@ extension MealsList {
         List {
             ForEach(meals) { meal in
                 Meal(
+                    date: date,
                     meal: meal,
                     meals: meals,
-                    didTapAddFood: didTapAddFood,
-                    didTapEditMeal: didTapEditMeal,
-                    didTapMealFoodItem: didTapMealFoodItem
+                    actionHandler: actionHandler
+//                    didTapAddFood: didTapAddFood,
+//                    didTapEditMeal: didTapEditMeal,
+//                    didTapMealFoodItem: didTapMealFoodItem
                 )
             }
             quickAddButtons
@@ -26,11 +28,13 @@ extension MealsList {
             LazyVStack {
                 ForEach(meals) { meal in
                     Meal(
+                        date: date,
                         meal: meal,
                         meals: meals,
-                        didTapAddFood: didTapAddFood,
-                        didTapEditMeal: didTapEditMeal,
-                        didTapMealFoodItem: didTapMealFoodItem
+                        actionHandler: actionHandler
+//                        didTapAddFood: didTapAddFood,
+//                        didTapEditMeal: didTapEditMeal,
+//                        didTapMealFoodItem: didTapMealFoodItem
                     )
                 }
                 quickAddButtons
@@ -54,8 +58,9 @@ extension MealsList {
     
     var addMealButton: some View {
         Button {
-            onTapAddMeal(nil)
-            Haptics.feedback(style: .soft)
+            actionHandler(.addMeal(nil))
+//            onTapAddMeal(nil)
+//            Haptics.feedback(style: .soft)
         } label: {
             HStack {
                 Image(systemName: "note.text.badge.plus")
@@ -102,7 +107,8 @@ extension MealsList {
     
     func quickAddButton(at time: Date? = nil) -> some View {
         Button {
-            onTapAddMeal(time ?? Date())
+            actionHandler(.addMeal(time ?? Date()))
+//            onTapAddMeal(time ?? Date())
             Haptics.successFeedback()
         } label: {
             HStack {

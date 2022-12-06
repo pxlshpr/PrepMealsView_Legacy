@@ -14,18 +14,22 @@ extension MealsList {
 //        var meal: DayMeal
         
         init(
+            date: Date,
             meal: DayMeal,
             meals: [DayMeal],
-            didTapAddFood: @escaping (DayMeal) -> (),
-            didTapEditMeal: @escaping (DayMeal) -> (),
-            didTapMealFoodItem: @escaping (MealFoodItem, DayMeal) -> ()
+            actionHandler: @escaping (MealsDiaryAction) -> ()
+//            didTapAddFood: @escaping (DayMeal) -> (),
+//            didTapEditMeal: @escaping (DayMeal) -> (),
+//            didTapMealFoodItem: @escaping (MealFoodItem, DayMeal) -> ()
         ) {
             let viewModel = MealsList.Meal.ViewModel(
+                date: date,
                 meal: meal,
                 meals: meals,
-                didTapAddFood: didTapAddFood,
-                didTapEditMeal: didTapEditMeal,
-                didTapMealFoodItem: didTapMealFoodItem
+                actionHandler: actionHandler
+//                didTapAddFood: didTapAddFood,
+//                didTapEditMeal: didTapEditMeal,
+//                didTapMealFoodItem: didTapMealFoodItem
             )
             _viewModel = StateObject(wrappedValue: viewModel)
 //            self.meal = meal
@@ -105,9 +109,9 @@ extension MealsList.Meal {
     }
     
     var itemRows: some View {
-        ForEach(viewModel.meal.foodItems) { mealFoodItem in
-            cell(for: mealFoodItem)
-            dropTargetView(for: mealFoodItem)
+        ForEach(viewModel.meal.foodItems.indices, id: \.self) { index in
+            cell(for: $viewModel.meal.foodItems[index])
+            dropTargetView(for: viewModel.meal.foodItems[index])
         }
     }
     
@@ -124,14 +128,15 @@ extension MealsList.Meal {
         }
     }
     
-    func cell(for mealFoodItem: MealFoodItem) -> some View {
+    func cell(for mealFoodItem: Binding<MealFoodItem>) -> some View {
         Button {
-            viewModel.didTapMealFoodItem(mealFoodItem, viewModel.meal)
+            viewModel.actionHandler(.editFoodItem(mealFoodItem.wrappedValue, viewModel.meal))
+//            viewModel.didTapMealFoodItem(mealFoodItem, viewModel.meal)
         } label: {
             MealItemCell(item: mealFoodItem)
                 .environmentObject(viewModel)
         }
-        .draggable(mealFoodItem)
+        .draggable(mealFoodItem.wrappedValue)
         .transition(
             .asymmetric(
                 insertion: .move(edge: .top),

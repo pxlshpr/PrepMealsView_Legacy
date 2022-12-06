@@ -190,12 +190,14 @@ extension MealsList.Meal.Header {
     //MARK: - Actions
     
     func tappedEditMeal() {
-        viewModel.didTapEditMeal(viewModel.meal)
+        viewModel.actionHandler(.editMeal(viewModel.meal))
+//        viewModel.didTapEditMeal(viewModel.meal)
     }
     
     func tappedAddFood() {
         Haptics.feedback(style: .light)
         //TODO: Present Meal
+        viewModel.actionHandler(.addFood(viewModel.meal))
     }
     
     func tappedDeleteMeal() {

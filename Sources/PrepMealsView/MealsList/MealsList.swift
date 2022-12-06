@@ -5,10 +5,11 @@ import SwiftSugar
 
 public struct MealsList: View {
     
-    let onTapAddMeal: ((Date?) -> ())
-    let didTapAddFood: ((DayMeal) -> ())
-    let didTapEditMeal: ((DayMeal) -> ())
-    let didTapMealFoodItem: ((MealFoodItem, DayMeal) -> ())
+    let actionHandler: (MealsDiaryAction) -> ()
+//    let onTapAddMeal: ((Date?) -> ())
+//    let didTapAddFood: ((DayMeal) -> ())
+//    let didTapEditMeal: ((DayMeal) -> ())
+//    let didTapMealFoodItem: ((MealFoodItem, DayMeal) -> ())
 
     let date: Date
     @Binding var meals: [DayMeal]
@@ -18,17 +19,19 @@ public struct MealsList: View {
     public init(
         date: Date,
         meals: Binding<[DayMeal]>,
-        didTapAddFood: @escaping (DayMeal) -> (),
-        didTapEditMeal: @escaping (DayMeal) -> (),
-        didTapMealFoodItem: @escaping (MealFoodItem, DayMeal) -> (),
-        onTapAddMeal: @escaping ((Date?) -> ())
+        actionHandler: @escaping (MealsDiaryAction) -> ()
+//        didTapAddFood: @escaping (DayMeal) -> (),
+//        didTapEditMeal: @escaping (DayMeal) -> (),
+//        didTapMealFoodItem: @escaping (MealFoodItem, DayMeal) -> (),
+//        onTapAddMeal: @escaping ((Date?) -> ())
     ) {
         self.date = date
         _meals = meals
-        self.onTapAddMeal = onTapAddMeal
-        self.didTapAddFood = didTapAddFood
-        self.didTapEditMeal = didTapEditMeal
-        self.didTapMealFoodItem = didTapMealFoodItem
+        self.actionHandler = actionHandler
+//        self.onTapAddMeal = onTapAddMeal
+//        self.didTapAddFood = didTapAddFood
+//        self.didTapEditMeal = didTapEditMeal
+//        self.didTapMealFoodItem = didTapMealFoodItem
     }
     
     public var body: some View {

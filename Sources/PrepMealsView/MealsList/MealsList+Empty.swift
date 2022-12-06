@@ -26,7 +26,8 @@ extension MealsList {
     var addMealEmptyButton: some View {
         let string = isBeforeToday ? "Log a Meal" : "Prep a Meal"
         return Button {
-            onTapAddMeal(nil)
+            actionHandler(.addMeal(nil))
+//            onTapAddMeal(nil)
         } label: {
             HStack {
                 Image(systemName: "note.text.badge.plus")
@@ -49,10 +50,12 @@ struct MealsListEmptyPreview: View {
     var body: some View {
         MealsList(date: Date(),
                   meals: .constant([]),
-                  didTapAddFood: { _ in },
-                  didTapEditMeal: { _ in },
-                  didTapMealFoodItem: { _, _ in },
-                  onTapAddMeal: { _ in })
+                  actionHandler: { _ in }
+//                  didTapAddFood: { _ in },
+//                  didTapEditMeal: { _ in },
+//                  didTapMealFoodItem: { _, _ in },
+//                  onTapAddMeal: { _ in }
+        )
     }
 }
 

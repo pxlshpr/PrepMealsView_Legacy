@@ -5,6 +5,9 @@ import PrepCoreDataStack
 extension MealsList.Meal {
     class ViewModel: ObservableObject {
         
+        
+        let date: Date
+        
         @Published var meal: DayMeal
         @Published var meals: [DayMeal]
 
@@ -19,22 +22,27 @@ extension MealsList.Meal {
         
         @Published var dateIsChanging: Bool = false
         
-        let didTapEditMeal: (DayMeal) -> ()
-        let didTapAddFood: (DayMeal) -> ()
-        let didTapMealFoodItem: (MealFoodItem, DayMeal) -> ()
-
+        let actionHandler: (MealsDiaryAction) -> ()
+//        let didTapEditMeal: (DayMeal) -> ()
+//        let didTapAddFood: (DayMeal) -> ()
+//        let didTapMealFoodItem: (MealFoodItem, DayMeal) -> ()
+        
         init(
+            date: Date,
             meal: DayMeal,
             meals: [DayMeal],
-            didTapAddFood: @escaping (DayMeal) -> (),
-            didTapEditMeal: @escaping (DayMeal) -> (),
-            didTapMealFoodItem: @escaping (MealFoodItem, DayMeal) -> ()
+            actionHandler: @escaping (MealsDiaryAction) -> ()
+//            didTapAddFood: @escaping (DayMeal) -> (),
+//            didTapEditMeal: @escaping (DayMeal) -> (),
+//            didTapMealFoodItem: @escaping (MealFoodItem, DayMeal) -> ()
         ) {
+            self.date = date
             self.meal = meal
             self.meals = meals
-            self.didTapEditMeal = didTapEditMeal
-            self.didTapAddFood = didTapAddFood
-            self.didTapMealFoodItem = didTapMealFoodItem
+            self.actionHandler = actionHandler
+//            self.didTapEditMeal = didTapEditMeal
+//            self.didTapAddFood = didTapAddFood
+//            self.didTapMealFoodItem = didTapMealFoodItem
             
             NotificationCenter.default.addObserver(
                 self, selector: #selector(didAddFoodItemToMeal),
@@ -364,6 +372,20 @@ extension Array where Element == MealFoodItem {
     }
 }
 
+extension Array where Element == DayMeal {
+    var nextPlannedMeal: DayMeal? {
+        self
+            .filter { Date().timeIntervalSince($0.timeDate) < 0 }
+            .sorted(by: { Date().timeIntervalSince($0.timeDate) > Date().timeIntervalSince($1.timeDate) })
+            .first
+    }
+}
+
+extension DayMeal {
+    var timeDate: Date {
+        Date(timeIntervalSince1970: time)
+    }
+}
 
 extension MealsList.Meal.ViewModel {
     
@@ -387,7 +409,10 @@ extension MealsList.Meal.ViewModel {
     }
     
     var shouldShowUpcomingLabel: Bool {
-        meal.isNextPlannedMeal
+        guard date.isToday, let nextPlannedMeal = meals.nextPlannedMeal else {
+            return false
+        }
+        return nextPlannedMeal.id == meal.id
     }
     
     var shouldShowAddFoodActionInMenu: Bool {

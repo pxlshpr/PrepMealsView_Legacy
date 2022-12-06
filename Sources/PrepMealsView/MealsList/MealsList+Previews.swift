@@ -17,10 +17,11 @@ struct ListPagePreview: View {
         MealsList(
             date: Date(),
             meals: .constant(meals.map { DayMeal(from: $0) }),
-            didTapAddFood: { _ in },
-            didTapEditMeal: { _ in },
-            didTapMealFoodItem: { _, _ in },
-            onTapAddMeal: { _ in }
+            actionHandler: { _ in }
+//            didTapAddFood: { _ in },
+//            didTapEditMeal: { _ in },
+//            didTapMealFoodItem: { _, _ in },
+//            onTapAddMeal: { _ in }
         )
     }
     
@@ -68,10 +69,11 @@ struct EmptyListViewPreview: View {
         MealsList(
             date: Date(),
             meals: .constant([]),
-            didTapAddFood: { _ in },
-            didTapEditMeal: { _ in },
-            didTapMealFoodItem: { _, _ in },
-            onTapAddMeal: { _ in }
+            actionHandler: { _ in }
+//            didTapAddFood: { _ in },
+//            didTapEditMeal: { _ in },
+//            didTapMealFoodItem: { _, _ in },
+//            onTapAddMeal: { _ in }
         )
     }
 }
