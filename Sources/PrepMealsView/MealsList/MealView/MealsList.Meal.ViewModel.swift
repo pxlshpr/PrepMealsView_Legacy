@@ -249,7 +249,9 @@ extension MealsList.Meal.ViewModel {
         }
         
         withAnimation(.interactiveSpring()) {
-            self.meal = updatedMeal
+            if meal.id == updatedMeal.id {
+                self.meal = updatedMeal
+            }
             self.macrosIndicatorWidth = self.calculateMacrosIndicatorWidth
 //            print("\(meal.name) now has width: \(macrosIndicatorWidth)")
         }
