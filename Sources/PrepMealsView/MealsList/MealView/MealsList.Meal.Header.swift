@@ -9,8 +9,6 @@ extension MealsList.Meal {
     struct Header: View {
         @EnvironmentObject var viewModel: ViewModel
         @Environment(\.colorScheme) var colorScheme
-        
-//        let didTapEditMeal: (DayMeal) -> ()
     }
 }
 
@@ -21,8 +19,6 @@ extension MealsList.Meal.Header {
             .background(
                 listRowBackground
             )
-//            .listRowBackground(listRowBackground)
-//            .listRowSeparator(.hidden)
     }
     
     var listRowBackground: some View {

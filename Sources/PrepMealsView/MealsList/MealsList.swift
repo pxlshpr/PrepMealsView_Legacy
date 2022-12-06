@@ -5,10 +5,6 @@ import SwiftSugar
 
 public struct MealsList: View {
     
-//    let didAddMeal = NotificationCenter.default.publisher(for: .didAddMeal)
-//    let didDeleteMeal = NotificationCenter.default.publisher(for: .didDeleteMeal)
-//    let didUpdateMeals = NotificationCenter.default.publisher(for: .didUpdateMeals)
-    
     let onTapAddMeal: ((Date?) -> ())
     let didTapAddFood: ((DayMeal) -> ())
     let didTapEditMeal: ((DayMeal) -> ())

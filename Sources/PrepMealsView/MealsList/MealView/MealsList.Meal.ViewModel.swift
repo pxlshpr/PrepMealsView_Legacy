@@ -225,40 +225,37 @@ extension MealsList.Meal.ViewModel {
         }
         
         if initialMeal != meal {
-            print("\(meal.name) Sending didUpdateMeal")
+//            print("\(meal.name) Sending didUpdateMeal")
             NotificationCenter.default.post(
                 name: .didUpdateMeal,
                 object: nil,
-                userInfo: [Notification.Keys.meal : meal]
+                userInfo: [Notification.Keys.dayMeal : meal]
             )
         }
     }
     
     @objc func didUpdateMeal(notification: Notification) {
         guard let userInfo = notification.userInfo,
-              let updatedMeal = userInfo[Notification.Keys.meal] as? DayMeal else {
+              let updatedMeal = userInfo[Notification.Keys.dayMeal] as? DayMeal else {
             return
         }
         
-        print("\(meal.name) received")
+//        print("\(meal.name) received")
         if let index = meals.firstIndex(where: { $0.id == updatedMeal.id }) {
-            print("\(meal.name) is changing meal at index: \(index)")
+//            print("\(meal.name) is changing meal at index: \(index)")
             meals[index] = updatedMeal
         } else {
-            print("\(meal.name) does not have meal? within \(meals.count)")
+//            print("\(meal.name) does not have meal? within \(meals.count)")
         }
         
         withAnimation(.interactiveSpring()) {
+            self.meal = updatedMeal
             self.macrosIndicatorWidth = self.calculateMacrosIndicatorWidth
-            print("\(meal.name) now has width: \(macrosIndicatorWidth)")
+//            print("\(meal.name) now has width: \(macrosIndicatorWidth)")
         }
     }
 }
 
-
-extension Notification.Name {
-    static var didUpdateMeal: Notification.Name { return .init("didUpdateMeal") }
-}
 
 extension MealsList.Meal.ViewModel {
     
