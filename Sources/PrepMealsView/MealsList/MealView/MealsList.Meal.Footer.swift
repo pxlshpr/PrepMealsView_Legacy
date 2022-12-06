@@ -15,7 +15,7 @@ extension MealsList.Meal {
 //        @ObservedObject var meal: Meal
 //        @Binding var meal: DayMeal
         
-        let didTapAddFood: (DayMeal) -> ()
+//        let didTapAddFood: (DayMeal) -> ()
         
         let didDeleteFoodItemFromMeal = NotificationCenter.default.publisher(for: .didDeleteFoodItemFromMeal)
     }
@@ -125,7 +125,7 @@ extension MealsList.Meal.Footer {
     //MARK: - Actions
     func tappedAddFood() {
         Haptics.feedback(style: .soft)
-        didTapAddFood(viewModel.meal)
+        viewModel.didTapAddFood(viewModel.meal)
     }
     
     func tappedEnergy() {

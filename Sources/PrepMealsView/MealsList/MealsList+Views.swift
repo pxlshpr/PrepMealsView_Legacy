@@ -10,6 +10,7 @@ extension MealsList {
                     meal: meal,
                     meals: meals,
                     didTapAddFood: didTapAddFood,
+                    didTapEditMeal: didTapEditMeal,
                     didTapMealFoodItem: didTapMealFoodItem
                 )
             }
@@ -28,6 +29,7 @@ extension MealsList {
                         meal: meal,
                         meals: meals,
                         didTapAddFood: didTapAddFood,
+                        didTapEditMeal: didTapEditMeal,
                         didTapMealFoodItem: didTapMealFoodItem
                     )
                 }

@@ -19,9 +19,22 @@ extension MealsList.Meal {
         
         @Published var dateIsChanging: Bool = false
         
-        init(meal: DayMeal, meals: [DayMeal]) {
+        let didTapEditMeal: (DayMeal) -> ()
+        let didTapAddFood: (DayMeal) -> ()
+        let didTapMealFoodItem: (MealFoodItem, DayMeal) -> ()
+
+        init(
+            meal: DayMeal,
+            meals: [DayMeal],
+            didTapAddFood: @escaping (DayMeal) -> (),
+            didTapEditMeal: @escaping (DayMeal) -> (),
+            didTapMealFoodItem: @escaping (MealFoodItem, DayMeal) -> ()
+        ) {
             self.meal = meal
             self.meals = meals
+            self.didTapEditMeal = didTapEditMeal
+            self.didTapAddFood = didTapAddFood
+            self.didTapMealFoodItem = didTapMealFoodItem
             
             NotificationCenter.default.addObserver(
                 self, selector: #selector(didAddFoodItemToMeal),

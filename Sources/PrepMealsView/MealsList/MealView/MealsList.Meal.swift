@@ -8,8 +8,8 @@ extension MealsList {
         @Environment(\.colorScheme) var colorScheme
         @StateObject var viewModel: MealsList.Meal.ViewModel
         
-        let didTapAddFood: (DayMeal) -> ()
-        let didTapMealFoodItem: (MealFoodItem, DayMeal) -> ()
+//        let didTapAddFood: (DayMeal) -> ()
+//        let didTapMealFoodItem: (MealFoodItem, DayMeal) -> ()
         
 //        var meal: DayMeal
         
@@ -17,19 +17,22 @@ extension MealsList {
             meal: DayMeal,
             meals: [DayMeal],
             didTapAddFood: @escaping (DayMeal) -> (),
+            didTapEditMeal: @escaping (DayMeal) -> (),
             didTapMealFoodItem: @escaping (MealFoodItem, DayMeal) -> ()
         ) {
             let viewModel = MealsList.Meal.ViewModel(
                 meal: meal,
-                meals: meals
+                meals: meals,
+                didTapAddFood: didTapAddFood,
+                didTapEditMeal: didTapEditMeal,
+                didTapMealFoodItem: didTapMealFoodItem
             )
             _viewModel = StateObject(wrappedValue: viewModel)
 //            self.meal = meal
-            self.didTapAddFood = didTapAddFood
-            self.didTapMealFoodItem = didTapMealFoodItem
+//            self.didTapAddFood = didTapAddFood
+//            self.didTapMealFoodItem = didTapMealFoodItem
         }
 
-        
         @State var showingDropOptions: Bool = false
 //        @State var droppedFoodItem: MealFoodItem? = nil
     }
@@ -92,7 +95,7 @@ extension MealsList.Meal {
     
     @ViewBuilder
     var footer: some View {
-        MealsList.Meal.Footer(didTapAddFood: didTapAddFood)
+        MealsList.Meal.Footer()
             .environmentObject(viewModel)
     }
     
@@ -123,7 +126,7 @@ extension MealsList.Meal {
     
     func cell(for mealFoodItem: MealFoodItem) -> some View {
         Button {
-            didTapMealFoodItem(mealFoodItem, viewModel.meal)
+            viewModel.didTapMealFoodItem(mealFoodItem, viewModel.meal)
         } label: {
             MealItemCell(item: mealFoodItem)
                 .environmentObject(viewModel)

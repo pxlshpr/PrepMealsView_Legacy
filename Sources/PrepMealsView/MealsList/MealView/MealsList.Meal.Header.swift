@@ -9,6 +9,8 @@ extension MealsList.Meal {
     struct Header: View {
         @EnvironmentObject var viewModel: ViewModel
         @Environment(\.colorScheme) var colorScheme
+        
+//        let didTapEditMeal: (DayMeal) -> ()
     }
 }
 
@@ -132,7 +134,7 @@ extension MealsList.Meal.Header {
             
             
             Button {
-                
+                tappedEditMeal()
             } label: {
                 Label("Edit", systemImage: "pencil")
             }
@@ -192,8 +194,7 @@ extension MealsList.Meal.Header {
     //MARK: - Actions
     
     func tappedEditMeal() {
-        //TODO: Preset Edit Meal
-        Haptics.feedback(style: .light)
+        viewModel.didTapEditMeal(viewModel.meal)
     }
     
     func tappedAddFood() {

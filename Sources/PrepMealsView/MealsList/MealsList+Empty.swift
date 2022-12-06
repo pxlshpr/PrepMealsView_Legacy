@@ -50,6 +50,7 @@ struct MealsListEmptyPreview: View {
         MealsList(date: Date(),
                   meals: .constant([]),
                   didTapAddFood: { _ in },
+                  didTapEditMeal: { _ in },
                   didTapMealFoodItem: { _, _ in },
                   onTapAddMeal: { _ in })
     }

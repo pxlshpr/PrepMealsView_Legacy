@@ -11,6 +11,7 @@ public struct MealsList: View {
     
     let onTapAddMeal: ((Date?) -> ())
     let didTapAddFood: ((DayMeal) -> ())
+    let didTapEditMeal: ((DayMeal) -> ())
     let didTapMealFoodItem: ((MealFoodItem, DayMeal) -> ())
 
     let date: Date
@@ -22,6 +23,7 @@ public struct MealsList: View {
         date: Date,
         meals: Binding<[DayMeal]>,
         didTapAddFood: @escaping (DayMeal) -> (),
+        didTapEditMeal: @escaping (DayMeal) -> (),
         didTapMealFoodItem: @escaping (MealFoodItem, DayMeal) -> (),
         onTapAddMeal: @escaping ((Date?) -> ())
     ) {
@@ -29,6 +31,7 @@ public struct MealsList: View {
         _meals = meals
         self.onTapAddMeal = onTapAddMeal
         self.didTapAddFood = didTapAddFood
+        self.didTapEditMeal = didTapEditMeal
         self.didTapMealFoodItem = didTapMealFoodItem
     }
     
