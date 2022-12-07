@@ -156,6 +156,8 @@ extension MealsList.Meal.ViewModel {
 //            print("🔥 Calculating after UPDATE \(meal.name)")
             self.macrosIndicatorWidth = calculateMacrosIndicatorWidth
         }
+        
+        SyncManager.shared.resume()
     }
 
     @objc func didDeleteFoodItemFromMeal(notification: Notification) {
@@ -275,11 +277,6 @@ extension MealsList.Meal.ViewModel {
         self.meal.foodItems.resetSortPositions(aroundFoodItemWithId: id)
         self.meal.foodItems.sort { $0.sortPosition < $1.sortPosition }
         
-        //TODO: ⚠️ **** CRUCIAL ****
-        /// We now (or after calling this), need to
-        /// [x] Update any of the `FoodItem`'s that have had their `sortPosition` changed with the backend,
-        /// [x] modifying the `updatedAt` flags, and
-        /// [x] reseting the `syncStatus`.
         for oldItem in before {
             guard let newItem = self.meal.foodItems.first(where: { $0.id == oldItem.id }) else {
                 /// We shouldn't get here
@@ -358,17 +355,31 @@ extension Array where Element == MealFoodItem {
             }
             let removed = self.remove(at: currentIndex)
             
-            //TODO: ⚠️ **** CRUCIAL ****
-            /// [ ] Have a failsafe that makes sure we don't insert this out of range (or with a negative index)
-
             /// Now insert it where it actually belongs
-            self.insert(removed, at: removed.sortPosition - 1)
+            var newIndex = removed.sortPosition - 1
+            
+//            print("🔀 newIndex for: \(removed.food.name) is \(newIndex)")
+            if newIndex > self.count {
+                newIndex = self.count
+//                print("🔀 Changed newIndex to \(newIndex) since it was out of bounds (greater than \(self.count))")
+            }
+            
+            if newIndex <= self.count , newIndex >= 0 {
+//                print("🔀 Inserting \(removed.food.name) at \(newIndex)")
+                self.insert(removed, at: newIndex)
+            } else {
+//                print("🔀 NOT Inserting \(removed.food.name) at \(newIndex) because it's out of bounds")
+            }
         }
-        
+
+//        print("🔀 Before re-number: \(map({ "\($0.sortPosition)" }).joined(separator: ", "))")
+
         /// Finally, renumber all the items for the array just to be safe (can be optimised later)
         for i in self.indices {
             self[i].sortPosition = i + 1
         }
+        
+//        print("🔀 After re-number: \(map({ "\($0.sortPosition)" }).joined(separator: ", "))")
     }
 }
 
@@ -430,6 +441,8 @@ extension MealsList.Meal.ViewModel {
     func tappedMoveForDrop() {
         guard let droppedFoodItem else { return }
         do {
+            SyncManager.shared.pause()
+//            print("🔀 Before move: \(meal.foodItems.map({ "\($0.sortPosition)" }).joined(separator: ", "))")
             try DataManager.shared.moveMealItem(droppedFoodItem, to: meal, after: dropRecipient)
 //            resetDrop()
         } catch {
