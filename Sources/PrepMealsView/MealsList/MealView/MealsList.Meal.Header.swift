@@ -47,9 +47,12 @@ extension MealsList.Meal.Header {
             @ViewBuilder
             var upcomingLabel: some View {
                 if viewModel.shouldShowUpcomingLabel {
-                    Text("UPCOMING")
+//                    Text(viewModel.meal.timeDate, style: .timer)
+//                        .monospacedDigit()
+                        Text("UPCOMING")
                         .foregroundColor(.white)
-                    //                            .font(.footnote)
+                        .font(.caption2)
+                        .bold()
                         .padding(.vertical, 3)
                         .padding(.horizontal, 5)
                         .background(
