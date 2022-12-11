@@ -73,8 +73,9 @@ extension MealsList.Meal {
 //            NotificationCenter.default.addObserver(
 //                self, selector: #selector(diaryWillChangeDate),
 //                name: .dayPagerWillChangeDate, object: nil)
-
-            self.macrosIndicatorWidth = calculateMacrosIndicatorWidth
+            
+//            print("🧮 Calculating width in init")
+//            self.macrosIndicatorWidth = calculateMacrosIndicatorWidth
         }
     }
 }
@@ -504,7 +505,8 @@ extension MealsList.Meal.ViewModel {
     }
     
     var calculateMacrosIndicatorWidth: CGFloat {
-        calculateMacrosIndicatorWidth(for: meal.energyValueInKcal, largest: largestEnergyInKcal, smallest: smallestEnergyInKcal)
+        print("🧮 Getting width")
+        return calculateMacrosIndicatorWidth(for: meal.energyValueInKcal, largest: largestEnergyInKcal, smallest: smallestEnergyInKcal)
 //
 //        let min = MacrosIndicator.DefaultWidth
 //        let max: CGFloat = 100
