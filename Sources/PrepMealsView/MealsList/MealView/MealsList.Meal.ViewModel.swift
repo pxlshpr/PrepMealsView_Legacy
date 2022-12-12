@@ -505,8 +505,7 @@ extension MealsList.Meal.ViewModel {
     }
     
     var calculateMacrosIndicatorWidth: CGFloat {
-        print("🧮 Getting width")
-        return calculateMacrosIndicatorWidth(for: meal.energyValueInKcal, largest: largestEnergyInKcal, smallest: smallestEnergyInKcal)
+        calculateMacrosIndicatorWidth(for: meal.energyValueInKcal, largest: largestEnergyInKcal, smallest: smallestEnergyInKcal)
 //
 //        let min = MacrosIndicator.DefaultWidth
 //        let max: CGFloat = 100
