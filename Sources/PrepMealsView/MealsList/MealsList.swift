@@ -13,6 +13,8 @@ public struct MealsList: View {
 
     let date: Date
     @Binding var meals: [DayMeal]
+    
+    @Environment(\.colorScheme) var colorScheme
 
     @State var animation: Animation? = .none
     

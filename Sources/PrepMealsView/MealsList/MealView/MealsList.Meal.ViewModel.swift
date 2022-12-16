@@ -74,7 +74,7 @@ extension MealsList.Meal {
 //                self, selector: #selector(diaryWillChangeDate),
 //                name: .dayPagerWillChangeDate, object: nil)
             
-//            print("🧮 Calculating width in init")
+            print("🧮 Calculating width in init")
 //            self.macrosIndicatorWidth = calculateMacrosIndicatorWidth
         }
     }

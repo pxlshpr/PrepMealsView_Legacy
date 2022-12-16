@@ -40,18 +40,22 @@ extension MealsList {
                 quickAddButtons
                     .safeAreaInset(edge: .bottom) {
                         Color.clear
-                            .frame(height: 60)
+                            .frame(height: 60 + 55)
                     }
             }
         }
 //        .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .background(Color(.systemGroupedBackground))
+        .background(background)
 //        .onAppear {
 //            DispatchQueue.main.async {
 //                self.animation = .none
 //            }
 //        }
+    }
+    
+    var background: Color {
+        colorScheme == .light ? Color(.systemGroupedBackground) : Color(hex: "191919")
     }
     
     //MARK: - Buttons

@@ -123,7 +123,7 @@ struct MealItemCell: View {
         if item.isCompleted {
             return colorScheme == .light ? Color(hex: "EBE9F7") : Color(hex: "191331")
         } else {
-            return Color(.secondarySystemGroupedBackground)
+            return colorScheme == .light ? Color(.secondarySystemGroupedBackground) : Color(hex: "232323")
         }
     }
     

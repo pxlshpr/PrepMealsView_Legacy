@@ -3,6 +3,7 @@ import SwiftHaptics
 import SwiftUISugar
 import PrepDataTypes
 
+//TODO: Possibly remove this
 struct DiaryItemView: View {
     
     @Environment(\.colorScheme) var colorScheme
@@ -27,9 +28,9 @@ struct DiaryItemView: View {
     
     var listRowBackgroundColor: Color {
         if item.isCompleted {
-            return colorScheme == .light ? Color("EBE9F7") : Color("191331")
+            return colorScheme == .light ? Color(hex: "EBE9F7") : Color(hex: "191331")
         } else {
-            return Color(.secondarySystemGroupedBackground)
+            return colorScheme == .light ? Color(.secondarySystemGroupedBackground) : Color(hex: "232323")
         }
     }
     var listRowBackground: some View {

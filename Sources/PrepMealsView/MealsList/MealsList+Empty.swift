@@ -4,7 +4,8 @@ extension MealsList {
 
     var emptyContent: some View {
         ZStack {
-            Color(.systemGroupedBackground)
+            background
+//            Color(.systemGroupedBackground)
             VStack {
                 Text(emptyText)
                     .font(.title2)
