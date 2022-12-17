@@ -110,7 +110,7 @@ extension MealsList.Meal {
     
     var itemRows: some View {
         ForEach(viewModel.meal.foodItems.indices, id: \.self) { index in
-            cell(for: $viewModel.meal.foodItems[index])
+            cell(for: $viewModel.meal.foodItems[index], index: index)
             dropTargetView(for: viewModel.meal.foodItems[index])
         }
     }
@@ -128,12 +128,12 @@ extension MealsList.Meal {
         }
     }
     
-    func cell(for mealFoodItem: Binding<MealFoodItem>) -> some View {
+    func cell(for mealFoodItem: Binding<MealFoodItem>, index: Int) -> some View {
         Button {
             viewModel.actionHandler(.editFoodItem(mealFoodItem.wrappedValue, viewModel.meal))
 //            viewModel.didTapMealFoodItem(mealFoodItem, viewModel.meal)
         } label: {
-            MealItemCell(item: mealFoodItem)
+            MealItemCell(item: mealFoodItem, index: index)
                 .environmentObject(viewModel)
         }
         .draggable(mealFoodItem.wrappedValue)

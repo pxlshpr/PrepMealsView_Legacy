@@ -67,24 +67,25 @@ struct MealItemCell: View {
     //TODO: CoreData
     //    @ObservedObject var item: FoodItem
     @Binding var item: MealFoodItem
-    
+    let index: Int
+
     //    @Namespace var localNamespace
     //    var namespace: Binding<Namespace.ID?>
     //    @Binding var namespacePrefix: UUID
     
-    let didCalculateFoodItemMacrosIndicatorWidth = NotificationCenter.default.publisher(for: .didCalculateFoodItemMacrosIndicatorWidth)
-    
-    
-    
     @State var badgeWidth: CGFloat = 0
     
+    let didAddFoodItemToMeal = NotificationCenter.default.publisher(for: .didAddFoodItemToMeal)
+    let didUpdateMealFoodItem = NotificationCenter.default.publisher(for: .didUpdateMealFoodItem)
+    let didDeleteFoodItemFromMeal = NotificationCenter.default.publisher(for: .didDeleteFoodItemFromMeal)
+
     var body: some View {
         HStack {
             optionalEmojiText
             nameTexts
             Spacer()
             if showingFoodDetails {
-                macrosIndicator
+                foodBadge
                     .transition(.scale)
             }
             isEatenToggle
@@ -97,38 +98,42 @@ struct MealItemCell: View {
             action: handleDrop,
             isTargeted: handleDropIsTargeted
         )
-        .onReceive(didCalculateFoodItemMacrosIndicatorWidth, perform: didCalculateFoodItemMacrosIndicatorWidth)
         .onAppear(perform: appeared)
+        .onReceive(didAddFoodItemToMeal, perform: didAddFoodItemToMeal)
+        .onReceive(didUpdateMealFoodItem, perform: didUpdateMealFoodItem)
+        .onReceive(didDeleteFoodItemFromMeal, perform: didDeleteFoodItemFromMeal)
     }
     
     func appeared() {
-        
+        calculateBadgeWidth()
     }
-    
+    func didAddFoodItemToMeal(notification: Notification) {
+        calculateBadgeWidth()
+    }
+    func didUpdateMealFoodItem(notification: Notification) {
+        calculateBadgeWidth()
+    }
+    func didDeleteFoodItemFromMeal(notification: Notification) {
+        guard index < viewModel.meal.foodItems.count else {
+            /// Rule out the actual food item being deleted using this, otherwise resulting in a crash when we try and acces the bound `item`
+            return
+        }
+        
+        calculateBadgeWidth()
+    }
+
     func calculateBadgeWidth() {
         Task {
             DataManager.shared.badgeWidth(forFoodItemWithId: item.id) { width in
                 withAnimation {
-                    print("🟣 (onAppear) Setting width for: \(item.food.name) — \(width)")
+                    print("🟣 Setting width for: \(item.food.name) — \(width)")
                     self.badgeWidth = width
                 }
             }
         }
     }
     
-    func didCalculateFoodItemMacrosIndicatorWidth(_ notification: Notification) {
-        guard let userInfo = notification.userInfo,
-              let id = userInfo[Notification.Keys.uuid] as? UUID,
-              self.item.id == id,
-              let width = userInfo[Notification.Keys.macrosIndicatorWidth] as? CGFloat
-        else { return }
-        print("🟣 (notification) setting width for: \(item.food.name) — \(width)")
-        withAnimation {
-            self.badgeWidth = width
-        }
-    }
-    
-    var macrosIndicator: some View {
+    var foodBadge: some View {
         let widthBinding = Binding<CGFloat>(
 //            get: { viewModel.calculateMacrosIndicatorWidth(of: item) },
             //TODO: This needs to be something stored in the cell that gets recalculated dynamically to changes
