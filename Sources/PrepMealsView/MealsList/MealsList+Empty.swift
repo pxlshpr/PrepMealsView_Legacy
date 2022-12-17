@@ -20,7 +20,7 @@ extension MealsList {
                     .foregroundColor(Color(.quaternarySystemFill))
             )
             .padding(.horizontal, 50)
-            .offset(y: 0)
+            .offset(y: -15)
         }
     }
     

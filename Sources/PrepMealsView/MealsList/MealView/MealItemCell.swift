@@ -3,7 +3,7 @@ import SwiftHaptics
 import SwiftUISugar
 import PrepDataTypes
 import PrepViews
-
+import PrepCoreDataStack
 
 extension MealsList.Meal.ViewModel {
     var isTargetingLastCell: Bool {
@@ -72,6 +72,12 @@ struct MealItemCell: View {
     //    var namespace: Binding<Namespace.ID?>
     //    @Binding var namespacePrefix: UUID
     
+    let didCalculateFoodItemMacrosIndicatorWidth = NotificationCenter.default.publisher(for: .didCalculateFoodItemMacrosIndicatorWidth)
+    
+    
+    
+    @State var badgeWidth: CGFloat = 0
+    
     var body: some View {
         HStack {
             optionalEmojiText
@@ -91,14 +97,46 @@ struct MealItemCell: View {
             action: handleDrop,
             isTargeted: handleDropIsTargeted
         )
+        .onReceive(didCalculateFoodItemMacrosIndicatorWidth, perform: didCalculateFoodItemMacrosIndicatorWidth)
+        .onAppear(perform: appeared)
+    }
+    
+    func appeared() {
+        
+    }
+    
+    func calculateBadgeWidth() {
+        Task {
+            DataManager.shared.badgeWidth(forFoodItemWithId: item.id) { width in
+                withAnimation {
+                    print("🟣 (onAppear) Setting width for: \(item.food.name) — \(width)")
+                    self.badgeWidth = width
+                }
+            }
+        }
+    }
+    
+    func didCalculateFoodItemMacrosIndicatorWidth(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let id = userInfo[Notification.Keys.uuid] as? UUID,
+              self.item.id == id,
+              let width = userInfo[Notification.Keys.macrosIndicatorWidth] as? CGFloat
+        else { return }
+        print("🟣 (notification) setting width for: \(item.food.name) — \(width)")
+        withAnimation {
+            self.badgeWidth = width
+        }
     }
     
     var macrosIndicator: some View {
         let widthBinding = Binding<CGFloat>(
-            get: { viewModel.calculateMacrosIndicatorWidth(of: item) },
+//            get: { viewModel.calculateMacrosIndicatorWidth(of: item) },
+            //TODO: This needs to be something stored in the cell that gets recalculated dynamically to changes
+//            get: { item.macrosIndicatorWidth },
+            get: { badgeWidth },
             set: { _ in }
         )
-        return MacrosIndicator(
+        return FoodBadge(
             c: item.food.info.nutrients.carb,
             f: item.food.info.nutrients.fat,
             p: item.food.info.nutrients.protein,

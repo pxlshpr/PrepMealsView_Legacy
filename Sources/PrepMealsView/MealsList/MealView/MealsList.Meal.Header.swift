@@ -156,9 +156,6 @@ extension MealsList.Meal.Header {
                 .padding(.leading)
         }
         .contentShape(Rectangle())
-        .simultaneousGesture(TapGesture().onEnded {
-            Haptics.feedback(style: .soft)
-        })
     }
     
     var addFoodMenuButton: some View {

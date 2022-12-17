@@ -89,13 +89,13 @@ extension MealsList.Meal.Footer {
             let binding = Binding<CGFloat>(
                 get: {
 //                    let width = viewModel.calculateMacrosIndicatorWidth
-                    let width = viewModel.macrosIndicatorWidth
-//                    print("    📐 \(viewModel.meal.name): \(width)")
+//                    let width = viewModel.calculatedMealMacrosIndicatorWidth
+                    let width = viewModel.mealMacrosIndicatorWidth
                     return width
                 },
                 set: { _ in }
             )
-            return MacrosIndicator(
+            return FoodBadge(
                 c: viewModel.meal.scaledValueForMacro(.carb),
                 f: viewModel.meal.scaledValueForMacro(.fat),
                 p: viewModel.meal.scaledValueForMacro(.protein),

@@ -18,7 +18,7 @@ extension MealsList.Meal {
 
         @Published var targetId: UUID? = nil
 
-        @Published var macrosIndicatorWidth: CGFloat = MacrosIndicator.DefaultWidth
+        @Published var mealMacrosIndicatorWidth: CGFloat = FoodBadge.DefaultWidth
         
         @Published var dateIsChanging: Bool = false
         
@@ -74,7 +74,8 @@ extension MealsList.Meal {
 //                self, selector: #selector(diaryWillChangeDate),
 //                name: .dayPagerWillChangeDate, object: nil)
             
-            print("🧮 Calculating width in init")
+//            print("🧮 Calculating width in init")
+            self.mealMacrosIndicatorWidth = meal.macrosIndicatorWidth
 //            self.macrosIndicatorWidth = calculateMacrosIndicatorWidth
         }
     }
@@ -105,7 +106,7 @@ extension MealsList.Meal.ViewModel {
             
             /// Make sure this is the `MealView.ViewModel` for the `Meal` that the `FoodItem` belongs to before proceeding
             guard foodItem.meal?.id == meal.id else {
-                self.macrosIndicatorWidth = calculateMacrosIndicatorWidth
+//                self.mealMacrosIndicatorWidth = calculatedMealMacrosIndicatorWidth
                 return
             }
             
@@ -117,10 +118,10 @@ extension MealsList.Meal.ViewModel {
             resetSortPositions(aroundFoodItemWithId: foodItem.id)
         }
         
-        withAnimation(Bounce) {
+//        withAnimation(Bounce) {
 //            print("🔥 Calculating after ADD \(meal.name)")
-            self.macrosIndicatorWidth = calculateMacrosIndicatorWidth
-        }
+//            self.mealMacrosIndicatorWidth = calculatedMealMacrosIndicatorWidth
+//        }
     }
     
     @objc func didUpdateMealFoodItem(notification: Notification) {
@@ -142,7 +143,7 @@ extension MealsList.Meal.ViewModel {
                 updatedFoodItem.meal?.id == meal.id,
                 let existingIndex = meal.foodItems.firstIndex(where: { $0.id == updatedFoodItem.id })
             else {
-                self.macrosIndicatorWidth = calculateMacrosIndicatorWidth
+//                self.mealMacrosIndicatorWidth = calculatedMealMacrosIndicatorWidth
                 return
             }
             
@@ -153,10 +154,10 @@ extension MealsList.Meal.ViewModel {
             resetSortPositions(aroundFoodItemWithId: updatedFoodItem.id)
         }
         
-        withAnimation(Bounce) {
+//        withAnimation(Bounce) {
 //            print("🔥 Calculating after UPDATE \(meal.name)")
-            self.macrosIndicatorWidth = calculateMacrosIndicatorWidth
-        }
+//            self.mealMacrosIndicatorWidth = calculatedMealMacrosIndicatorWidth
+//        }
         
         SyncManager.shared.resume()
     }
@@ -174,7 +175,7 @@ extension MealsList.Meal.ViewModel {
 
         guard meal.foodItems.contains(where: { $0.id == id }) else {
 //            print("🔥 Calculating after DELETE \(meal.name)")
-            self.macrosIndicatorWidth = calculateMacrosIndicatorWidth
+//            self.mealMacrosIndicatorWidth = calculatedMealMacrosIndicatorWidth
             return
         }
         
@@ -184,10 +185,10 @@ extension MealsList.Meal.ViewModel {
             self.meal.foodItems.removeAll(where: { $0.id == id })
             resetSortPositions(aroundFoodItemWithId: nil)
         }
-        withAnimation(Bounce) {
+//        withAnimation(Bounce) {
 //            print("🔥 Calculating after DELETE \(meal.name)")
-            self.macrosIndicatorWidth = calculateMacrosIndicatorWidth
-        }
+//            self.mealMacrosIndicatorWidth = calculatedMealMacrosIndicatorWidth
+//        }
     }
     
     @objc func didUpdateFoodItems(notification: Notification) {
@@ -263,7 +264,7 @@ extension MealsList.Meal.ViewModel {
             if meal.id == updatedMeal.id {
                 self.meal = updatedMeal
             }
-            self.macrosIndicatorWidth = self.calculateMacrosIndicatorWidth
+            self.mealMacrosIndicatorWidth = self.calculatedMealMacrosIndicatorWidth
 //            print("\(meal.name) now has width: \(macrosIndicatorWidth)")
         }
     }
@@ -504,16 +505,16 @@ extension MealsList.Meal.ViewModel {
         energyValuesInKcalDecreasing.last ?? 0
     }
     
-    var calculateMacrosIndicatorWidth: CGFloat {
+    var calculatedMealMacrosIndicatorWidth: CGFloat {
         calculateMacrosIndicatorWidth(for: meal.energyValueInKcal, largest: largestEnergyInKcal, smallest: smallestEnergyInKcal)
 //
-//        let min = MacrosIndicator.DefaultWidth
+//        let min = FoodBadge.DefaultWidth
 //        let max: CGFloat = 100
 //        let largest = largestEnergyInKcal
 //        let smallest = smallestEnergyInKcal
 //
 //        guard largest > 0, smallest > 0 else {
-//            return MacrosIndicator.DefaultWidth
+//            return FoodBadge.DefaultWidth
 //        }
 //
 //        /// First try and scale values such that smallest value gets the DefaultWidth and everything else scales accordingly
@@ -529,11 +530,11 @@ extension MealsList.Meal.ViewModel {
     }
 
     func calculateMacrosIndicatorWidth(for value: Double, largest: Double, smallest: Double, maxWidth: CGFloat = 150) -> CGFloat {
-        let min = MacrosIndicator.DefaultWidth
+        let min = FoodBadge.DefaultWidth
         let max: CGFloat = maxWidth
         
         guard largest > 0, smallest > 0, value <= largest, value >= smallest else {
-            return MacrosIndicator.DefaultWidth
+            return FoodBadge.DefaultWidth
         }
         
         /// First try and scale values such that smallest value gets the DefaultWidth and everything else scales accordingly
