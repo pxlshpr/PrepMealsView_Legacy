@@ -11,6 +11,7 @@ struct MealItemCell: View {
     
     @EnvironmentObject var viewModel: MealsList.Meal.ViewModel
     
+    @AppStorage(UserDefaultsKeys.showingFoodEmojis) private var showingFoodEmojis = true
     @AppStorage(UserDefaultsKeys.showingFoodDetails) private var showingFoodDetails = false
     @AppStorage(UserDefaultsKeys.showingBadgesForFoods) private var showingBadgesForFoods = false
 
@@ -138,14 +139,16 @@ struct MealItemCell: View {
     
     @ViewBuilder
     var optionalEmojiText: some View {
-        Text(item.food.emoji)
-            .font(.body)
-        //            .if(namespace.wrappedValue != nil) { view in
-        //                view.matchedGeometryEffect(id: "\(item.id.uuidString)-\(namespacePrefix.uuidString)", in: namespace.wrappedValue!)
-        //            }
-        //            .if(namespace.wrappedValue == nil) { view in
-        //                view.matchedGeometryEffect(id: "\(item.id.uuidString)-\(namespacePrefix.uuidString)", in: localNamespace)
-        //            }
+        if showingFoodEmojis {
+            Text(item.food.emoji)
+                .font(.body)
+//                .if(namespace.wrappedValue != nil) { view in
+//                    view.matchedGeometryEffect(id: "\(item.id.uuidString)-\(namespacePrefix.uuidString)", in: namespace.wrappedValue!)
+//                }
+//                .if(namespace.wrappedValue == nil) { view in
+//                    view.matchedGeometryEffect(id: "\(item.id.uuidString)-\(namespacePrefix.uuidString)", in: localNamespace)
+//                }
+        }
     }
     
     var nameColor: Color {
