@@ -14,12 +14,14 @@ extension MealsList {
 //        var meal: DayMeal
         
         @Binding var badgeWidths: [UUID : CGFloat]
+        @Binding var isUpcomingMeal: Bool
         
         init(
             date: Date,
             meal: DayMeal,
-            meals: [DayMeal],
+//            meals: [DayMeal],
             badgeWidths: Binding<[UUID : CGFloat]>,
+            isUpcomingMeal: Binding<Bool>,
             actionHandler: @escaping (MealsDiaryAction) -> ()
 //            didTapAddFood: @escaping (DayMeal) -> (),
 //            didTapEditMeal: @escaping (DayMeal) -> (),
@@ -28,13 +30,15 @@ extension MealsList {
             let viewModel = MealsList.Meal.ViewModel(
                 date: date,
                 meal: meal,
-                meals: meals,
+                isUpcomingMeal: isUpcomingMeal.wrappedValue,
+//                meals: meals,
                 actionHandler: actionHandler
 //                didTapAddFood: didTapAddFood,
 //                didTapEditMeal: didTapEditMeal,
 //                didTapMealFoodItem: didTapMealFoodItem
             )
             _badgeWidths = badgeWidths
+            _isUpcomingMeal = isUpcomingMeal
             _viewModel = StateObject(wrappedValue: viewModel)
 //            self.meal = meal
 //            self.didTapAddFood = didTapAddFood
@@ -66,6 +70,11 @@ extension MealsList.Meal {
                 titleVisibility: .visible,
                 actions: dropConfirmationActions
             )
+            .onChange(of: isUpcomingMeal) { newValue in
+                withAnimation {
+                    viewModel.isUpcomingMeal = newValue
+                }
+            }
     }
     
     func droppedFoodItemChanged(to droppedFoodItem: MealFoodItem?) {
@@ -101,10 +110,15 @@ extension MealsList.Meal {
             })
     }
     
-    @ViewBuilder
     var footer: some View {
-        MealsList.Meal.Footer()
-            .environmentObject(viewModel)
+        let binding = Binding<CGFloat>(
+            get: { badgeWidths[viewModel.meal.id] ?? 0 },
+            set: { _ in }
+        )
+        return MealsList.Meal.Footer(
+            badgeWidth: binding
+        )
+        .environmentObject(viewModel)
     }
     
     @ViewBuilder

@@ -9,7 +9,7 @@ extension MealsList.Meal {
         let date: Date
         
         @Published var meal: DayMeal
-        @Published var meals: [DayMeal]
+//        @Published var meals: [DayMeal]
 
         @Published var dragTargetFoodItemId: UUID? = nil
         
@@ -22,6 +22,8 @@ extension MealsList.Meal {
         
         @Published var dateIsChanging: Bool = false
         
+        @Published var isUpcomingMeal: Bool
+        
         let actionHandler: (MealsDiaryAction) -> ()
 //        let didTapEditMeal: (DayMeal) -> ()
 //        let didTapAddFood: (DayMeal) -> ()
@@ -30,7 +32,8 @@ extension MealsList.Meal {
         init(
             date: Date,
             meal: DayMeal,
-            meals: [DayMeal],
+//            meals: [DayMeal],
+            isUpcomingMeal: Bool,
             actionHandler: @escaping (MealsDiaryAction) -> ()
 //            didTapAddFood: @escaping (DayMeal) -> (),
 //            didTapEditMeal: @escaping (DayMeal) -> (),
@@ -38,7 +41,8 @@ extension MealsList.Meal {
         ) {
             self.date = date
             self.meal = meal
-            self.meals = meals
+            self.isUpcomingMeal = isUpcomingMeal
+//            self.meals = meals
             self.actionHandler = actionHandler
 //            self.didTapEditMeal = didTapEditMeal
 //            self.didTapAddFood = didTapAddFood
@@ -96,7 +100,7 @@ extension MealsList.Meal.ViewModel {
         
         withAnimation(Bounce) {
             /// Update our local array used to calculate macro indicator widths first
-            self.meals.addFoodItem(foodItem)
+//            self.meals.addFoodItem(foodItem)
         }
 
         /// Make sure this is the `MealView.ViewModel` for the `Meal` that the `FoodItem` belongs to before proceeding
@@ -126,7 +130,7 @@ extension MealsList.Meal.ViewModel {
         
         withAnimation(Bounce) {
             /// Update our local array used to calculate macro indicator widths first
-            self.meals.updateFoodItem(updatedFoodItem)
+//            self.meals.updateFoodItem(updatedFoodItem)
         }
 
         /// Make sure this is the `MealView.ViewModel` for the `Meal` that the `FoodItem` belongs to before proceeding
@@ -163,7 +167,7 @@ extension MealsList.Meal.ViewModel {
         }
 
         withAnimation(Bounce) {
-            self.meals.deleteFoodItem(with: id)
+//            self.meals.deleteFoodItem(with: id)
         }
 
         guard meal.foodItems.contains(where: { $0.id == id }) else {
@@ -243,19 +247,16 @@ extension MealsList.Meal.ViewModel {
             return
         }
         
-//        print("\(meal.name) received")
-        if let index = meals.firstIndex(where: { $0.id == updatedMeal.id }) {
-//            print("\(meal.name) is changing meal at index: \(index)")
-            meals[index] = updatedMeal
-        } else {
-//            print("\(meal.name) does not have meal? within \(meals.count)")
-        }
+//        if let index = meals.firstIndex(where: { $0.id == updatedMeal.id }) {
+//            meals[index] = updatedMeal
+//        } else {
+//        }
         
         withAnimation(.interactiveSpring()) {
             if meal.id == updatedMeal.id {
                 self.meal = updatedMeal
             }
-            self.mealMacrosIndicatorWidth = self.calculatedMealMacrosIndicatorWidth
+//            self.mealMacrosIndicatorWidth = self.calculatedMealMacrosIndicatorWidth
 //            print("\(meal.name) now has width: \(macrosIndicatorWidth)")
         }
     }
@@ -287,6 +288,7 @@ extension MealsList.Meal.ViewModel {
     
 }
 
+//TODO: Move this elsewhere
 let Bounce: Animation = .interactiveSpring(response: 0.35, dampingFraction: 0.66, blendDuration: 0.35)
 
 import PrepDataTypes
@@ -412,13 +414,6 @@ extension MealsList.Meal.ViewModel {
         "Delete \(meal.name)"
     }
     
-    var shouldShowUpcomingLabel: Bool {
-        guard date.isToday, let nextPlannedMeal = meals.nextPlannedMeal else {
-            return false
-        }
-        return nextPlannedMeal.id == meal.id
-    }
-    
     var shouldShowAddFoodActionInMenu: Bool {
         meal.isCompleted
     }
@@ -482,29 +477,29 @@ import PrepViews
 
 extension MealsList.Meal.ViewModel {
     
-    var energyValuesInKcalDecreasing: [Double] {
-        meals
-            .filter { !$0.foodItems.isEmpty }
-            .map { $0.energyValueInKcal }
-            .sorted { $0 > $1 }
-    }
-    var largestEnergyInKcal: Double {
-        energyValuesInKcalDecreasing.first ?? 0
-    }
-    
-    var smallestEnergyInKcal: Double {
-        energyValuesInKcalDecreasing.last ?? 0
-    }
-    
-    var calculatedMealMacrosIndicatorWidth: CGFloat {
-        calculateMacrosIndicatorWidth(for: meal.energyValueInKcal, largest: largestEnergyInKcal, smallest: smallestEnergyInKcal)
+//    var energyValuesInKcalDecreasing: [Double] {
+//        meals
+//            .filter { !$0.foodItems.isEmpty }
+//            .map { $0.energyValueInKcal }
+//            .sorted { $0 > $1 }
+//    }
+//    var largestEnergyInKcal: Double {
+//        energyValuesInKcalDecreasing.first ?? 0
+//    }
 //
+//    var smallestEnergyInKcal: Double {
+//        energyValuesInKcalDecreasing.last ?? 0
+//    }
+//
+//    var calculatedMealMacrosIndicatorWidth: CGFloat {
+//        calculateMacrosIndicatorWidth(for: meal.energyValueInKcal, largest: largestEnergyInKcal, smallest: smallestEnergyInKcal)
+//    }
+//
+//    func calculateMacrosIndicatorWidth(for value: Double, largest: Double, smallest: Double, maxWidth: CGFloat = 150) -> CGFloat {
 //        let min = FoodBadge.DefaultWidth
-//        let max: CGFloat = 100
-//        let largest = largestEnergyInKcal
-//        let smallest = smallestEnergyInKcal
+//        let max: CGFloat = maxWidth
 //
-//        guard largest > 0, smallest > 0 else {
+//        guard largest > 0, smallest > 0, value <= largest, value >= smallest else {
 //            return FoodBadge.DefaultWidth
 //        }
 //
@@ -512,44 +507,24 @@ extension MealsList.Meal.ViewModel {
 //        /// But first see if this results in the largest value crossing the MaxWidth, and if so
 //        guard (largest/smallest) * min <= max else {
 //            /// scale values such that largest value gets the MaxWidth and everything else scales accordingly
-//            let percent = meal.energyValueInKcal/largest
-//            return percent * max
+//            let percent = value/largest
+//            let width = percent * max
+//            return width
 //        }
 //
-//        let percent = meal.energyValueInKcal/smallest
-//        return percent * min
-    }
-
-    func calculateMacrosIndicatorWidth(for value: Double, largest: Double, smallest: Double, maxWidth: CGFloat = 150) -> CGFloat {
-        let min = FoodBadge.DefaultWidth
-        let max: CGFloat = maxWidth
-        
-        guard largest > 0, smallest > 0, value <= largest, value >= smallest else {
-            return FoodBadge.DefaultWidth
-        }
-        
-        /// First try and scale values such that smallest value gets the DefaultWidth and everything else scales accordingly
-        /// But first see if this results in the largest value crossing the MaxWidth, and if so
-        guard (largest/smallest) * min <= max else {
-            /// scale values such that largest value gets the MaxWidth and everything else scales accordingly
-            let percent = value/largest
-            let width = percent * max
-            return width
-        }
-        
-        let percent = value/smallest
-        let width = percent * min
-        return width
-    }
-
-    func calculateMacrosIndicatorWidth(of foodItem: MealFoodItem) -> CGFloat {
-        calculateMacrosIndicatorWidth(
-            for: foodItem.scaledValueForEnergyInKcal,
-            largest: meal.largestEnergyInKcal,
-            smallest: meal.smallestEnergyInKcal,
-            maxWidth: 100
-        )
-    }
+//        let percent = value/smallest
+//        let width = percent * min
+//        return width
+//    }
+//
+//    func calculateMacrosIndicatorWidth(of foodItem: MealFoodItem) -> CGFloat {
+//        calculateMacrosIndicatorWidth(
+//            for: foodItem.scaledValueForEnergyInKcal,
+//            largest: meal.largestEnergyInKcal,
+//            smallest: meal.smallestEnergyInKcal,
+//            maxWidth: 100
+//        )
+//    }
     
 }
 

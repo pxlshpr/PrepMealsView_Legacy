@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftHaptics
+import PrepDataTypes
 
 extension MealsList {
     
@@ -7,16 +8,7 @@ extension MealsList {
         ScrollView(showsIndicators: false) {
             LazyVStack {
                 ForEach(meals) { meal in
-                    Meal(
-                        date: date,
-                        meal: meal,
-                        meals: meals,
-                        badgeWidths: $badgeWidths,
-                        actionHandler: actionHandler
-//                        didTapAddFood: didTapAddFood,
-//                        didTapEditMeal: didTapEditMeal,
-//                        didTapMealFoodItem: didTapMealFoodItem
-                    )
+                    mealView(for: meal)
                 }
                 quickAddButtons
                     .safeAreaInset(edge: .bottom) {
@@ -33,6 +25,25 @@ extension MealsList {
 //                self.animation = .none
 //            }
 //        }
+    }
+    
+    func mealView(for meal: DayMeal) -> some View {
+        let isUpcomingMealBinding = Binding<Bool>(
+            get: {
+                guard date.isToday, let nextPlannedMeal = meals.nextPlannedMeal else {
+                    return false
+                }
+                return nextPlannedMeal.id == meal.id
+            },
+            set: { _ in }
+        )
+        return Meal(
+            date: date,
+            meal: meal,
+            badgeWidths: $badgeWidths,
+            isUpcomingMeal: isUpcomingMealBinding,
+            actionHandler: actionHandler
+        )
     }
     
     var background: Color {

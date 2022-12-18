@@ -7,9 +7,10 @@ extension MealsList.Meal {
     struct Footer: View {
         @EnvironmentObject var viewModel: MealsList.Meal.ViewModel
         
-//        @AppStorage(UserDefaultsKeys.showingMealMacros) private var showingMealMacros = false
-        @AppStorage(UserDefaultsKeys.showingFoodDetails) private var showingFoodDetails = false
+        @AppStorage(UserDefaultsKeys.showingBadgesForFoods) private var showingBadgesForFoods = false
 
+        @Binding var badgeWidth: CGFloat
+        
 //        @State var refreshBool = false
         //TODO: CoreData
 //        @ObservedObject var meal: Meal
@@ -88,9 +89,8 @@ extension MealsList.Meal.Footer {
             
             let binding = Binding<CGFloat>(
                 get: {
-//                    let width = viewModel.calculateMacrosIndicatorWidth
-//                    let width = viewModel.calculatedMealMacrosIndicatorWidth
-                    let width = viewModel.mealMacrosIndicatorWidth
+//                    let width = viewModel.mealMacrosIndicatorWidth
+                    let width = badgeWidth
                     return width
                 },
                 set: { _ in }
@@ -100,7 +100,6 @@ extension MealsList.Meal.Footer {
                 f: viewModel.meal.scaledValueForMacro(.fat),
                 p: viewModel.meal.scaledValueForMacro(.protein),
                 width: binding
-//                width: $viewModel.macrosIndicatorWidth
             )
         }
         
@@ -109,7 +108,7 @@ extension MealsList.Meal.Footer {
         } label: {
             HStack {
 //                if showingMealMacros {
-                if !showingFoodDetails {
+                if !showingBadgesForFoods {
                     macrosIndicator
                         .transition(.scale)
                 }

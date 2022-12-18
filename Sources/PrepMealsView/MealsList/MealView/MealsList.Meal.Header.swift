@@ -46,9 +46,7 @@ extension MealsList.Meal.Header {
             
             @ViewBuilder
             var upcomingLabel: some View {
-                if viewModel.shouldShowUpcomingLabel {
-//                    Text(viewModel.meal.timeDate, style: .timer)
-//                        .monospacedDigit()
+                if viewModel.isUpcomingMeal {
                         Text("UPCOMING")
                         .foregroundColor(.white)
                         .font(.caption2)
@@ -59,6 +57,7 @@ extension MealsList.Meal.Header {
                             RoundedRectangle(cornerRadius: 4)
                                 .foregroundColor(Color.accentColor)
                         )
+                        .transition(.scale)
                 }
             }
             

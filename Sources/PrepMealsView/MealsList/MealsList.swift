@@ -16,7 +16,7 @@ public struct MealsList: View {
     @State var animation: Animation? = .none
     
     @State var badgeWidths: [UUID : CGFloat] = [:]
-    
+
     let didAddFoodItemToMeal = NotificationCenter.default.publisher(for: .didAddFoodItemToMeal)
     let didUpdateMealFoodItem = NotificationCenter.default.publisher(for: .didUpdateMealFoodItem)
     let didDeleteFoodItemFromMeal = NotificationCenter.default.publisher(for: .didDeleteFoodItemFromMeal)
@@ -65,8 +65,9 @@ extension MealsList {
     
     func calculateBadgeWidths() {
         Task {
-            DataManager.shared.badgeWidths(for: date) { badgeWidths in
-                withAnimation(Bounce) {
+            DataManager.shared.badgeWidths(on: date) { badgeWidths in
+//                withAnimation(Bounce) {
+                withAnimation(.interactiveSpring()) {
                     self.badgeWidths = badgeWidths
                 }
             }

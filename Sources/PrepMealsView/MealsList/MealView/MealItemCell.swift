@@ -12,7 +12,8 @@ struct MealItemCell: View {
     @EnvironmentObject var viewModel: MealsList.Meal.ViewModel
     
     @AppStorage(UserDefaultsKeys.showingFoodDetails) private var showingFoodDetails = false
-    
+    @AppStorage(UserDefaultsKeys.showingBadgesForFoods) private var showingBadgesForFoods = false
+
     //TODO: CoreData
     //    @ObservedObject var item: FoodItem
     @Binding var item: MealFoodItem
@@ -24,17 +25,12 @@ struct MealItemCell: View {
     
     @Binding var badgeWidth: CGFloat
     
-//    let didAddFoodItemToMeal = NotificationCenter.default.publisher(for: .didAddFoodItemToMeal)
-//    let didUpdateMealFoodItem = NotificationCenter.default.publisher(for: .didUpdateMealFoodItem)
-//    let didDeleteFoodItemFromMeal = NotificationCenter.default.publisher(for: .didDeleteFoodItemFromMeal)
-    let didInvalidateBadgeWidths = NotificationCenter.default.publisher(for: .didInvalidateBadgeWidths)
-
     var body: some View {
         HStack {
             optionalEmojiText
             nameTexts
             Spacer()
-            if showingFoodDetails {
+            if showingBadgesForFoods {
                 foodBadge
                     .transition(.scale)
             }
@@ -48,45 +44,6 @@ struct MealItemCell: View {
             action: handleDrop,
             isTargeted: handleDropIsTargeted
         )
-        .onAppear(perform: appeared)
-//        .onReceive(didAddFoodItemToMeal, perform: didAddFoodItemToMeal)
-//        .onReceive(didUpdateMealFoodItem, perform: didUpdateMealFoodItem)
-//        .onReceive(didDeleteFoodItemFromMeal, perform: didDeleteFoodItemFromMeal)
-//        .onReceive(didInvalidateBadgeWidths, perform: didInvalidateBadgeWidths)
-    }
-    
-    func appeared() {
-//        calculateBadgeWidth()
-    }
-    func didInvalidateBadgeWidths(notification: Notification) {
-        guard index < viewModel.meal.foodItems.count else { return }        
-        calculateBadgeWidth()
-    }
-    
-    
-    func didAddFoodItemToMeal(notification: Notification) {
-        calculateBadgeWidth()
-    }
-    func didUpdateMealFoodItem(notification: Notification) {
-        calculateBadgeWidth()
-    }
-    func didDeleteFoodItemFromMeal(notification: Notification) {
-        guard index < viewModel.meal.foodItems.count else {
-            /// Rule out the actual food item being deleted using this, otherwise resulting in a crash when we try and acces the bound `item`
-            return
-        }
-        
-        calculateBadgeWidth()
-    }
-
-    func calculateBadgeWidth() {
-        Task {
-            DataManager.shared.badgeWidth(forFoodItemWithId: item.id) { width in
-                withAnimation {
-                    self.badgeWidth = width
-                }
-            }
-        }
     }
     
     var foodBadge: some View {
