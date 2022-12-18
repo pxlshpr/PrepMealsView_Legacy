@@ -2,26 +2,6 @@ import SwiftUI
 import SwiftHaptics
 
 extension MealsList {
-
-    var list: some View {
-        List {
-            ForEach(meals) { meal in
-                Meal(
-                    date: date,
-                    meal: meal,
-                    meals: meals,
-                    actionHandler: actionHandler
-//                    didTapAddFood: didTapAddFood,
-//                    didTapEditMeal: didTapEditMeal,
-//                    didTapMealFoodItem: didTapMealFoodItem
-                )
-            }
-            quickAddButtons
-        }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .background(Color(.systemGroupedBackground))
-    }
     
     var scrollView: some View {
         ScrollView(showsIndicators: false) {
@@ -31,6 +11,7 @@ extension MealsList {
                         date: date,
                         meal: meal,
                         meals: meals,
+                        badgeWidths: $badgeWidths,
                         actionHandler: actionHandler
 //                        didTapAddFood: didTapAddFood,
 //                        didTapEditMeal: didTapEditMeal,

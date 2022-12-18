@@ -94,34 +94,27 @@ extension MealsList.Meal.ViewModel {
             return
         }
         
-        let mealFoodItem = MealFoodItem(from: foodItem)
-        
         withAnimation(Bounce) {
             /// Update our local array used to calculate macro indicator widths first
             self.meals.addFoodItem(foodItem)
-
         }
 
+        /// Make sure this is the `MealView.ViewModel` for the `Meal` that the `FoodItem` belongs to before proceeding
+        guard foodItem.meal?.id == meal.id else {
+            return
+        }
+        
+        let mealFoodItem = MealFoodItem(from: foodItem)
         withAnimation(.interactiveSpring()) {
-            
-            /// Make sure this is the `MealView.ViewModel` for the `Meal` that the `FoodItem` belongs to before proceeding
-            guard foodItem.meal?.id == meal.id else {
-//                self.mealMacrosIndicatorWidth = calculatedMealMacrosIndicatorWidth
-                return
-            }
-            
-            self.meal.foodItems.append(mealFoodItem)
-
-            //TODO: Try simply appending it and then re-sorting it for that item
-            // It should take the sort position, insert it correctly, and then reset all the numbers
-            /// Re-sort the `foodItems` in case we moved an item within a meal
+            meal.foodItems.append(mealFoodItem)
             resetSortPositions(aroundFoodItemWithId: foodItem.id)
         }
         
-//        withAnimation(Bounce) {
-//            print("🔥 Calculating after ADD \(meal.name)")
-//            self.mealMacrosIndicatorWidth = calculatedMealMacrosIndicatorWidth
-//        }
+        NotificationCenter.default.post(
+            name: .didInvalidateBadgeWidths,
+            object: nil,
+            userInfo: [Notification.Keys.date : date]
+        )
     }
     
     @objc func didUpdateMealFoodItem(notification: Notification) {
@@ -136,16 +129,15 @@ extension MealsList.Meal.ViewModel {
             self.meals.updateFoodItem(updatedFoodItem)
         }
 
+        /// Make sure this is the `MealView.ViewModel` for the `Meal` that the `FoodItem` belongs to before proceeding
+        guard
+            updatedFoodItem.meal?.id == meal.id,
+            let existingIndex = meal.foodItems.firstIndex(where: { $0.id == updatedFoodItem.id })
+        else {
+            return
+        }
+        
         withAnimation(.interactiveSpring()) {
-            
-            /// Make sure this is the `MealView.ViewModel` for the `Meal` that the `FoodItem` belongs to before proceeding
-            guard
-                updatedFoodItem.meal?.id == meal.id,
-                let existingIndex = meal.foodItems.firstIndex(where: { $0.id == updatedFoodItem.id })
-            else {
-//                self.mealMacrosIndicatorWidth = calculatedMealMacrosIndicatorWidth
-                return
-            }
             
             /// Replace the existing `MealFoodItem` with the updated one
             self.meal.foodItems[existingIndex] = MealFoodItem(from: updatedFoodItem)
@@ -154,11 +146,12 @@ extension MealsList.Meal.ViewModel {
             resetSortPositions(aroundFoodItemWithId: updatedFoodItem.id)
         }
         
-//        withAnimation(Bounce) {
-//            print("🔥 Calculating after UPDATE \(meal.name)")
-//            self.mealMacrosIndicatorWidth = calculatedMealMacrosIndicatorWidth
-//        }
-        
+        NotificationCenter.default.post(
+            name: .didInvalidateBadgeWidths,
+            object: nil,
+            userInfo: [Notification.Keys.date : date]
+        )
+
         SyncManager.shared.resume()
     }
 
@@ -174,21 +167,19 @@ extension MealsList.Meal.ViewModel {
         }
 
         guard meal.foodItems.contains(where: { $0.id == id }) else {
-//            print("🔥 Calculating after DELETE \(meal.name)")
-//            self.mealMacrosIndicatorWidth = calculatedMealMacrosIndicatorWidth
             return
         }
         
         withAnimation(.interactiveSpring()) {
-            /// Update our local array used to calculate macro indicator widths first
-
-            self.meal.foodItems.removeAll(where: { $0.id == id })
+            meal.foodItems.removeAll(where: { $0.id == id })
             resetSortPositions(aroundFoodItemWithId: nil)
         }
-//        withAnimation(Bounce) {
-//            print("🔥 Calculating after DELETE \(meal.name)")
-//            self.mealMacrosIndicatorWidth = calculatedMealMacrosIndicatorWidth
-//        }
+        
+        NotificationCenter.default.post(
+            name: .didInvalidateBadgeWidths,
+            object: nil,
+            userInfo: [Notification.Keys.date : date]
+        )
     }
     
     @objc func didUpdateFoodItems(notification: Notification) {

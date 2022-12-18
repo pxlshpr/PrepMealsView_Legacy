@@ -13,10 +13,13 @@ extension MealsList {
         
 //        var meal: DayMeal
         
+        @Binding var badgeWidths: [UUID : CGFloat]
+        
         init(
             date: Date,
             meal: DayMeal,
             meals: [DayMeal],
+            badgeWidths: Binding<[UUID : CGFloat]>,
             actionHandler: @escaping (MealsDiaryAction) -> ()
 //            didTapAddFood: @escaping (DayMeal) -> (),
 //            didTapEditMeal: @escaping (DayMeal) -> (),
@@ -31,6 +34,7 @@ extension MealsList {
 //                didTapEditMeal: didTapEditMeal,
 //                didTapMealFoodItem: didTapMealFoodItem
             )
+            _badgeWidths = badgeWidths
             _viewModel = StateObject(wrappedValue: viewModel)
 //            self.meal = meal
 //            self.didTapAddFood = didTapAddFood
@@ -129,11 +133,19 @@ extension MealsList.Meal {
     }
     
     func cell(for mealFoodItem: Binding<MealFoodItem>, index: Int) -> some View {
-        Button {
+        
+        let badgeWidthBinding = Binding<CGFloat>(
+            get: {
+                badgeWidths[mealFoodItem.id] ?? 0
+            },
+            set: { _ in }
+        )
+        
+        return Button {
             viewModel.actionHandler(.editFoodItem(mealFoodItem.wrappedValue, viewModel.meal))
 //            viewModel.didTapMealFoodItem(mealFoodItem, viewModel.meal)
         } label: {
-            MealItemCell(item: mealFoodItem, index: index)
+            MealItemCell(item: mealFoodItem, index: index, badgeWidth: badgeWidthBinding)
                 .environmentObject(viewModel)
         }
         .draggable(mealFoodItem.wrappedValue)

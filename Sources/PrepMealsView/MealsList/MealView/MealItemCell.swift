@@ -5,57 +5,6 @@ import PrepDataTypes
 import PrepViews
 import PrepCoreDataStack
 
-extension MealsList.Meal.ViewModel {
-    var isTargetingLastCell: Bool {
-        dragTargetFoodItemId == meal.foodItems.last?.id
-    }
-    
-    var shouldShowFooterTopSeparatorBinding: Binding<Bool> {
-        Binding<Bool>(
-            get: {
-                /// if we're currently targeting last cell, don't show it
-                guard !self.isTargetingLastCell else { return false }
-                
-                /// Otherwise only show it if we're not empty
-                return !self.meal.foodItems.isEmpty
-            },
-            set: { _ in }
-        )
-    }
-    
-    func shouldShowTopSeparator(for item: MealFoodItem) -> Bool {
-        /// if the meal header is being targeted on and this is the first cell
-//        if targetId == meal.id, item.id == meal.foodItems.first?.id {
-//            return true
-//        }
-        
-        return false
-    }
-    
-    func shouldShowBottomSeparator(for item: MealFoodItem) -> Bool {
-        /// If this cell is being targeted,  and its the last one, show it
-//        if item.id == meal.foodItems.last?.id, dragTargetFoodItemId == item.id {
-//            return true
-//        }
-        
-        return false
-    }
-
-    func shouldShowDivider(for item: MealFoodItem) -> Bool {
-        /// if this is the last cell, never show it
-        if item.id == meal.foodItems.last?.id {
-            return false
-        }
-        
-        /// If this cell is being targeted, don't show it
-        if dragTargetFoodItemId == item.id {
-            return false
-        }
-        
-        return true
-    }
-}
-
 struct MealItemCell: View {
     
     @Environment(\.colorScheme) var colorScheme
@@ -73,11 +22,12 @@ struct MealItemCell: View {
     //    var namespace: Binding<Namespace.ID?>
     //    @Binding var namespacePrefix: UUID
     
-    @State var badgeWidth: CGFloat = 0
+    @Binding var badgeWidth: CGFloat
     
-    let didAddFoodItemToMeal = NotificationCenter.default.publisher(for: .didAddFoodItemToMeal)
-    let didUpdateMealFoodItem = NotificationCenter.default.publisher(for: .didUpdateMealFoodItem)
-    let didDeleteFoodItemFromMeal = NotificationCenter.default.publisher(for: .didDeleteFoodItemFromMeal)
+//    let didAddFoodItemToMeal = NotificationCenter.default.publisher(for: .didAddFoodItemToMeal)
+//    let didUpdateMealFoodItem = NotificationCenter.default.publisher(for: .didUpdateMealFoodItem)
+//    let didDeleteFoodItemFromMeal = NotificationCenter.default.publisher(for: .didDeleteFoodItemFromMeal)
+    let didInvalidateBadgeWidths = NotificationCenter.default.publisher(for: .didInvalidateBadgeWidths)
 
     var body: some View {
         HStack {
@@ -99,14 +49,21 @@ struct MealItemCell: View {
             isTargeted: handleDropIsTargeted
         )
         .onAppear(perform: appeared)
-        .onReceive(didAddFoodItemToMeal, perform: didAddFoodItemToMeal)
-        .onReceive(didUpdateMealFoodItem, perform: didUpdateMealFoodItem)
-        .onReceive(didDeleteFoodItemFromMeal, perform: didDeleteFoodItemFromMeal)
+//        .onReceive(didAddFoodItemToMeal, perform: didAddFoodItemToMeal)
+//        .onReceive(didUpdateMealFoodItem, perform: didUpdateMealFoodItem)
+//        .onReceive(didDeleteFoodItemFromMeal, perform: didDeleteFoodItemFromMeal)
+//        .onReceive(didInvalidateBadgeWidths, perform: didInvalidateBadgeWidths)
     }
     
     func appeared() {
+//        calculateBadgeWidth()
+    }
+    func didInvalidateBadgeWidths(notification: Notification) {
+        guard index < viewModel.meal.foodItems.count else { return }        
         calculateBadgeWidth()
     }
+    
+    
     func didAddFoodItemToMeal(notification: Notification) {
         calculateBadgeWidth()
     }
@@ -126,7 +83,6 @@ struct MealItemCell: View {
         Task {
             DataManager.shared.badgeWidth(forFoodItemWithId: item.id) { width in
                 withAnimation {
-                    print("🟣 Setting width for: \(item.food.name) — \(width)")
                     self.badgeWidth = width
                 }
             }
@@ -328,3 +284,54 @@ extension UTType {
     static var mealFoodItem: UTType { .init(exportedAs: "com.pxlshpr.Prep.mealFoodItem") }
 }
 
+
+extension MealsList.Meal.ViewModel {
+    var isTargetingLastCell: Bool {
+        dragTargetFoodItemId == meal.foodItems.last?.id
+    }
+    
+    var shouldShowFooterTopSeparatorBinding: Binding<Bool> {
+        Binding<Bool>(
+            get: {
+                /// if we're currently targeting last cell, don't show it
+                guard !self.isTargetingLastCell else { return false }
+                
+                /// Otherwise only show it if we're not empty
+                return !self.meal.foodItems.isEmpty
+            },
+            set: { _ in }
+        )
+    }
+    
+    func shouldShowTopSeparator(for item: MealFoodItem) -> Bool {
+        /// if the meal header is being targeted on and this is the first cell
+//        if targetId == meal.id, item.id == meal.foodItems.first?.id {
+//            return true
+//        }
+        
+        return false
+    }
+    
+    func shouldShowBottomSeparator(for item: MealFoodItem) -> Bool {
+        /// If this cell is being targeted,  and its the last one, show it
+//        if item.id == meal.foodItems.last?.id, dragTargetFoodItemId == item.id {
+//            return true
+//        }
+        
+        return false
+    }
+
+    func shouldShowDivider(for item: MealFoodItem) -> Bool {
+        /// if this is the last cell, never show it
+        if item.id == meal.foodItems.last?.id {
+            return false
+        }
+        
+        /// If this cell is being targeted, don't show it
+        if dragTargetFoodItemId == item.id {
+            return false
+        }
+        
+        return true
+    }
+}
