@@ -100,7 +100,7 @@ extension MealsList.Meal.Header {
     var mealMenuButton: some View {
         Menu {
             Button {
-                
+                viewModel.actionHandler(.addFood(viewModel.meal))
             } label: {
                 Label("Add Food", systemImage: "plus")
             }
