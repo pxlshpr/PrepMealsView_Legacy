@@ -7,12 +7,13 @@ extension MealsList {
             
             func yOffset(forHeight contentHeight: CGFloat, safeAreaInsets: EdgeInsets) -> CGFloat {
                 /// [ ] Handle these hardcoded values gracefully
-                let weekPagerHeight: CGFloat = 45
-                let dayPagerHeight: CGFloat = 27
+//                let weekPagerHeight: CGFloat = 45
+//                let dayPagerHeight: CGFloat = 27
+//                let topHeight: CGFloat = weekPagerHeight + dayPagerHeight + safeAreaInsets.top
+                let topHeight: CGFloat = 185
+
                 let bottomHeight: CGFloat = 95
-                
-                let topHeight: CGFloat = weekPagerHeight + dayPagerHeight + safeAreaInsets.top
-                
+
                 return (UIScreen.main.bounds.height - topHeight - bottomHeight) / 2.0 - (contentHeight / 2.0)
             }
             
@@ -28,7 +29,7 @@ extension MealsList {
                                 .fixedSize(horizontal: false, vertical: true)
                             addMealEmptyButton
                         }
-                        .frame(width: 100, height: 100)
+                        .frame(width: 300, height: 170)
 //                        .padding()
 //                        .padding(.vertical, 15)
                         .background(
@@ -38,7 +39,7 @@ extension MealsList {
                         .padding(.horizontal, 50)
                         Spacer()
                     }
-//                    .offset(y: yOffset(forHeight: proxy.size.height, safeAreaInsets: proxy.safeAreaInsets))
+                    .offset(y: yOffset(forHeight: 170, safeAreaInsets: proxy.safeAreaInsets))
                 }
             }
             
@@ -64,10 +65,8 @@ extension MealsList {
     
     var addMealEmptyButton: some View {
         let string = isBeforeToday ? "Log a Meal" : "Prep a Meal"
-        return Button {
-            actionHandler(.addMeal(nil))
-//            onTapAddMeal(nil)
-        } label: {
+        
+        var label: some View {
             HStack {
                 Image(systemName: "note.text.badge.plus")
                 Text(string)
@@ -77,11 +76,27 @@ extension MealsList {
             .padding(.vertical, 12)
             .background(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-//                Capsule(style: .continuous)
                     .foregroundColor(Color.accentColor)
             )
         }
-        .buttonStyle(.borderless)
+        
+        var button: some View {
+            Button {
+                actionHandler(.addMeal(nil))
+            } label: {
+                label
+            }
+            .buttonStyle(.borderless)
+        }
+        
+        var customButton: some View {
+            label
+                .onTapGesture {
+                    actionHandler(.addMeal(nil))
+                }
+        }
+        
+        return button
     }
 }
 
