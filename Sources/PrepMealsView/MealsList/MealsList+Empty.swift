@@ -3,24 +3,62 @@ import SwiftUI
 extension MealsList {
 
     var emptyContent: some View {
-        ZStack {
-            background
-//            Color(.systemGroupedBackground)
-            VStack {
-                Text(emptyText)
-                    .font(.title2)
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(Color(.tertiaryLabel))
-                addMealEmptyButton
+        var emptyMessageLayer: some View {
+            
+            func yOffset(forHeight contentHeight: CGFloat, safeAreaInsets: EdgeInsets) -> CGFloat {
+                /// [ ] Handle these hardcoded values gracefully
+                let weekPagerHeight: CGFloat = 45
+                let dayPagerHeight: CGFloat = 27
+                let bottomHeight: CGFloat = 95
+                
+                let topHeight: CGFloat = weekPagerHeight + dayPagerHeight + safeAreaInsets.top
+                
+                return (UIScreen.main.bounds.height - topHeight - bottomHeight) / 2.0 - (contentHeight / 2.0)
             }
-            .padding()
-            .padding(.vertical, 15)
-            .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .foregroundColor(Color(.quaternarySystemFill))
-            )
-            .padding(.horizontal, 50)
-            .offset(y: -15)
+            
+            var emptyMessage: some View {
+                GeometryReader { proxy in
+                    HStack {
+                        Spacer()
+                        VStack {
+                            Text(emptyText)
+                                .font(.title2)
+                                .multilineTextAlignment(.center)
+                                .foregroundColor(Color(.tertiaryLabel))
+                                .fixedSize(horizontal: false, vertical: true)
+                            addMealEmptyButton
+                        }
+                        .frame(width: 100, height: 100)
+//                        .padding()
+//                        .padding(.vertical, 15)
+                        .background(
+                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                .foregroundColor(Color(.quaternarySystemFill))
+                        )
+                        .padding(.horizontal, 50)
+                        Spacer()
+                    }
+//                    .offset(y: yOffset(forHeight: proxy.size.height, safeAreaInsets: proxy.safeAreaInsets))
+                }
+            }
+            
+            return ScrollView {
+                emptyMessage
+            }
+//            .fixedSize()
+            
+//            return ScrollView {
+//                VStack {
+//                    Spacer()
+//                    emptyMessage
+//                    Spacer()
+//                }
+//            }
+        }
+        
+        return ZStack {
+            background
+            emptyMessageLayer
         }
     }
     
