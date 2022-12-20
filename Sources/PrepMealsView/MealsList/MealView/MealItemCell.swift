@@ -27,9 +27,12 @@ struct MealItemCell: View {
     @Binding var badgeWidth: CGFloat
     
     var body: some View {
-        HStack {
+        HStack(spacing: 0) {
             optionalEmojiText
+                .padding(.leading, 20)
             nameTexts
+                .padding(.leading, showingFoodEmojis ? 8 : 20)
+                .padding(.vertical, 12)
             Spacer()
             if showingBadgesForFoods {
                 foodBadge
@@ -37,8 +40,7 @@ struct MealItemCell: View {
             }
             isEatenToggle
         }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 20)
+//        .padding(.leading, 20)
         .background(listRowBackground)
         .dropDestination(
             for: MealFoodItem.self,
@@ -132,9 +134,13 @@ struct MealItemCell: View {
             Haptics.feedback(style: .soft)
         } label: {
             Image(systemName: item.isCompleted ? "checkmark.circle.fill" : "circle.dotted")
+                .padding(.leading, 8)
+                .padding(.trailing, 20)
+                .frame(maxHeight: .infinity)
         }
         .foregroundColor(item.isCompleted ? .accentColor : Color(.tertiaryLabel))
         .buttonStyle(.borderless)
+//        .background(.green)
     }
     
     @ViewBuilder

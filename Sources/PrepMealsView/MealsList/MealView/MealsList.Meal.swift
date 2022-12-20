@@ -88,11 +88,18 @@ extension MealsList.Meal {
     }
     
     var content: some View {
-        VStack(spacing: 0) {
-            header
-            dropTargetForMeal
-            mealContent
-            footer
+        ZStack {
+            VStack(spacing: 0) {
+                header
+                dropTargetForMeal
+                mealContent
+                Color.clear
+                    .frame(height: 50)
+            }
+            VStack(spacing: 0) {
+                Spacer()
+                footer
+            }
         }
     }
     

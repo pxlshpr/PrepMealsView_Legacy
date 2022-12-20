@@ -25,7 +25,6 @@ extension MealsList.Meal {
 extension MealsList.Meal.Footer {
     var body: some View {
         content
-            .background(listRowBackground)
             .onReceive(didDeleteFoodItemFromMeal, perform: didDeleteFoodItemFromMeal)
     }
     
@@ -37,19 +36,36 @@ extension MealsList.Meal.Footer {
 //        refreshBool.toggle()
     }
     
-    var content: some View {
-        HStack(spacing: 0) {
-            if !viewModel.meal.isCompleted {
-                addFoodButton
-            }
-            Spacer()
-            if !viewModel.meal.foodItems.isEmpty {
-                nutrientsButton
-                    .fixedSize()
-            }
+    @ViewBuilder
+    var optionalFoodButton: some View {
+        if !viewModel.meal.isCompleted {
+            addFoodButton
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+    }
+    
+    @ViewBuilder
+    var optionalNutrientsButton: some View {
+        if !viewModel.meal.foodItems.isEmpty {
+            nutrientsButton
+                .fixedSize()
+        }
+    }
+    
+    var content: some View {
+        ZStack(alignment: .bottom) {
+            HStack(spacing: 0) {
+                Spacer()
+                optionalNutrientsButton
+            }
+            .padding(.trailing, 20)
+            .frame(height: 50)
+            .background(listRowBackground)
+            HStack(spacing: 0) {
+                optionalFoodButton
+                Spacer()
+            }
+            .frame(height: 65)
+        }
     }
     
     var addFoodButton: some View {
@@ -60,16 +76,20 @@ extension MealsList.Meal.Footer {
                 .font(.caption)
                 .bold()
 //                .foregroundColor(.secondary)
-                .padding(8)
+                .padding(.horizontal, 8)
+                .frame(height: 30)
                 .background(
                     RoundedRectangle(cornerRadius: 5)
                         .foregroundColor(Color(.tertiarySystemFill))
                 )
+                .frame(maxHeight: .infinity)
+                .padding(.leading, 20)
+                .padding(.top, 22.75)
+//                .background(.green)
         }
         .contentShape(Rectangle())
         .padding(.trailing)
         .buttonStyle(.borderless)
-        .frame(maxHeight: .infinity)
     }
 
     var nutrientsButton: some View {
