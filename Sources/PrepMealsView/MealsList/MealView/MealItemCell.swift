@@ -33,6 +33,7 @@ struct MealItemCell: View {
             nameTexts
                 .padding(.leading, showingFoodEmojis ? 8 : 20)
                 .padding(.vertical, 12)
+                .fixedSize(horizontal: false, vertical: true)
             Spacer()
             if showingBadgesForFoods {
                 foodBadge
