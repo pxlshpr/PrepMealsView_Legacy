@@ -24,6 +24,8 @@ public struct MealsList: View {
     
     let dateDidChange = NotificationCenter.default.publisher(for: .dateDidChange)
 
+    @State var hasAppeared: Bool = false
+    
     public init(
         date: Date,
         meals: Binding<[DayMeal]>,
@@ -36,10 +38,11 @@ public struct MealsList: View {
     
     public var body: some View {
         Group {
-            if meals.isEmpty {
-                emptyContent
+            if hasAppeared {
+                content
+                    .transition(.opacity)
             } else {
-                scrollView
+                Color(.systemGroupedBackground)
             }
         }
         .onAppear(perform: appeared)
@@ -49,13 +52,27 @@ public struct MealsList: View {
         .onReceive(didDeleteFoodItemFromMeal, perform: didDeleteFoodItemFromMeal)
         .onReceive(didDeleteMeal, perform: didDeleteMeal)
     }
+    
+    var content: some View {
+        Group {
+            if meals.isEmpty {
+                emptyContent
+            } else {
+                scrollView
+            }
+        }
+    }
 }
 
 extension MealsList {
     func appeared() {
-        /// Delayed slightly so as to not interrupt the pager animation
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            calculateBadgeWidths()
+            withAnimation {
+                self.hasAppeared = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                calculateBadgeWidths()
+            }
         }
     }
     
