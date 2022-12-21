@@ -66,6 +66,7 @@ public struct MealsList: View {
 
 extension MealsList {
     func appeared() {
+        //TODO: Don't do this for the initial load when app launches
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             withAnimation {
                 self.hasAppeared = true
