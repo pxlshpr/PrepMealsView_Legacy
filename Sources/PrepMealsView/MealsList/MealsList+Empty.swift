@@ -83,6 +83,9 @@ extension MealsList {
         var button: some View {
             Button {
                 actionHandler(.addMeal(nil))
+                
+                ///** DELETE THIS **
+                NotificationCenter.default.post(name: .debugNotification, object: nil)
             } label: {
                 label
             }
