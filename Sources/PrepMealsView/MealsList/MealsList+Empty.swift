@@ -30,8 +30,6 @@ extension MealsList {
                             addMealEmptyButton
                         }
                         .frame(width: 300, height: 170)
-//                        .padding()
-//                        .padding(.vertical, 15)
                         .background(
                             RoundedRectangle(cornerRadius: 20, style: .continuous)
                                 .foregroundColor(Color(.quaternarySystemFill))
@@ -43,18 +41,18 @@ extension MealsList {
                 }
             }
             
-            return ScrollView {
-                emptyMessage
-            }
-//            .fixedSize()
-            
 //            return ScrollView {
-//                VStack {
-//                    Spacer()
-//                    emptyMessage
-//                    Spacer()
-//                }
+//                emptyMessage
 //            }
+//            .fixedSize()
+
+            return ScrollView {
+                VStack {
+                    Spacer()
+                    emptyMessage
+                    Spacer()
+                }
+            }
         }
         
         return ZStack {
@@ -83,9 +81,6 @@ extension MealsList {
         var button: some View {
             Button {
                 actionHandler(.addMeal(nil))
-                
-                ///** DELETE THIS **
-                NotificationCenter.default.post(name: .debugNotification, object: nil)
             } label: {
                 label
             }
