@@ -27,6 +27,7 @@ extension MealsList {
                                 .multilineTextAlignment(.center)
                                 .foregroundColor(Color(.tertiaryLabel))
                                 .fixedSize(horizontal: false, vertical: true)
+                                .padding(.horizontal)
                             addMealEmptyButton
                         }
                         .frame(width: 300, height: 170)
@@ -69,12 +70,16 @@ extension MealsList {
                 Image(systemName: "note.text.badge.plus")
                 Text(string)
             }
-            .foregroundColor(.white)
+//            .foregroundColor(.white)
+//            .foregroundColor(.secondary)
+            .foregroundColor(colorScheme == .light ? Color(.secondarySystemGroupedBackground) : .accentColor)
+            .fontWeight(.bold)
             .padding(.horizontal)
             .padding(.vertical, 12)
             .background(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .foregroundColor(Color.accentColor)
+//                    .foregroundStyle(colorScheme == .light ? .regularMaterial : .ultraThinMaterial)
+                    .foregroundColor(colorScheme == .light ? Color.accentColor : Color(hex: "343435"))
             )
         }
         
