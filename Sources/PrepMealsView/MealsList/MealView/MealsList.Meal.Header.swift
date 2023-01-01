@@ -37,8 +37,7 @@ extension MealsList.Meal.Header {
             Spacer()
             mealMenuButton
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+//        .background(.blue)
     }
     
     var titleButton: some View {
@@ -47,7 +46,7 @@ extension MealsList.Meal.Header {
             @ViewBuilder
             var upcomingLabel: some View {
                 if viewModel.isUpcomingMeal {
-                        Text("UPCOMING")
+                    Text("UPCOMING")
                         .foregroundColor(.white)
                         .font(.caption2)
                         .bold()
@@ -91,8 +90,11 @@ extension MealsList.Meal.Header {
             tappedEditMeal()
         } label: {
             label
+                .padding(.leading, 20)
+                .frame(maxHeight: .infinity)
         }
         .buttonStyle(.plain)
+//        .background(.green)
     }
     
     //MARK: - Menu
@@ -153,6 +155,9 @@ extension MealsList.Meal.Header {
                 .padding(.top, 10)
                 .padding(.bottom, 5)
                 .padding(.leading)
+                .padding(.vertical, 12)
+                .padding(.trailing, 20)
+                .frame(maxHeight: .infinity)
         }
         .contentShape(Rectangle())
     }
@@ -190,7 +195,7 @@ extension MealsList.Meal.Header {
     
     func tappedEditMeal() {
         viewModel.actionHandler(.editMeal(viewModel.meal))
-//        viewModel.didTapEditMeal(viewModel.meal)
+        //        viewModel.didTapEditMeal(viewModel.meal)
     }
     
     func tappedAddFood() {
