@@ -26,6 +26,7 @@ extension MealsList.Meal.Footer {
     var body: some View {
         content
             .onReceive(didDeleteFoodItemFromMeal, perform: didDeleteFoodItemFromMeal)
+//            .background(.yellow)
     }
     
     var listRowBackground: some View {

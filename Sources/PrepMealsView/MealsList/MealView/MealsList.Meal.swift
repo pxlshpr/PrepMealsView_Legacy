@@ -90,11 +90,16 @@ extension MealsList.Meal {
     var content: some View {
         ZStack {
             VStack(spacing: 0) {
-                header
+                Color.clear
+                    .frame(height: 44)
                 dropTargetForMeal
                 mealContent
                 Color.clear
                     .frame(height: 50)
+            }
+            VStack(spacing: 0) {
+                header
+                Spacer()
             }
             VStack(spacing: 0) {
                 Spacer()

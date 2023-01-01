@@ -16,9 +16,6 @@ extension MealsList.Meal.Header {
     
     var body: some View {
         content
-            .background(
-                listRowBackground
-            )
     }
     
     var listRowBackground: some View {
@@ -32,12 +29,29 @@ extension MealsList.Meal.Header {
     }
     
     var content: some View {
+        ZStack(alignment: .top) {
+            HStack {
+                Spacer()
+                mealMenuButton
+            }
+            .frame(height: 44)
+            .background(
+                listRowBackground
+            )
+            HStack {
+                titleButton
+                Spacer()
+            }
+            .frame(height: 65)
+        }
+    }
+    
+    var content_legacy: some View {
         HStack {
             titleButton
             Spacer()
             mealMenuButton
         }
-//        .background(.blue)
     }
     
     var titleButton: some View {
@@ -92,9 +106,11 @@ extension MealsList.Meal.Header {
             label
                 .padding(.leading, 20)
                 .frame(maxHeight: .infinity)
+                .padding(.bottom, 16.75)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-//        .background(.green)
+//        .background(.green.opacity(0.2))
     }
     
     //MARK: - Menu
