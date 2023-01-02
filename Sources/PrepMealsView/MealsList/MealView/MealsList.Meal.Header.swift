@@ -87,13 +87,15 @@ extension MealsList.Meal.Header {
                     .fixedSize(horizontal: false, vertical: true)
             }
             
-            return Group {
+            return HStack {
                 HStack {
                     timeText
                     separatorText
                     nameText
                 }
+                .fixedSize(horizontal: true, vertical: false)
                 upcomingLabel
+                Spacer()
             }
             .textCase(.uppercase)
             .font(.footnote)
