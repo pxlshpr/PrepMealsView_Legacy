@@ -30,10 +30,10 @@ extension MealsList {
                                 .padding(.horizontal)
                             addMealEmptyButton
                         }
-                        .frame(width: 300, height: 170)
+                        .frame(width: UIScreen.main.bounds.width * 0.7, height: 170)
                         .background(
                             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                .foregroundColor(Color(.quaternarySystemFill))
+                                .foregroundColor(Color(.quaternarySystemFill).opacity(colorScheme == .dark ? 0.5 : 1.0))
                         )
                         .padding(.horizontal, 50)
                         Spacer()
@@ -69,18 +69,25 @@ extension MealsList {
             HStack {
                 Image(systemName: "note.text.badge.plus")
                 Text(string)
+                    .fontWeight(.bold)
             }
-//            .foregroundColor(.white)
-//            .foregroundColor(.secondary)
-            .foregroundColor(colorScheme == .light ? Color(.secondarySystemGroupedBackground) : .accentColor)
-            .fontWeight(.bold)
+//            .foregroundColor(colorScheme == .light ? Color(.secondarySystemGroupedBackground) : .accentColor)
+            .foregroundColor(.accentColor)
             .padding(.horizontal)
             .padding(.vertical, 12)
+            
             .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-//                    .foregroundStyle(colorScheme == .light ? .regularMaterial : .ultraThinMaterial)
-                    .foregroundColor(colorScheme == .light ? Color.accentColor : Color(hex: "343435"))
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(Color.accentColor.opacity(
+                        colorScheme == .dark ? 0.1 : 0.15
+                    ))
             )
+            
+//            .background(
+//                RoundedRectangle(cornerRadius: 20, style: .continuous)
+////                    .foregroundStyle(colorScheme == .light ? .regularMaterial : .ultraThinMaterial)
+//                    .foregroundColor(colorScheme == .light ? Color.accentColor : Color(hex: "343435"))
+//            )
         }
         
         var button: some View {
