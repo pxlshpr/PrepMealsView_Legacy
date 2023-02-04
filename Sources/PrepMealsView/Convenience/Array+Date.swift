@@ -34,34 +34,19 @@ extension Array where Element == Date {
 
         let suggestions: [Date?]
         if includingSuggestionsRelativeToNow {
-//
-//            let twoHoursFromNow = newDateIfOnSameDay(2, hoursAfter: Date())
-//            let fourHoursFromNow = newDateIfOnSameDay(4, hoursAfter: Date())
-//            let sizeHoursFromNow = newDateIfOnSameDay(6, hoursAfter: Date())
-
             let times = timesTillEndOfDay(from: Date())
-//            var times: [Date?] = []
-//            var hours: Int = 2
-//            while hours < 24 {
-//                let time = newDateIfOnSameDay(hours, hoursAfter: Date())
-//
-//            }
             
             /// if the last meal is within 1 hour from now (in either direction)
             if abs(last.timeIntervalSince1970 - Date().timeIntervalSince1970) < 3600
                 || twoHoursFromLast == nil
             {
                 suggestions = times
-//                suggestions = [twoHoursFromNow, fourHoursFromNow, sizeHoursFromNow]
             } else {
                 suggestions = [twoHoursFromLast] + times
-//                suggestions = [twoHoursFromLast, twoHoursFromNow]
             }
         } else {
-//            let fourHoursFromLast = newDateIfOnSameDay(4, hoursAfter: last)
             let times = timesTillEndOfDay(from: last)
             suggestions = times
-//            suggestions = [twoHoursFromLast, fourHoursFromLast]
         }
         
         return suggestions.compactMap { $0 }

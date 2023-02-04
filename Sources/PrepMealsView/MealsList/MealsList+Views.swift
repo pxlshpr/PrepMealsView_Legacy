@@ -86,7 +86,7 @@ extension MealsList {
             Text("Quick:")
                 .font(.footnote)
                 .foregroundColor(.secondary)
-                .padding(.horizontal, 5)
+                .padding(.leading, 5)
                 .padding(.vertical, 10)
                 .background(
                     RoundedRectangle(cornerRadius: 7, style: .continuous)
@@ -99,10 +99,30 @@ extension MealsList {
         }
         
         var row: some View {
-            HStack {
+            var gradientFill: LinearGradient {
+                var backgroundColor: Color {
+//                    colorScheme == .light ? Color(hex: "F2F2F7") : Color(hex: "191919")
+                    colorScheme == .light ? Color(hex: "EAEAF0") : Color(hex: "212122")
+                }
+                return LinearGradient(
+                    gradient: Gradient(colors: [backgroundColor, .clear]), startPoint: .leading, endPoint: .trailing)
+            }
+            return HStack(spacing: 0) {
                 addMealButton
+                    .padding(.trailing, 5)
                 quickMealLabel
-                scrollView
+                ZStack {
+                    scrollView
+                    HStack(spacing: 0) {
+                        Rectangle()
+//                            .fill(.blue.opacity(0.5))
+                            .fill(gradientFill)
+                            .frame(width: 20)
+//                            .offset(x: -10)
+                        Spacer()
+                    }
+                    .allowsHitTesting(false)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .center)
             .padding(.leading, 20)
@@ -110,7 +130,7 @@ extension MealsList {
         
         var scrollView: some View {
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 5) {
+                LazyHStack(spacing: 5) {
                     if isToday {
                         quickAddButton()
                     }
@@ -118,13 +138,17 @@ extension MealsList {
                         quickAddButton(at: mealTimeSuggestions[$0])
                     }
                 }
+                .padding(.horizontal, 10)
             }
         }
         
         return row
-//        return scrollView
             .frame(maxWidth: .infinity, alignment: .center)
             .padding(.vertical, 15)
+            .background(
+                Color(.quaternarySystemFill).opacity(colorScheme == .light ? 0.75 : 0.5)
+                    .frame(height: 45)
+            )
     }
    
     var quickAddButtons_legacy: some View {
