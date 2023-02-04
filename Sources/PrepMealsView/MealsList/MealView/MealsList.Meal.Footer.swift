@@ -5,6 +5,7 @@ import PrepViews
 
 extension MealsList.Meal {
     struct Footer: View {
+        @Environment(\.colorScheme) var colorScheme
         @EnvironmentObject var viewModel: MealsList.Meal.ViewModel
         
         @AppStorage(UserDefaultsKeys.showingBadgesForFoods) private var showingBadgesForFoods = false
@@ -70,13 +71,28 @@ extension MealsList.Meal.Footer {
     }
     
     var addFoodButton: some View {
-        Button {
-            tappedAddFood()
-        } label: {
+        var label: some View {
             Text("Add Food")
                 .font(.caption)
                 .bold()
-//                .foregroundColor(.secondary)
+                .foregroundColor(.accentColor)
+                .padding(.horizontal, 8)
+                .frame(height: 30)
+                .background(
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .fill(Color.accentColor.opacity(
+                            colorScheme == .dark ? 0.1 : 0.15
+                        ))
+                )
+                .frame(maxHeight: .infinity)
+                .padding(.leading, 20)
+                .padding(.top, 22.75)
+        }
+        
+        var label_legacy: some View {
+            Text("Add Food")
+                .font(.caption)
+                .bold()
                 .padding(.horizontal, 8)
                 .frame(height: 30)
                 .background(
@@ -87,6 +103,12 @@ extension MealsList.Meal.Footer {
                 .padding(.leading, 20)
                 .padding(.top, 22.75)
 //                .background(.green)
+        }
+        
+        return Button {
+            tappedAddFood()
+        } label: {
+            label
         }
         .contentShape(Rectangle())
         .padding(.trailing)

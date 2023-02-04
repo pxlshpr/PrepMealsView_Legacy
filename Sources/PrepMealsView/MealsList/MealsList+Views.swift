@@ -60,18 +60,74 @@ extension MealsList {
         } label: {
             HStack {
                 Image(systemName: "note.text.badge.plus")
+                Text("Add Meal")
+                    .bold()
             }
-            .padding(.horizontal)
-            .padding(.vertical, 10)
+            .font(.footnote)
+            .padding(.horizontal, 8)
+            .frame(height: 30)
             .background(
-                RoundedRectangle(cornerRadius: 15, style: .continuous)
-                    .foregroundColor(Color(.tertiarySystemFill))
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(Color.accentColor.opacity(
+                        colorScheme == .dark ? 0.1 : 0.15
+                    ))
             )
+//            .background(
+//                RoundedRectangle(cornerRadius: 15, style: .continuous)
+//                    .foregroundColor(Color(.tertiarySystemFill))
+//            )
         }
         .buttonStyle(.borderless)
     }
 
     var quickAddButtons: some View {
+        
+        var quickMealLabel: some View {
+            Text("Quick:")
+                .font(.footnote)
+                .foregroundColor(.secondary)
+                .padding(.horizontal, 5)
+                .padding(.vertical, 10)
+                .background(
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .fill(Color.secondary.opacity(
+                            colorScheme == .dark ? 0.1 : 0.15
+                        ))
+                        .opacity(0)
+                )
+
+        }
+        
+        var row: some View {
+            HStack {
+                addMealButton
+                quickMealLabel
+                scrollView
+            }
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.leading, 20)
+        }
+        
+        var scrollView: some View {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 5) {
+                    if isToday {
+                        quickAddButton()
+                    }
+                    ForEach(mealTimeSuggestions.indices, id: \.self) {
+                        quickAddButton(at: mealTimeSuggestions[$0])
+                    }
+                }
+            }
+        }
+        
+        return row
+//        return scrollView
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.vertical, 15)
+    }
+   
+    var quickAddButtons_legacy: some View {
         
         var listRowBackground: some View {
             ZStack {
@@ -102,11 +158,28 @@ extension MealsList {
     }
     
     func quickAddButton(at time: Date? = nil) -> some View {
-        Button {
-            actionHandler(.addMeal(time ?? Date()))
-//            onTapAddMeal(time ?? Date())
-            Haptics.successFeedback()
-        } label: {
+        var label: some View {
+            HStack {
+                if let time {
+                    Text(time.hourString.lowercased())
+                } else {
+                    Text("Now")
+                }
+            }
+            .bold()
+            .font(.footnote)
+            .foregroundColor(.accentColor)
+            .padding(.horizontal, 8)
+            .frame(height: 30)
+            .background(
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(Color.accentColor.opacity(
+                        colorScheme == .dark ? 0.1 : 0.15
+                    ))
+            )
+        }
+        
+        var label_legacy: some View {
             HStack {
                 if let time {
                     Text(time.hourString)
@@ -120,6 +193,14 @@ extension MealsList {
                 RoundedRectangle(cornerRadius: 15, style: .continuous)
                     .foregroundColor(Color(.tertiarySystemFill))
             )
+        }
+        
+        return Button {
+            actionHandler(.addMeal(time ?? Date()))
+//            onTapAddMeal(time ?? Date())
+            Haptics.successFeedback()
+        } label: {
+            label
         }
         .buttonStyle(.borderless)
     }
