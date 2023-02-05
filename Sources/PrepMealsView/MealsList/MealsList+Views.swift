@@ -68,6 +68,7 @@ extension MealsList {
             .frame(height: 30)
             .background(
                 RoundedRectangle(cornerRadius: 7, style: .continuous)
+//                    .fill(colorScheme == .light ? Color(hex: "DFDDF8") : Color(hex: "262335"))
                     .fill(Color.accentColor.opacity(
                         colorScheme == .dark ? 0.1 : 0.15
                     ))
