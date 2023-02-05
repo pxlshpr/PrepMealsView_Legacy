@@ -17,36 +17,78 @@ extension MealsList {
                 return (UIScreen.main.bounds.height - topHeight - bottomHeight) / 2.0 - (contentHeight / 2.0)
             }
             
+            var showFastedSection: Bool {
+                date.startOfDay < Date().startOfDay
+            }
+            
             var emptyMessage: some View {
                 GeometryReader { proxy in
-                    HStack {
-                        Spacer()
-                        VStack {
-                            Text(emptyText)
-                                .font(.title2)
-                                .multilineTextAlignment(.center)
-                                .foregroundColor(Color(.tertiaryLabel))
-                                .fixedSize(horizontal: false, vertical: true)
-                                .padding(.horizontal)
-                            addMealEmptyButton
+                    content
+                        .readSize { size in
+                            emptyContentHeight = size.height
                         }
-                        .frame(width: UIScreen.main.bounds.width * 0.7, height: 170)
-                        .background(
-                            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                .foregroundColor(Color(.quaternarySystemFill).opacity(colorScheme == .dark ? 0.5 : 1.0))
-                        )
-                        .padding(.horizontal, 50)
-                        Spacer()
-                    }
-                    .offset(y: yOffset(forHeight: 170, safeAreaInsets: proxy.safeAreaInsets))
+                        .offset(y: yOffset(forHeight: emptyContentHeight, safeAreaInsets: proxy.safeAreaInsets))
                 }
             }
             
-//            return ScrollView {
-//                emptyMessage
-//            }
-//            .fixedSize()
-
+            var content: some View {
+                HStack {
+                    Spacer()
+                    VStack {
+                        Text(emptyText)
+                            .font(.title2)
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(Color(.tertiaryLabel))
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.horizontal)
+                        addMealEmptyButton
+                        markAsFastedSection
+                    }
+                    .padding(.vertical, 30)
+        //            .frame(width: UIScreen.main.bounds.width * 0.7, height: 370)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .foregroundColor(Color(.quaternarySystemFill).opacity(colorScheme == .dark ? 0.5 : 1.0))
+                    )
+                    .padding(.horizontal, 50)
+                    Spacer()
+                }
+                .transition(.opacity)
+            }
+            
+            var isMarkedAsFastedBinding: Binding<Bool> {
+                Binding<Bool>(
+                    get: {
+                        false
+                    },
+                    set: { newValue in
+                        
+                    }
+                )
+            }
+            
+            @ViewBuilder
+            var markAsFastedSection: some View {
+                if showFastedSection {
+                    VStack {
+                        Toggle("Mark as fasted", isOn: isMarkedAsFastedBinding)
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 15, style: .continuous)
+                                    .fill(Color(.quaternarySystemFill))
+                            )
+                        Text("This day is being counted towards your daily averages.")
+                            .fixedSize(horizontal: false, vertical: true)
+                            .font(.footnote)
+                            .foregroundColor(Color(.tertiaryLabel))
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 10)
+                }
+            }
+            
             return ScrollView {
                 VStack {
                     Spacer()
@@ -111,15 +153,59 @@ extension MealsList {
 }
 
 struct MealsListEmptyPreview: View {
+    
+    @Environment(\.colorScheme) var colorScheme
+    
     var body: some View {
-        MealsList(date: Date(),
-                  meals: .constant([]),
-                  actionHandler: { _ in }
-//                  didTapAddFood: { _ in },
-//                  didTapEditMeal: { _ in },
-//                  didTapMealFoodItem: { _, _ in },
-//                  onTapAddMeal: { _ in }
-        )
+        HStack {
+            Spacer()
+            VStack {
+                Text("You haven't prepped any meals yet")
+                    .font(.title2)
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(Color(.tertiaryLabel))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal)
+                addMealEmptyButton
+            }
+            .frame(width: UIScreen.main.bounds.width * 0.7, height: 170)
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .foregroundColor(Color(.quaternarySystemFill).opacity(colorScheme == .dark ? 0.5 : 1.0))
+            )
+            .padding(.horizontal, 50)
+            Spacer()
+        }
+    }
+    
+    var addMealEmptyButton: some View {
+        var label: some View {
+            HStack {
+                Image(systemName: "note.text.badge.plus")
+                Text("Prep a Meal")
+                    .fontWeight(.bold)
+            }
+            .foregroundColor(.accentColor)
+            .padding(.horizontal)
+            .padding(.vertical, 12)
+            
+            .background(
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(Color.accentColor.opacity(
+                        colorScheme == .dark ? 0.1 : 0.15
+                    ))
+            )
+        }
+        
+        var button: some View {
+            Button {
+            } label: {
+                label
+            }
+            .buttonStyle(.borderless)
+        }
+        
+        return button
     }
 }
 

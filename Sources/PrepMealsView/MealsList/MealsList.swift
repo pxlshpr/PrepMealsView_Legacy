@@ -16,6 +16,8 @@ public struct MealsList: View {
     @State var animation: Animation? = .none
     
     @State var badgeWidths: [UUID : CGFloat] = [:]
+    
+    @State var emptyContentHeight: CGFloat = 0
 
     let didAddFoodItemToMeal = NotificationCenter.default.publisher(for: .didAddFoodItemToMeal)
     let didUpdateMealFoodItem = NotificationCenter.default.publisher(for: .didUpdateMealFoodItem)
@@ -54,11 +56,16 @@ public struct MealsList: View {
     }
     
     var content: some View {
-        Group {
-            if meals.isEmpty {
-                emptyContent
-            } else {
-                scrollView
+        ZStack {
+            background
+            Group {
+                if meals.isEmpty {
+                    emptyContent
+                        .transition(.move(edge: .bottom))
+                } else {
+                    scrollView
+                        .transition(.move(edge: .top))
+                }
             }
         }
     }
