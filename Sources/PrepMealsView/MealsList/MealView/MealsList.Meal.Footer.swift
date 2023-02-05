@@ -40,9 +40,9 @@ extension MealsList.Meal.Footer {
     
     @ViewBuilder
     var optionalFoodButton: some View {
-        if !viewModel.meal.isCompleted {
+//        if !viewModel.meal.isCompleted {
             addFoodButton
-        }
+//        }
     }
     
     @ViewBuilder
@@ -72,7 +72,7 @@ extension MealsList.Meal.Footer {
     
     var addFoodButton: some View {
         var label: some View {
-            Text("Add Food")
+            Text(viewModel.isInFuture ? "Prep Food" : "Log Food")
                 .font(.caption)
                 .bold()
                 .foregroundColor(.accentColor)

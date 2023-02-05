@@ -60,7 +60,7 @@ extension MealsList {
         } label: {
             HStack {
                 Image(systemName: "note.text.badge.plus")
-                Text("Add Meal")
+                Text("New Meal")
                     .bold()
             }
             .font(.footnote)
@@ -84,7 +84,7 @@ extension MealsList {
     var quickAddButtons: some View {
         
         var quickMealLabel: some View {
-            Text("Quick:")
+            Text("Quick Meal:")
                 .font(.footnote)
                 .foregroundColor(.secondary)
                 .padding(.leading, 5)
@@ -126,7 +126,7 @@ extension MealsList {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .center)
-            .padding(.leading, 20)
+            .padding(.leading, 5)
         }
         
         var scrollView: some View {
@@ -184,12 +184,32 @@ extension MealsList {
     
     func quickAddButton(at time: Date? = nil) -> some View {
         var label: some View {
-            HStack {
-                if let time {
-                    Text(time.hourString.lowercased())
-                } else {
-                    Text("Now")
+            var string: String {
+                guard let time else {
+                    return "Now "
                 }
+                
+                let timeString = time.hourString.lowercased()
+                /// if on same day
+                if time.startOfDay == date.startOfDay {
+                    return timeString
+                } else {
+                    let dayString: String
+                    if date.isToday {
+                        dayString = "Tomorrow"
+                    } else {
+                        let nextDay = date.startOfDay.moveDayBy(1)
+                        let dateFormatter = DateFormatter()
+                        dateFormatter.dateFormat = "EEE"
+                        dayString = dateFormatter.string(from: nextDay)
+                    }
+                    return "\(dayString) \(timeString)"
+                }
+                
+            }
+            
+            return HStack {
+                Text(string)
             }
             .bold()
             .font(.footnote)

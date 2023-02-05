@@ -395,6 +395,10 @@ extension DayMeal {
 
 extension MealsList.Meal.ViewModel {
     
+    var isInFuture: Bool {
+        meal.timeDate >= Date()
+    }
+    
     var targetingDropOverHeader: Bool {
         targetId == meal.id
     }
