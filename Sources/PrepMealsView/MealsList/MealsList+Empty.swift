@@ -3,7 +3,7 @@ import PrepCoreDataStack
 
 extension MealsList {
 
-    var emptyContent: some View {
+    var emptyContent_legacy: some View {
         var emptyMessageLayer: some View {
             
             func yOffset(forHeight contentHeight: CGFloat, safeAreaInsets: EdgeInsets) -> CGFloat {
@@ -37,7 +37,8 @@ extension MealsList {
                 HStack {
                     Spacer()
                     VStack {
-                        Text(emptyText + " " + date.calendarDayString + " \(markedAsFasted)")
+//                        Text(emptyText + " " + date.calendarDayString + " \(markedAsFasted)")
+                        Text(emptyText)
                             .font(.title2)
                             .multilineTextAlignment(.center)
                             .foregroundColor(Color(.tertiaryLabel))
@@ -61,10 +62,20 @@ extension MealsList {
             var markAsFastedSection: some View {
                 if showFastedSection {
                     VStack {
-                        Toggle("Mark as fasted", isOn: $markedAsFasted)
-                            .toggleStyle(.button)
+                        Toggle("Mark as fasted", isOn: markedAsFastedBinding)
+                            .tint(Color.accentColor.gradient)
+                            .foregroundColor(.secondary)
                             .padding(.horizontal, 20)
                             .padding(.vertical, 10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 15, style: .continuous)
+                                    .fill(Color(.quaternarySystemFill))
+                            )
+//
+//                        Toggle("Mark as fasted", isOn: markedAsFastedBinding)
+//                            .toggleStyle(.button)
+//                            .padding(.horizontal, 20)
+//                            .padding(.vertical, 10)
 //                            .background(
 //                                RoundedRectangle(cornerRadius: 15, style: .continuous)
 //                                    .fill(Color(.quaternarySystemFill))
@@ -93,7 +104,110 @@ extension MealsList {
             emptyMessageLayer
         }
     }
+
+    var emptyContent: some View {
+        var emptyMessageLayer: some View {
+            
+            func yOffset(forHeight contentHeight: CGFloat, safeAreaInsets: EdgeInsets) -> CGFloat {
+                /// [ ] Handle these hardcoded values gracefully
+//                let weekPagerHeight: CGFloat = 45
+//                let dayPagerHeight: CGFloat = 27
+//                let topHeight: CGFloat = weekPagerHeight + dayPagerHeight + safeAreaInsets.top
+                let topHeight: CGFloat = 185
+
+                let bottomHeight: CGFloat = 95
+
+                return (UIScreen.main.bounds.height - topHeight - bottomHeight) / 2.0 - (contentHeight / 2.0)
+            }
+            
+            var showFastedSection: Bool {
+                date.startOfDay < Date().startOfDay
+            }
+            
+            @ViewBuilder
+            var explanationText: some View {
+                markedAsFasted
+                ? Text("This day **is** included when calculating your daily averages.")
+                : Text("This day is **not** included when calculating your daily averages.")
+            }
+            
+            var emptyMessage: some View {
+                content
+                    .readSize { size in
+                        emptyContentHeight = size.height
+                    }
+            }
+            
+            var content: some View {
+
+                HStack {
+                    Spacer()
+                    VStack {
+//                        Text(emptyText + " " + date.calendarDayString + " \(markedAsFasted)")
+                        Text(emptyText)
+                            .font(.title2)
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(Color(.tertiaryLabel))
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.horizontal)
+                        addMealEmptyButton
+                        markAsFastedSection
+                    }
+                    .padding(.vertical, 30)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .foregroundColor(Color(.quaternarySystemFill).opacity(colorScheme == .dark ? 0.5 : 1.0))
+                    )
+                    .padding(.horizontal, 50)
+                    Spacer()
+                }
+                .transition(.opacity)
+            }
+            
+            @ViewBuilder
+            var markAsFastedSection: some View {
+                if showFastedSection {
+                    VStack {
+                        Toggle("Mark as fasted", isOn: markedAsFastedBinding)
+                            .tint(Color.accentColor.gradient)
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 15, style: .continuous)
+                                    .fill(Color(.quaternarySystemFill))
+                            )
+//                        Toggle("Mark as fasted", isOn: markedAsFastedBinding)
+//                            .toggleStyle(.button)
+//                            .padding(.horizontal, 20)
+//                            .padding(.vertical, 10)
+//                            .background(
+//                                RoundedRectangle(cornerRadius: 15, style: .continuous)
+//                                    .fill(Color(.quaternarySystemFill))
+//                            )
+                        explanationText
+                            .fixedSize(horizontal: false, vertical: true)
+                            .font(.footnote)
+                            .foregroundColor(Color(.tertiaryLabel))
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 10)
+                }
+            }
+            
+            return VStack {
+                Spacer()
+                emptyMessage
+                Spacer()
+            }
+        }
         
+        return ZStack {
+            background
+            emptyMessageLayer
+        }
+    }
+
     func markedAsFastedChanged(_ newValue: Bool) {
         DataManager.shared.setFastedState(as: newValue, on: date)
     }

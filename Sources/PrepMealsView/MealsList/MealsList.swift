@@ -27,19 +27,39 @@ public struct MealsList: View {
     let dateDidChange = NotificationCenter.default.publisher(for: .dateDidChange)
 
     @State var hasAppeared: Bool = false
-    
+
+    let initialMarkedAsFasted: Bool
     @State var markedAsFasted: Bool
-    
+    /// We're using this as a workaround for an issue where changing the date from outside the diary pager (ie using the week pager or date picker)
+    /// sometimes causes the incorrect `markedAsFasted` (still unsure why this happens)
+    /// Instead of spending too much time on this—this, in tandem with the code in `dateDidChange` and the `initialMarkedAsFasted` constant
+    /// ensures that the correctly supplied value is set to begin with. We're also setting this in the `set` call of the `markedAsFastedBinding` for
+    /// when the app initially loads and we don't get a `dateDidChange` call.
+    @State var dateDidChangeOrMarkedAsFastedWasSet: Bool = false
+
     public init(
         date: Date,
         markedAsFasted: Bool = false,
         meals: Binding<[DayMeal]>,
         actionHandler: @escaping (MealsDiaryAction) -> ()
     ) {
+        self.initialMarkedAsFasted = markedAsFasted
         _markedAsFasted = State(initialValue: markedAsFasted)
         self.date = date
         self.actionHandler = actionHandler
         _meals = meals
+    }
+    
+    var markedAsFastedBinding: Binding<Bool> {
+        Binding<Bool>(
+            get: {
+                dateDidChangeOrMarkedAsFastedWasSet ? markedAsFasted : initialMarkedAsFasted
+            },
+            set: {
+                self.markedAsFasted = $0
+                self.dateDidChangeOrMarkedAsFastedWasSet = true
+            }
+        )
     }
     
     public var body: some View {
@@ -81,9 +101,6 @@ public struct MealsList: View {
 
 extension MealsList {
     func appeared() {
-        
-        print("❄️ appeared: \(date.calendarDayString)")
-        
         //TODO: Don't delay this for the initial load when app launches
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             withAnimation {
@@ -112,11 +129,15 @@ extension MealsList {
 
     func dateDidChange(notification: Notification) {
         guard let userInfo = notification.userInfo,
-              let date = userInfo[Notification.Keys.date] as? Date,
-              date.startOfDay == self.date.startOfDay
+              let date = userInfo[Notification.Keys.date] as? Date
         else { return }
-        
-        calculateBadgeWidths()
+        print("🌻 \(self.date.calendarDayString): MealList.dateDidChange(\(date.calendarDayString)), markedAsFasted: \(markedAsFasted)")
+        print("🌻     - but it should be \(DataManager.shared.markedAsFasting(on: self.date))")
+        self.markedAsFasted = DataManager.shared.markedAsFasting(on: self.date)
+        self.dateDidChangeOrMarkedAsFastedWasSet = true
+        if  date.startOfDay == self.date.startOfDay {
+            calculateBadgeWidths()
+        }
     }
     
     func didInvalidateBadgeWidths(notification: Notification) {
