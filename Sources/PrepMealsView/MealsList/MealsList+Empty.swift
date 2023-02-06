@@ -206,7 +206,7 @@ extension MealsList {
         return ZStack {
             background
             emptyMessageLayer
-                .padding(.bottom, PrepConstants.bottomBarHeight)
+                .padding(.bottom, PrepConstants.bottomBarHeight / 2.0)
         }
         /// This is essential to make sure it doesn't shift vertically when we're resigning focus from the
         /// proxy text field (which we use to mitigate the tap target movement bug with sheets)
