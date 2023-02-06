@@ -196,10 +196,12 @@ extension MealsList {
             }
             
             return VStack {
+//                Text("Hello")
                 Spacer()
                 emptyMessage
                 Spacer()
             }
+            .ignoresSafeArea(.keyboard)
         }
         
         return ZStack {
