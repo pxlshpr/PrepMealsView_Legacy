@@ -1,5 +1,6 @@
 import SwiftUI
 import PrepCoreDataStack
+import PrepDataTypes
 
 extension MealsList {
 
@@ -196,18 +197,20 @@ extension MealsList {
             }
             
             return VStack {
-//                Text("Hello")
                 Spacer()
                 emptyMessage
                 Spacer()
             }
-            .ignoresSafeArea(.keyboard)
         }
         
         return ZStack {
             background
             emptyMessageLayer
+                .padding(.bottom, PrepConstants.bottomBarHeight)
         }
+        /// This is essential to make sure it doesn't shift vertically when we're resigning focus from the
+        /// proxy text field (which we use to mitigate the tap target movement bug with sheets)
+        .ignoresSafeArea(.keyboard)
     }
 
     func markedAsFastedChanged(_ newValue: Bool) {
