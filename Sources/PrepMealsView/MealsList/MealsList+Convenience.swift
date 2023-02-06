@@ -12,7 +12,7 @@ extension MealsList {
     
     var emptyText: String {
         isBeforeToday
-        ? "No meals had been logged on this day"
+        ? "No meals were logged on this day"
         : "You haven't prepped any meals yet"
     }
 

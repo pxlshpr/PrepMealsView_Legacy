@@ -28,11 +28,15 @@ public struct MealsList: View {
 
     @State var hasAppeared: Bool = false
     
+    @State var markedAsFasted: Bool
+    
     public init(
         date: Date,
+        markedAsFasted: Bool = false,
         meals: Binding<[DayMeal]>,
         actionHandler: @escaping (MealsDiaryAction) -> ()
     ) {
+        _markedAsFasted = State(initialValue: markedAsFasted)
         self.date = date
         self.actionHandler = actionHandler
         _meals = meals
@@ -48,11 +52,15 @@ public struct MealsList: View {
             }
         }
         .onAppear(perform: appeared)
+        .task {
+            print("❄️ task: \(date.calendarDayString)")
+        }
         .onReceive(dateDidChange, perform: dateDidChange)
         .onReceive(didAddFoodItemToMeal, perform: didAddFoodItemToMeal)
         .onReceive(didUpdateMealFoodItem, perform: didUpdateMealFoodItem)
         .onReceive(didDeleteFoodItemFromMeal, perform: didDeleteFoodItemFromMeal)
         .onReceive(didDeleteMeal, perform: didDeleteMeal)
+        .onChange(of: markedAsFasted, perform: markedAsFastedChanged)
     }
     
     var content: some View {
@@ -73,7 +81,10 @@ public struct MealsList: View {
 
 extension MealsList {
     func appeared() {
-        //TODO: Don't do this for the initial load when app launches
+        
+        print("❄️ appeared: \(date.calendarDayString)")
+        
+        //TODO: Don't delay this for the initial load when app launches
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             withAnimation {
                 self.hasAppeared = true

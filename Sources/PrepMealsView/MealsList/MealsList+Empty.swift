@@ -1,4 +1,5 @@
 import SwiftUI
+import PrepCoreDataStack
 
 extension MealsList {
 
@@ -32,10 +33,11 @@ extension MealsList {
             }
             
             var content: some View {
+
                 HStack {
                     Spacer()
                     VStack {
-                        Text(emptyText)
+                        Text(emptyText + " " + date.calendarDayString + " \(markedAsFasted)")
                             .font(.title2)
                             .multilineTextAlignment(.center)
                             .foregroundColor(Color(.tertiaryLabel))
@@ -45,7 +47,6 @@ extension MealsList {
                         markAsFastedSection
                     }
                     .padding(.vertical, 30)
-        //            .frame(width: UIScreen.main.bounds.width * 0.7, height: 370)
                     .background(
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
                             .foregroundColor(Color(.quaternarySystemFill).opacity(colorScheme == .dark ? 0.5 : 1.0))
@@ -56,30 +57,19 @@ extension MealsList {
                 .transition(.opacity)
             }
             
-            var isMarkedAsFastedBinding: Binding<Bool> {
-                Binding<Bool>(
-                    get: {
-                        false
-                    },
-                    set: { newValue in
-                        
-                    }
-                )
-            }
-            
             @ViewBuilder
             var markAsFastedSection: some View {
                 if showFastedSection {
                     VStack {
-                        Toggle("Mark as fasted", isOn: isMarkedAsFastedBinding)
-                            .foregroundColor(.secondary)
+                        Toggle("Mark as fasted", isOn: $markedAsFasted)
+                            .toggleStyle(.button)
                             .padding(.horizontal, 20)
                             .padding(.vertical, 10)
-                            .background(
-                                RoundedRectangle(cornerRadius: 15, style: .continuous)
-                                    .fill(Color(.quaternarySystemFill))
-                            )
-                        Text("This day is being counted towards your daily averages.")
+//                            .background(
+//                                RoundedRectangle(cornerRadius: 15, style: .continuous)
+//                                    .fill(Color(.quaternarySystemFill))
+//                            )
+                        Text("This day is being counted as zero calories, affecting your daily averages.")
                             .fixedSize(horizontal: false, vertical: true)
                             .font(.footnote)
                             .foregroundColor(Color(.tertiaryLabel))
@@ -103,7 +93,11 @@ extension MealsList {
             emptyMessageLayer
         }
     }
-    
+        
+    func markedAsFastedChanged(_ newValue: Bool) {
+        DataManager.shared.setFastedState(as: newValue, on: date)
+    }
+
     var addMealEmptyButton: some View {
         let string = isBeforeToday ? "Log a Meal" : "Prep a Meal"
         
