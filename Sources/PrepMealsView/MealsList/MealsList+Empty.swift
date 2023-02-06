@@ -127,8 +127,8 @@ extension MealsList {
             @ViewBuilder
             var explanationText: some View {
                 markedAsFasted
-                ? Text("This day **is** included when calculating your daily averages.")
-                : Text("This day is **not** included when calculating your daily averages.")
+                ? Text("This day **is** included when calculating your daily averages and fasting duration.")
+                : Text("This day is **not** included when calculating your daily averages and fasting duration.")
             }
             
             var emptyMessage: some View {
