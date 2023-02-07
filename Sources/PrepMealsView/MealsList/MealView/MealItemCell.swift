@@ -129,7 +129,7 @@ struct MealItemCell: View {
     var isEatenToggle: some View {
         Button {
             withAnimation {
-                viewModel.actionHandler(.toggleCompletion(item, viewModel.meal))
+                viewModel.actionHandler(.toggleItemCompletion(item))
                 item.markedAsEatenAt = item.isCompleted ? nil : Date().timeIntervalSince1970
             }
             Haptics.feedback(style: .soft)
