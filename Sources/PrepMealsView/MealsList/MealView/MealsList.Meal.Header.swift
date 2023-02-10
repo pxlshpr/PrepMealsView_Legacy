@@ -88,13 +88,25 @@ extension MealsList.Meal.Header {
             }
             
             return HStack {
-                HStack {
-                    timeText
-                    separatorText
-                    nameText
+                Button {
+                    tappedEditMeal()
+                } label: {
+                    HStack {
+                        HStack {
+                            timeText
+                            separatorText
+                            nameText
+                        }
+                        .fixedSize(horizontal: true, vertical: false)
+                        upcomingLabel
+                    }
+                    .padding(.leading, 20)
+                    .frame(maxHeight: .infinity)
+                    .padding(.bottom, 16.75)
+                    .contentShape(Rectangle())
                 }
-                .fixedSize(horizontal: true, vertical: false)
-                upcomingLabel
+                .buttonStyle(.plain)
+//                .background(.green)
                 Spacer()
             }
             .textCase(.uppercase)
@@ -102,17 +114,25 @@ extension MealsList.Meal.Header {
             .foregroundColor(Color(.secondaryLabel))
         }
         
-        return Button {
-            tappedEditMeal()
-        } label: {
+        var paddedLabel: some View {
             label
-                .padding(.leading, 20)
-                .frame(maxHeight: .infinity)
-                .padding(.bottom, 16.75)
-                .contentShape(Rectangle())
+//                .padding(.leading, 20)
+//                .frame(maxHeight: .infinity)
+//                .padding(.bottom, 16.75)
+//                .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
-//        .background(.green.opacity(0.2))
+        
+        var button: some View {
+            Button {
+                tappedEditMeal()
+            } label: {
+                paddedLabel
+            }
+            .buttonStyle(.plain)
+        }
+        
+//        return button
+        return paddedLabel
     }
     
     //MARK: - Menu
