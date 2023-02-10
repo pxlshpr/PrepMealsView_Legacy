@@ -10,11 +10,11 @@ extension MealsList {
                 ForEach(meals) { meal in
                     mealView(for: meal)
                 }
-                quickAddButtons
-                    .safeAreaInset(edge: .bottom) {
-                        Color.clear
-                            .frame(height: 60 + 55)
-                    }
+//                quickAddButtons
+            }
+            .safeAreaInset(edge: .bottom) {
+                Color.clear
+                    .frame(height: 60 + 55)
             }
         }
 //        .listStyle(.plain)

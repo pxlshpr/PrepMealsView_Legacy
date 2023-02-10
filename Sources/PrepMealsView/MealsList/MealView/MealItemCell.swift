@@ -29,17 +29,18 @@ struct MealItemCell: View {
     var body: some View {
         HStack(spacing: 0) {
             optionalEmojiText
-                .padding(.leading, 20)
+                .padding(.leading, 10)
             nameTexts
-                .padding(.leading, showingFoodEmojis ? 8 : 20)
+                .padding(.leading, showingFoodEmojis ? 8 : 10)
                 .padding(.vertical, 12)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer()
             if showingBadgesForFoods {
                 foodBadge
                     .transition(.scale)
+                    .padding(.trailing, 10)
             }
-            isEatenToggle
+//            isEatenToggle
         }
 //        .padding(.leading, 20)
         .background(listRowBackground)
@@ -79,32 +80,54 @@ struct MealItemCell: View {
         }
     }
     
-    var listRowBackgroundColor: Color {
-        if item.isCompleted {
-            return colorScheme == .light ? Color(hex: "EBE9F7") : Color(hex: "191331")
-        } else {
-            return colorScheme == .light ? Color(.secondarySystemGroupedBackground) : Color(hex: "232323")
-        }
-    }
-    
     var listRowBackground: some View {
+        var color: Color {
+
+            return colorScheme == .light
+            ? Color(.secondarySystemGroupedBackground)
+            : Color(hex: "232323")
+
+            
+//            if item.isCompleted {
+//                return colorScheme == .light
+//                ? Color(hex: "EBE9F7")
+////                : Color(hex: "191331")
+////                ? Color(hex: "EBE9F7")
+////                ? Color(hex: "EBEAEE")
+//                : Color(hex: "232323")
+//            } else {
+//                return colorScheme == .light
+////                ? Color(.secondarySystemGroupedBackground)
+////                : Color(hex: "232323")
+////                ? Color(.secondarySystemGroupedBackground)
+//                ? Color(hex: "DFDDF6")
+//                : Color(hex: "191331")
+//            }
+        }
+        
         var isLastCell: Bool {
             viewModel.meal.foodItems.last?.id == item.id
         }
         
         var divider: some View {
-            Color(hex: colorScheme == .light ? DiaryDividerLineColor.light : DiaryDividerLineColor.dark)
-                .frame(height: 0.18)
+            Color(hex: colorScheme == .light
+                  ? DiaryDividerLineColor.light
+                  : DiaryDividerLineColor.dark
+            )
+            .frame(height: 0.18)
         }
 
         var separator: some View {
-            Color(hex: colorScheme == .light ? DiarySeparatorLineColor.light : DiarySeparatorLineColor.dark)
-                .frame(height: 0.18)
+            Color(hex: colorScheme == .light
+                  ? DiarySeparatorLineColor.light
+                  : DiarySeparatorLineColor.dark
+            )
+            .frame(height: 0.18)
         }
 
         var background: some View {
             Color.white
-                .colorMultiply(listRowBackgroundColor)
+                .colorMultiply(color)
                 .animation(.default, value: item.isCompleted)
         }
 
@@ -139,7 +162,8 @@ struct MealItemCell: View {
                 .padding(.trailing, 20)
                 .frame(maxHeight: .infinity)
         }
-        .foregroundColor(item.isCompleted ? .accentColor : Color(.tertiaryLabel))
+//        .foregroundColor(item.isCompleted ? .accentColor : Color(.tertiaryLabel))
+        .foregroundColor(!item.isCompleted ? .accentColor : Color(.tertiaryLabel))
         .buttonStyle(.borderless)
 //        .background(.green)
     }
@@ -149,6 +173,7 @@ struct MealItemCell: View {
         if showingFoodEmojis {
             Text(item.food.emoji)
                 .font(.body)
+                .opacity(item.isCompleted ? 0.7 : 1)
 //                .if(namespace.wrappedValue != nil) { view in
 //                    view.matchedGeometryEffect(id: "\(item.id.uuidString)-\(namespacePrefix.uuidString)", in: namespace.wrappedValue!)
 //                }
@@ -159,12 +184,22 @@ struct MealItemCell: View {
     }
     
     var nameColor: Color {
-        return Color(.label)
+        .primary
+//        item.isCompleted ? Color(.secondaryLabel) : Color(.label)
+//        .primary
+//        item.isCompleted ? Color(.secondaryLabel) : Color(.label)
+//        return Color(.label)
         //TODO: Bring this back
         //        guard let meal = item.meal else {
         //            return Color(.secondaryLabel)
         //        }
         //        return meal.isNextPlannedMeal ? Color(.label) : Color(.secondaryLabel)
+    }
+    
+    var fontWeight: Font.Weight {
+        .semibold
+//        .semibold
+//        item.isCompleted ? .regular : .semibold
     }
     
     var amountColor: Color {
@@ -176,10 +211,15 @@ struct MealItemCell: View {
         //        return meal.isNextPlannedMeal ? Color(.secondaryLabel) : Color(.quaternaryLabel)
     }
     
+    var detailFontWeight: Font.Weight {
+        .semibold
+//        item.isCompleted ? .regular : .semibold
+    }
+    
     var nameTexts: some View {
         var view = Text(item.food.name)
             .font(.body)
-            .fontWeight(.semibold)
+            .fontWeight(fontWeight)
             .foregroundColor(nameColor)
         if showingFoodDetails {
             if let detail = item.food.detail, !detail.isEmpty {
@@ -206,7 +246,7 @@ struct MealItemCell: View {
         + Text(item.quantityDescription)
         
             .font(.callout)
-            .fontWeight(.semibold)
+            .fontWeight(detailFontWeight)
             .foregroundColor(amountColor)
         
         return view
