@@ -56,6 +56,7 @@ extension MealsList.Meal {
             .contentShape(Rectangle())
             .onChange(of: viewModel.droppedFoodItem, perform: droppedFoodItemChanged)
             .onChange(of: showingDropOptions, perform: showingDropOptionsChanged)
+            .onChange(of: isUpcomingMeal, perform: isUpcomingMealChanged)
             .if(viewModel.isEmpty) { view in
                 view
                     .dropDestination(
@@ -75,6 +76,10 @@ extension MealsList.Meal {
                     viewModel.isUpcomingMeal = newValue
                 }
             }
+    }
+    
+    func isUpcomingMealChanged(_ newValue: Bool) {
+        viewModel.isUpcomingMeal = newValue
     }
     
     func droppedFoodItemChanged(to droppedFoodItem: MealFoodItem?) {
@@ -171,8 +176,12 @@ extension MealsList.Meal {
             viewModel.actionHandler(.editFoodItem(mealFoodItem.wrappedValue, viewModel.meal))
 //            viewModel.didTapMealFoodItem(mealFoodItem, viewModel.meal)
         } label: {
-            MealItemCell(item: mealFoodItem, index: index, badgeWidth: badgeWidthBinding)
-                .environmentObject(viewModel)
+            MealItemCell(
+                item: mealFoodItem,
+                index: index,
+                badgeWidth: badgeWidthBinding
+            )
+            .environmentObject(viewModel)
         }
         .draggable(mealFoodItem.wrappedValue)
         .transition(

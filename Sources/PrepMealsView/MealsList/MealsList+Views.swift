@@ -30,10 +30,11 @@ extension MealsList {
     func mealView(for meal: DayMeal) -> some View {
         let isUpcomingMealBinding = Binding<Bool>(
             get: {
-                guard date.isToday, let nextPlannedMeal = meals.nextPlannedMeal else {
-                    return false
-                }
-                return nextPlannedMeal.id == meal.id
+                meal.id == upcomingMealId
+//                guard date.isToday, let nextPlannedMeal = meals.nextPlannedMeal else {
+//                    return false
+//                }
+//                return nextPlannedMeal.id == meal.id
             },
             set: { _ in }
         )

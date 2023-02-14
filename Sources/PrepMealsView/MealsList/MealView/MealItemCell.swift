@@ -15,16 +15,15 @@ struct MealItemCell: View {
     @AppStorage(UserDefaultsKeys.showingFoodDetails) private var showingFoodDetails = false
     @AppStorage(UserDefaultsKeys.showingBadgesForFoods) private var showingBadgesForFoods = false
 
-    //TODO: CoreData
-    //    @ObservedObject var item: FoodItem
     @Binding var item: MealFoodItem
-    let index: Int
-
-    //    @Namespace var localNamespace
-    //    var namespace: Binding<Namespace.ID?>
-    //    @Binding var namespacePrefix: UUID
-    
     @Binding var badgeWidth: CGFloat
+    let index: Int
+    
+    init(item: Binding<MealFoodItem>, index: Int, badgeWidth: Binding<CGFloat>) {
+        _item = item
+        self.index = index
+        _badgeWidth = badgeWidth
+    }
     
     var body: some View {
         HStack(spacing: 0) {
@@ -39,6 +38,7 @@ struct MealItemCell: View {
                 foodBadge
                     .transition(.scale)
                     .padding(.trailing, 10)
+                    .opacity(viewModel.hasPassed ? 0.7 : 1)
             }
 //            isEatenToggle
         }
@@ -128,7 +128,7 @@ struct MealItemCell: View {
         var background: some View {
             Color.white
                 .colorMultiply(color)
-                .animation(.default, value: item.isCompleted)
+                .animation(.default, value: viewModel.hasPassed)
         }
 
         return ZStack {
@@ -173,7 +173,7 @@ struct MealItemCell: View {
         if showingFoodEmojis {
             Text(item.food.emoji)
                 .font(.body)
-                .opacity(item.isCompleted ? 0.7 : 1)
+                .opacity(viewModel.hasPassed ? 0.7 : 1)
 //                .if(namespace.wrappedValue != nil) { view in
 //                    view.matchedGeometryEffect(id: "\(item.id.uuidString)-\(namespacePrefix.uuidString)", in: namespace.wrappedValue!)
 //                }
@@ -184,8 +184,8 @@ struct MealItemCell: View {
     }
     
     var nameColor: Color {
-        .primary
-//        item.isCompleted ? Color(.secondaryLabel) : Color(.label)
+//        .primary
+        viewModel.hasPassed ? Color(.secondaryLabel) : Color(.label)
 //        .primary
 //        item.isCompleted ? Color(.secondaryLabel) : Color(.label)
 //        return Color(.label)
@@ -197,9 +197,9 @@ struct MealItemCell: View {
     }
     
     var fontWeight: Font.Weight {
-        .semibold
 //        .semibold
-//        item.isCompleted ? .regular : .semibold
+//        .semibold
+        viewModel.hasPassed ? .medium : .semibold
     }
     
     var amountColor: Color {
@@ -212,8 +212,8 @@ struct MealItemCell: View {
     }
     
     var detailFontWeight: Font.Weight {
-        .semibold
-//        item.isCompleted ? .regular : .semibold
+//        .semibold
+        viewModel.hasPassed ? .medium : .semibold
     }
     
     var nameTexts: some View {

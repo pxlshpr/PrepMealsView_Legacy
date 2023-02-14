@@ -5,49 +5,75 @@ import PrepCoreDataStack
 extension MealsList.Meal {
     class ViewModel: ObservableObject {
         
-        
         let date: Date
         
         @Published var meal: DayMeal
-//        @Published var meals: [DayMeal]
-
+        @Published var hasPassed: Bool
         @Published var dragTargetFoodItemId: UUID? = nil
-        
         @Published var droppedFoodItem: MealFoodItem? = nil
         @Published var dropRecipient: MealFoodItem? = nil
-
         @Published var targetId: UUID? = nil
-
         @Published var mealMacrosIndicatorWidth: CGFloat = FoodBadge.DefaultWidth
-        
         @Published var dateIsChanging: Bool = false
-        
         @Published var isUpcomingMeal: Bool
         
         let actionHandler: (MealsDiaryAction) -> ()
-//        let didTapEditMeal: (DayMeal) -> ()
-//        let didTapAddFood: (DayMeal) -> ()
-//        let didTapMealFoodItem: (MealFoodItem, DayMeal) -> ()
+        
+        var timer: Timer? = nil
         
         init(
             date: Date,
             meal: DayMeal,
-//            meals: [DayMeal],
             isUpcomingMeal: Bool,
             actionHandler: @escaping (MealsDiaryAction) -> ()
-//            didTapAddFood: @escaping (DayMeal) -> (),
-//            didTapEditMeal: @escaping (DayMeal) -> (),
-//            didTapMealFoodItem: @escaping (MealFoodItem, DayMeal) -> ()
         ) {
             self.date = date
             self.meal = meal
             self.isUpcomingMeal = isUpcomingMeal
-//            self.meals = meals
+            self.hasPassed = meal.timeDate < Date()
             self.actionHandler = actionHandler
-//            self.didTapEditMeal = didTapEditMeal
-//            self.didTapAddFood = didTapAddFood
-//            self.didTapMealFoodItem = didTapMealFoodItem
             
+            self.mealMacrosIndicatorWidth = meal.macrosIndicatorWidth
+            addNotifications()
+            scheduleUpdateTime()
+        }
+        
+        func scheduleUpdateTime() {
+            timer?.invalidate()
+            timer = Timer(
+                fireAt: meal.timeDate,
+                interval: 0,
+                target: self,
+                selector: #selector(updatehasPassed),
+                userInfo: nil,
+                repeats: false
+            )
+            guard timer != nil else { return }
+            RunLoop.main.add(timer!, forMode: .common)
+            print("⏲ Scheduled timer for \(meal.name) @ \(meal.timeDate.shortTime)")
+        }
+        
+        @objc func updatehasPassed() {
+            print("⏲ Timer fired for \(meal.name) ...")
+
+            let hasPassed = meal.timeDate <= Date()
+            if self.hasPassed != hasPassed {
+                print("⏲ ... hasPassed it different (now \(hasPassed)) so setting with animation")
+                withAnimation {
+                    self.hasPassed = hasPassed
+                }
+                print("⏲ ... posting shouldUpdateUpcomingMeal notification")
+                NotificationCenter.default.post(name: .shouldUpdateUpcomingMeal, object: nil)
+            } else {
+                print("⏲ ... hasPassed isn't different and is still \(self.hasPassed)")
+            }
+        }
+        
+        deinit {
+            timer?.invalidate()
+        }
+
+        func addNotifications() {
             NotificationCenter.default.addObserver(
                 self, selector: #selector(didAddFoodItemToMeal),
                 name: .didAddFoodItemToMeal, object: nil)
@@ -67,25 +93,23 @@ extension MealsList.Meal {
             NotificationCenter.default.addObserver(
                 self, selector: #selector(didUpdateMeal),
                 name: .didUpdateMeal, object: nil)
-
-//            NotificationCenter.default.addObserver(
-//                self, selector: #selector(diaryWillChangeDate),
-//                name: .weekPagerWillChangeDate, object: nil)
-//            NotificationCenter.default.addObserver(
-//                self, selector: #selector(diaryWillChangeDate),
-//                name: .didPickDateOnDayView, object: nil)
-//            NotificationCenter.default.addObserver(
-//                self, selector: #selector(diaryWillChangeDate),
-//                name: .dayPagerWillChangeDate, object: nil)
             
-//            print("🧮 Calculating width in init")
-            self.mealMacrosIndicatorWidth = meal.macrosIndicatorWidth
-//            self.macrosIndicatorWidth = calculateMacrosIndicatorWidth
+
+    //            NotificationCenter.default.addObserver(
+    //                self, selector: #selector(diaryWillChangeDate),
+    //                name: .weekPagerWillChangeDate, object: nil)
+    //            NotificationCenter.default.addObserver(
+    //                self, selector: #selector(diaryWillChangeDate),
+    //                name: .didPickDateOnDayView, object: nil)
+    //            NotificationCenter.default.addObserver(
+    //                self, selector: #selector(diaryWillChangeDate),
+    //                name: .dayPagerWillChangeDate, object: nil)
         }
     }
 }
 
 extension MealsList.Meal.ViewModel {
+    
     @objc func didAddFoodItemToMeal(notification: Notification) {
         guard let userInfo = notification.userInfo as? [String: AnyObject],
               let foodItem = userInfo[Notification.Keys.foodItem] as? FoodItem
@@ -259,6 +283,8 @@ extension MealsList.Meal.ViewModel {
 //            self.mealMacrosIndicatorWidth = self.calculatedMealMacrosIndicatorWidth
 //            print("\(meal.name) now has width: \(macrosIndicatorWidth)")
         }
+        updatehasPassed()
+        scheduleUpdateTime()
     }
 }
 

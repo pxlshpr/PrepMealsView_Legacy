@@ -23,8 +23,8 @@ public struct MealsList: View {
     let didUpdateMealFoodItem = NotificationCenter.default.publisher(for: .didUpdateMealFoodItem)
     let didDeleteFoodItemFromMeal = NotificationCenter.default.publisher(for: .didDeleteFoodItemFromMeal)
     let didDeleteMeal = NotificationCenter.default.publisher(for: .didDeleteMeal)
-    
     let dateDidChange = NotificationCenter.default.publisher(for: .dateDidChange)
+    let shouldUpdateUpcomingMeal = NotificationCenter.default.publisher(for: .shouldUpdateUpcomingMeal)
 
     @State var hasAppeared: Bool = false
 
@@ -37,6 +37,8 @@ public struct MealsList: View {
     /// when the app initially loads and we don't get a `dateDidChange` call.
     @State var dateDidChangeOrMarkedAsFastedWasSet: Bool = false
 
+    @State var upcomingMealId: UUID? = nil
+    
     public init(
         date: Date,
         markedAsFasted: Bool = false,
@@ -76,11 +78,17 @@ public struct MealsList: View {
             print("❄️ task: \(date.calendarDayString)")
         }
         .onReceive(dateDidChange, perform: dateDidChange)
+        .onReceive(shouldUpdateUpcomingMeal, perform: shouldUpdateUpcomingMeal)
         .onReceive(didAddFoodItemToMeal, perform: didAddFoodItemToMeal)
         .onReceive(didUpdateMealFoodItem, perform: didUpdateMealFoodItem)
         .onReceive(didDeleteFoodItemFromMeal, perform: didDeleteFoodItemFromMeal)
         .onReceive(didDeleteMeal, perform: didDeleteMeal)
         .onChange(of: markedAsFasted, perform: markedAsFastedChanged)
+    }
+    
+    func shouldUpdateUpcomingMeal(_ notification: Notification) {
+        print("⏲🏝 MealsList received shouldUpdateUpcomingMeal")
+        setUpcomingMeal()
     }
     
     var content: some View {
@@ -109,6 +117,21 @@ extension MealsList {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                 calculateBadgeWidths()
             }
+        }
+        
+        setUpcomingMeal()
+    }
+    
+    func setUpcomingMeal() {
+        print("⏲ Setting upcoming meal as...")
+        let upcomingMeal = DataManager.shared.upcomingMeal
+        if let upcomingMeal {
+            print("⏲ ... \(upcomingMeal.name)")
+        } else {
+            print("⏲ ... nil")
+        }
+        withAnimation {
+            self.upcomingMealId = upcomingMeal?.id
         }
     }
     
@@ -169,6 +192,7 @@ extension MealsList {
     func didDeleteMeal(notification: Notification) {
         guard notificationMealIdBelongsHere(notification) else { return }
         calculateBadgeWidths()
+        NotificationCenter.default.post(name: .shouldUpdateUpcomingMeal, object: nil)
     }
     
     func notificationMealIdBelongsHere(_ notification: Notification) -> Bool {
