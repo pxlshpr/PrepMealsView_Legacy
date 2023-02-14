@@ -64,9 +64,17 @@ public struct MealsList: View {
         )
     }
     
+    var dummyContent: some View {
+        ZStack {
+            Color.yellow
+            Text(date.calendarDayString)
+        }
+    }
+    
     public var body: some View {
         Group {
             if hasAppeared {
+//            dummyContent
                 content
                     .transition(.opacity)
             } else {
@@ -75,7 +83,7 @@ public struct MealsList: View {
         }
         .onAppear(perform: appeared)
         .task {
-            print("❄️ task: \(date.calendarDayString)")
+            cprint("❄️ task: \(date.calendarDayString)")
         }
         .onReceive(dateDidChange, perform: dateDidChange)
         .onReceive(shouldUpdateUpcomingMeal, perform: shouldUpdateUpcomingMeal)
@@ -87,21 +95,19 @@ public struct MealsList: View {
     }
     
     func shouldUpdateUpcomingMeal(_ notification: Notification) {
-        print("⏲🏝 MealsList received shouldUpdateUpcomingMeal")
+        cprint("⏲🏝 MealsList received shouldUpdateUpcomingMeal")
         setUpcomingMeal()
     }
     
     var content: some View {
         ZStack {
             background
-            Group {
-                if meals.isEmpty {
-                    emptyContent
-                        .transition(.move(edge: .bottom))
-                } else {
-                    scrollView
-                        .transition(.move(edge: .top))
-                }
+            scrollView
+                .transition(.move(edge: .top))
+            if meals.isEmpty {
+                emptyContent
+                    .transition(.move(edge: .bottom))
+                    .padding(.top, 65)
             }
         }
     }
@@ -110,7 +116,7 @@ public struct MealsList: View {
 extension MealsList {
     func appeared() {
         //TODO: Don't delay this for the initial load when app launches
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
             withAnimation {
                 self.hasAppeared = true
             }
@@ -123,12 +129,12 @@ extension MealsList {
     }
     
     func setUpcomingMeal() {
-        print("⏲ Setting upcoming meal as...")
+        cprint("⏲ Setting upcoming meal as...")
         let upcomingMeal = DataManager.shared.upcomingMeal
         if let upcomingMeal {
-            print("⏲ ... \(upcomingMeal.name)")
+            cprint("⏲ ... \(upcomingMeal.name)")
         } else {
-            print("⏲ ... nil")
+            cprint("⏲ ... nil")
         }
         withAnimation {
             self.upcomingMealId = upcomingMeal?.id
@@ -142,7 +148,6 @@ extension MealsList {
     func calculateBadgeWidths() {
         Task {
             DataManager.shared.badgeWidths(on: date) { badgeWidths in
-//                withAnimation(Bounce) {
                 withAnimation(.interactiveSpring()) {
                     self.badgeWidths = badgeWidths
                 }
@@ -154,8 +159,8 @@ extension MealsList {
         guard let userInfo = notification.userInfo,
               let date = userInfo[Notification.Keys.date] as? Date
         else { return }
-        print("🌻 \(self.date.calendarDayString): MealList.dateDidChange(\(date.calendarDayString)), markedAsFasted: \(markedAsFasted)")
-        print("🌻     - but it should be \(DataManager.shared.markedAsFasting(on: self.date))")
+        cprint("🌻 \(self.date.calendarDayString): MealList.dateDidChange(\(date.calendarDayString)), markedAsFasted: \(markedAsFasted)")
+        cprint("🌻     - but it should be \(DataManager.shared.markedAsFasting(on: self.date))")
         self.markedAsFasted = DataManager.shared.markedAsFasting(on: self.date)
         self.dateDidChangeOrMarkedAsFastedWasSet = true
         if  date.startOfDay == self.date.startOfDay {

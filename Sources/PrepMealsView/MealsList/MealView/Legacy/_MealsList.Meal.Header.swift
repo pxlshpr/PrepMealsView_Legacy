@@ -109,7 +109,7 @@
 //                do {
 //                    try DataManager.shared.deleteMeal(viewModel.meal)
 //                } catch {
-//                    print("Couldn't delete meal: \(error)")
+//                    cprint("Couldn't delete meal: \(error)")
 //                }
 //            } label: {
 //                Label("Delete", systemImage: "trash")

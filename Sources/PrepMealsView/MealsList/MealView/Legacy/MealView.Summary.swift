@@ -481,7 +481,7 @@
 ////    var primitivePlottable: String
 ////
 ////    init?(primitivePlottable: String) {
-////        print("📐 Couldn't get a PlottableFoodItem from : \(primitivePlottable)")
+////        cprint("📐 Couldn't get a PlottableFoodItem from : \(primitivePlottable)")
 ////        return nil
 //////        self.primitivePlottable = primitivePlottable
 ////    }

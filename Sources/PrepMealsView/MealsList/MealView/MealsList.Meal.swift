@@ -113,6 +113,27 @@ extension MealsList.Meal {
         }
     }
     
+    var content_legacy: some View {
+        ZStack {
+            VStack(spacing: 0) {
+                Color.clear
+                    .frame(height: 44)
+                dropTargetForMeal
+                mealContent
+                Color.clear
+                    .frame(height: 50)
+            }
+            VStack(spacing: 0) {
+                header
+                Spacer()
+            }
+            VStack(spacing: 0) {
+                Spacer()
+                footer
+            }
+        }
+    }
+    
     var header: some View {
         MealsList.Meal.Header()
             .environmentObject(viewModel)
@@ -141,10 +162,20 @@ extension MealsList.Meal {
     @ViewBuilder
     var mealContent: some View {
         itemRows
+//        list
+    }
+    
+    var list: some View {
+        List {
+            ForEach(viewModel.meal.foodItems.indices, id: \.self) { index in
+                cell(for: $viewModel.meal.foodItems[index], index: index)
+            }
+        }
     }
     
     var itemRows: some View {
         ForEach(viewModel.meal.foodItems.indices, id: \.self) { index in
+//            cell(at: index)
             cell(for: $viewModel.meal.foodItems[index], index: index)
             dropTargetView(for: viewModel.meal.foodItems[index])
         }
@@ -162,6 +193,17 @@ extension MealsList.Meal {
                 }
         }
     }
+
+    func cell(at index: Int) -> some View {
+        Button {
+        } label: {
+            ZStack {
+                Color.yellow
+                Text(viewModel.meal.foodItems[index].food.name)
+            }
+            .frame(height: 40)
+        }
+    }
     
     func cell(for mealFoodItem: Binding<MealFoodItem>, index: Int) -> some View {
         
@@ -172,22 +214,77 @@ extension MealsList.Meal {
             set: { _ in }
         )
         
-        return Button {
-            viewModel.actionHandler(.editFoodItem(mealFoodItem.wrappedValue, viewModel.meal))
-//            viewModel.didTapMealFoodItem(mealFoodItem, viewModel.meal)
-        } label: {
-            MealItemCell(
-                item: mealFoodItem,
-                index: index,
-                badgeWidth: badgeWidthBinding
-            )
-            .environmentObject(viewModel)
+        var label: some View {
+            var yellow: some View {
+                ZStack {
+                    Color.yellow
+                    Text(viewModel.meal.foodItems[index].food.name)
+                }
+                .frame(height: 40)
+            }
+            var mealItemCell: some View {
+                MealItemCell(
+                    item: mealFoodItem,
+                    index: index,
+                    badgeWidth: badgeWidthBinding
+                )
+                .environmentObject(viewModel)
+            }
+            
+//            return yellow
+            return mealItemCell
         }
-        .draggable(mealFoodItem.wrappedValue)
+        
+        var button: some View {
+            Button {
+                viewModel.actionHandler(.editFoodItem(mealFoodItem.wrappedValue, viewModel.meal))
+    //            viewModel.didTapMealFoodItem(mealFoodItem, viewModel.meal)
+            } label: {
+                label
+            }
+        }
+        
+        
+        var asLabel: some View {
+            label
+                .onTapGesture {
+                    viewModel.actionHandler(.editFoodItem(mealFoodItem.wrappedValue, viewModel.meal))
+                }
+        }
+        
+        return button
+//        return asLabel
+//        .draggable(mealFoodItem.wrappedValue)
+            .contextMenu(menuItems: {
+                Section("Title goes here") {
+                    Button("Edit") {
+                        
+                    }
+                    Button("Other stuff") {
+                        
+                    }
+                    Divider()
+                    Button("delete", role: .destructive) {
+                        
+                    }
+                }
+//            }, preview: {
+//                VStack(alignment: .leading) {
+//                    HStack {
+//                        Text(mealFoodItem.wrappedValue.food.emoji)
+//                        Text(mealFoodItem.wrappedValue.food.name)
+//                    }
+//                    if let detail = mealFoodItem.wrappedValue.food.detail {
+//                        Text(detail)
+//                    }
+//                    if let brand = mealFoodItem.wrappedValue.food.brand {
+//                        Text(brand)
+//                    }
+//                }
+            })
         .transition(
             .asymmetric(
                 insertion: .move(edge: .top),
-//                removal: .move(edge: .top)
                 removal: .scale
             )
         )

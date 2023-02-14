@@ -128,8 +128,11 @@ extension MealsList {
             @ViewBuilder
             var explanationText: some View {
                 markedAsFasted
-                ? Text("This day **is** included when calculating your daily averages and fasting duration.")
-                : Text("This day is **not** included when calculating your daily averages and fasting duration.")
+                ? Text("Marking this day as fasted will make sure it **is included** when calculating your daily averages and roll-over fasts.")
+                : Text("Without this set, it is assumed that you skipped logging that day—it **will not** affect your daily averages and **will not** be counted towards your fasting duration.")
+//                markedAsFasted
+//                ? Text("This day **is** included when calculating your daily averages and fasting duration.")
+//                : Text("This day is **not** included when calculating your daily averages and fasting duration.")
             }
             
             var emptyMessage: some View {
@@ -196,13 +199,17 @@ extension MealsList {
                 }
             }
             
+//            return emptyMessage
             return VStack {
                 Spacer()
                 emptyMessage
                 Spacer()
             }
+            .edgesIgnoringSafeArea(.all)
+//            .background(.green)
         }
         
+//        return emptyMessageLayer
         return ZStack {
             background
             emptyMessageLayer

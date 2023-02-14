@@ -12,10 +12,10 @@ extension MealsList {
                 }
 //                quickAddButtons
             }
-            .safeAreaInset(edge: .bottom) {
-                Color.clear
-                    .frame(height: 60 + 55)
-            }
+//            .safeAreaInset(edge: .bottom) {
+//                Color.clear
+//                    .frame(height: 60 + 55)
+//            }
         }
 //        .listStyle(.plain)
         .scrollContentBackground(.hidden)

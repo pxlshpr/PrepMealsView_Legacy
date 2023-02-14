@@ -87,10 +87,8 @@ extension MealsList.Meal.Header {
                     .fixedSize(horizontal: false, vertical: true)
             }
             
-            return HStack {
-                Button {
-                    tappedEditMeal()
-                } label: {
+            var button: some View {
+                var label: some View {
                     HStack {
                         HStack {
                             timeText
@@ -105,7 +103,29 @@ extension MealsList.Meal.Header {
                     .padding(.bottom, 16.75)
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                
+                var actualButton: some View {
+                    Button {
+                        tappedEditMeal()
+                    } label: {
+                        label
+                    }
+                    .buttonStyle(.plain)
+                }
+                
+                var labelAsButton: some View {
+                    label
+//                        .onTapGesture {
+//                            tappedEditMeal()
+//                        }
+                }
+                
+                return actualButton
+//                return labelAsButton
+            }
+            
+            return HStack {
+                button
 //                .background(.green)
                 Spacer()
             }
@@ -131,8 +151,8 @@ extension MealsList.Meal.Header {
             .buttonStyle(.plain)
         }
         
-//        return button
-        return paddedLabel
+        return button
+//        return paddedLabel
     }
     
     //MARK: - Menu
@@ -145,6 +165,7 @@ extension MealsList.Meal.Header {
                 Label("Add Food", systemImage: "plus")
             }
         }
+        
         var mealCompletionButton: some View {
             var title: String {
                 viewModel.meal.isCompleted
@@ -192,7 +213,7 @@ extension MealsList.Meal.Header {
                 do {
                     try DataManager.shared.deleteMeal(viewModel.meal)
                 } catch {
-                    print("Couldn't delete meal: \(error)")
+                    cprint("Couldn't delete meal: \(error)")
                 }
             } label: {
                 Label("Delete", systemImage: "trash")

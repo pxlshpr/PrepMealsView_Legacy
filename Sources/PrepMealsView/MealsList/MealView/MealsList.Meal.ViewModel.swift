@@ -50,22 +50,22 @@ extension MealsList.Meal {
             )
             guard timer != nil else { return }
             RunLoop.main.add(timer!, forMode: .common)
-            print("⏲ Scheduled timer for \(meal.name) @ \(meal.timeDate.shortTime)")
+            cprint("⏲ Scheduled timer for \(meal.name) @ \(meal.timeDate.shortTime)")
         }
         
         @objc func updatehasPassed() {
-            print("⏲ Timer fired for \(meal.name) ...")
+            cprint("⏲ Timer fired for \(meal.name) ...")
 
             let hasPassed = meal.timeDate <= Date()
             if self.hasPassed != hasPassed {
-                print("⏲ ... hasPassed it different (now \(hasPassed)) so setting with animation")
+                cprint("⏲ ... hasPassed it different (now \(hasPassed)) so setting with animation")
                 withAnimation {
                     self.hasPassed = hasPassed
                 }
-                print("⏲ ... posting shouldUpdateUpcomingMeal notification")
+                cprint("⏲ ... posting shouldUpdateUpcomingMeal notification")
                 NotificationCenter.default.post(name: .shouldUpdateUpcomingMeal, object: nil)
             } else {
-                print("⏲ ... hasPassed isn't different and is still \(self.hasPassed)")
+                cprint("⏲ ... hasPassed isn't different and is still \(self.hasPassed)")
             }
         }
         
@@ -256,7 +256,7 @@ extension MealsList.Meal.ViewModel {
         }
         
         if initialMeal != meal {
-//            print("\(meal.name) Sending didUpdateMeal")
+//            cprint("\(meal.name) Sending didUpdateMeal")
             NotificationCenter.default.post(
                 name: .didUpdateMeal,
                 object: nil,
@@ -281,7 +281,7 @@ extension MealsList.Meal.ViewModel {
                 self.meal = updatedMeal
             }
 //            self.mealMacrosIndicatorWidth = self.calculatedMealMacrosIndicatorWidth
-//            print("\(meal.name) now has width: \(macrosIndicatorWidth)")
+//            cprint("\(meal.name) now has width: \(macrosIndicatorWidth)")
         }
         updatehasPassed()
         scheduleUpdateTime()
@@ -306,7 +306,7 @@ extension MealsList.Meal.ViewModel {
                 do {
                     try DataManager.shared.silentlyUpdateSortPosition(for: newItem)
                 } catch {
-                    print("Error updating sort position: \(error)")
+                    cprint("Error updating sort position: \(error)")
                 }
             }
         }
@@ -379,28 +379,28 @@ extension Array where Element == MealFoodItem {
             /// Now insert it where it actually belongs
             var newIndex = removed.sortPosition - 1
             
-//            print("🔀 newIndex for: \(removed.food.name) is \(newIndex)")
+//            cprint("🔀 newIndex for: \(removed.food.name) is \(newIndex)")
             if newIndex > self.count {
                 newIndex = self.count
-//                print("🔀 Changed newIndex to \(newIndex) since it was out of bounds (greater than \(self.count))")
+//                cprint("🔀 Changed newIndex to \(newIndex) since it was out of bounds (greater than \(self.count))")
             }
             
             if newIndex <= self.count , newIndex >= 0 {
-//                print("🔀 Inserting \(removed.food.name) at \(newIndex)")
+//                cprint("🔀 Inserting \(removed.food.name) at \(newIndex)")
                 self.insert(removed, at: newIndex)
             } else {
-//                print("🔀 NOT Inserting \(removed.food.name) at \(newIndex) because it's out of bounds")
+//                cprint("🔀 NOT Inserting \(removed.food.name) at \(newIndex) because it's out of bounds")
             }
         }
 
-//        print("🔀 Before re-number: \(map({ "\($0.sortPosition)" }).joined(separator: ", "))")
+//        cprint("🔀 Before re-number: \(map({ "\($0.sortPosition)" }).joined(separator: ", "))")
 
         /// Finally, renumber all the items for the array just to be safe (can be optimised later)
         for i in self.indices {
             self[i].sortPosition = i + 1
         }
         
-//        print("🔀 After re-number: \(map({ "\($0.sortPosition)" }).joined(separator: ", "))")
+//        cprint("🔀 After re-number: \(map({ "\($0.sortPosition)" }).joined(separator: ", "))")
     }
 }
 
@@ -460,11 +460,11 @@ extension MealsList.Meal.ViewModel {
         guard let droppedFoodItem else { return }
         do {
             SyncManager.shared.pause()
-//            print("🔀 Before move: \(meal.foodItems.map({ "\($0.sortPosition)" }).joined(separator: ", "))")
+//            cprint("🔀 Before move: \(meal.foodItems.map({ "\($0.sortPosition)" }).joined(separator: ", "))")
             try DataManager.shared.moveMealItem(droppedFoodItem, to: meal, after: dropRecipient)
 //            resetDrop()
         } catch {
-            print("Error moving dropped food item: \(error)")
+            cprint("Error moving dropped food item: \(error)")
         }
     }
     
@@ -474,7 +474,7 @@ extension MealsList.Meal.ViewModel {
             try DataManager.shared.duplicateMealItem(droppedFoodItem, to: meal, after: dropRecipient)
 //            resetDrop()
         } catch {
-            print("Error moving dropped food item: \(error)")
+            cprint("Error moving dropped food item: \(error)")
         }
     }
     

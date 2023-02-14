@@ -26,6 +26,16 @@ struct MealItemCell: View {
     }
     
     var body: some View {
+        content
+            .background(listRowBackground)
+            .dropDestination(
+                for: MealFoodItem.self,
+                action: handleDrop,
+                isTargeted: handleDropIsTargeted
+            )
+    }
+    
+    var content: some View {
         HStack(spacing: 0) {
             optionalEmojiText
                 .padding(.leading, 10)
@@ -42,16 +52,10 @@ struct MealItemCell: View {
             }
 //            isEatenToggle
         }
-//        .padding(.leading, 20)
-        .background(listRowBackground)
-        .dropDestination(
-            for: MealFoodItem.self,
-            action: handleDrop,
-            isTargeted: handleDropIsTargeted
-        )
     }
     
     var foodBadge: some View {
+//        Color.clear
         let widthBinding = Binding<CGFloat>(
 //            get: { viewModel.calculateMacrosIndicatorWidth(of: item) },
             //TODO: This needs to be something stored in the cell that gets recalculated dynamically to changes

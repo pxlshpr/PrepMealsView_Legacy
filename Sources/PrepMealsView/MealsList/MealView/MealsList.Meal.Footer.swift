@@ -105,14 +105,20 @@ extension MealsList.Meal.Footer {
 //                .background(.green)
         }
         
-        return Button {
-            tappedAddFood()
-        } label: {
-            label
+        var button: some View {
+            return Button {
+                tappedAddFood()
+            } label: {
+                label
+            }
         }
-        .contentShape(Rectangle())
-        .padding(.trailing)
-        .buttonStyle(.borderless)
+        
+        return button
+//        return label
+            .onTapGesture { tappedAddFood() }
+            .contentShape(Rectangle())
+            .padding(.trailing)
+            .buttonStyle(.borderless)
     }
 
     var nutrientsButton: some View {
@@ -129,10 +135,9 @@ extension MealsList.Meal.Footer {
         
         //TODO: Look into why this binding of the width still doesn't fix it? Maybe the calculation is wrong
         var macrosIndicator: some View {
-            
+//            Color.clear
             let binding = Binding<CGFloat>(
                 get: {
-//                    let width = viewModel.mealMacrosIndicatorWidth
                     let width = badgeWidth
                     return width
                 },
@@ -146,9 +151,7 @@ extension MealsList.Meal.Footer {
             )
         }
         
-        return Button {
-            tappedEnergy()
-        } label: {
+        var label: some View {
             HStack {
 //                if showingMealMacros {
                 if !showingBadgesForFoods {
@@ -158,10 +161,22 @@ extension MealsList.Meal.Footer {
                 energyLabel
             }
         }
-        .contentShape(Rectangle())
-        .padding(.leading)
-        .buttonStyle(.borderless)
-        .frame(maxHeight: .infinity)
+        
+        var button: some View {
+            return Button {
+                tappedEnergy()
+            } label: {
+                label
+            }
+        }
+        
+        return button
+//        return label
+            .onTapGesture { tappedEnergy() }
+            .contentShape(Rectangle())
+            .padding(.leading)
+            .buttonStyle(.borderless)
+            .frame(maxHeight: .infinity)
     }
     
     //MARK: - Actions
