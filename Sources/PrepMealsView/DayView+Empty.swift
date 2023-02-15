@@ -159,7 +159,7 @@ extension DayView.EmptyMessage {
     var markAsFastedSection: some View {
         if showFastedSection {
             VStack {
-                Toggle("Mark as fasted", isOn: $markedAsFasted)
+                Toggle("Log as Fasted", isOn: $markedAsFasted)
                     .tint(Color.accentColor.gradient)
                     .foregroundColor(.secondary)
                     .padding(.horizontal, 20)
@@ -238,8 +238,8 @@ extension DayView.EmptyMessage {
     @ViewBuilder
     var explanationText: some View {
         markedAsFasted
-        ? Text("Marking this day as fasted will make sure it **is included** when calculating your daily averages and roll-over fasts.")
-        : Text("Without this set, it is assumed that you skipped logging this day—it **will not** affect your daily averages and **will not** be counted towards your fasting duration.")
+        ? Text("Logging this day as fasted will ensure it is included in your daily averages and total fasted time.")
+        : Text("If you do not have this set, you will not be logging this day and it will not affect your daily averages or count towards your fasted duration.")
     }
 }
 
