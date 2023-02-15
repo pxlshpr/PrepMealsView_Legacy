@@ -7,10 +7,20 @@ import PrepCoreDataStack
 extension DayView {
     struct EmptyLayer: View {
         @Binding var date: Date
+        let actionHandler: (LogAction) -> ()
+
         @State var previousDate: Date = Date()
-        
         @State var previousShowingEmpty: Bool = false
         @State var currentShowingEmpty: Bool = true
+        @State var animatingMeal: Bool = false
+        let didAddMeal = NotificationCenter.default.publisher(for: .didAddMeal)
+        let didDeleteMeal = NotificationCenter.default.publisher(for: .didDeleteMeal)
+        
+        init(date: Binding<Date>, actionHandler: @escaping (LogAction) -> (), initialShowingEmpty: Bool = false) {
+            _date = date
+            self.actionHandler = actionHandler
+            _currentShowingEmpty = State(initialValue: initialShowingEmpty)
+        }
     }
 }
 
@@ -18,15 +28,31 @@ extension DayView.EmptyLayer {
     var body: some View {
         content
             .onChange(of: date) { newDate in
-                let current = DataManager.shared.isDateEmpty(newDate)
-                self.previousShowingEmpty = self.currentShowingEmpty
-                self.currentShowingEmpty = false
-                withAnimation {
-                    self.currentShowingEmpty = current
-                    self.previousShowingEmpty = false
-                }
-                self.previousDate = date
+                load(for: newDate)
             }
+            .onReceive(didAddMeal, perform: animateMealInsertionOrRemoval)
+            .onReceive(didDeleteMeal, perform: animateMealInsertionOrRemoval)
+    }
+    
+    func animateMealInsertionOrRemoval(_ notification: Notification) {
+        animatingMeal = true
+        reload()
+    }
+
+    func reload() {
+        load(for: date)
+    }
+    
+    func load(for date: Date) {
+        let current = DataManager.shared.isDateEmpty(date)
+        self.previousShowingEmpty = self.currentShowingEmpty
+        self.currentShowingEmpty = false
+        withAnimation {
+            self.currentShowingEmpty = current
+            self.previousShowingEmpty = false
+        }
+        self.previousDate = date
+        animatingMeal = false
     }
     
     var transitioningForwards: Bool {
@@ -43,14 +69,18 @@ extension DayView.EmptyLayer {
     var previousContent: some View {
         var transition: AnyTransition {
             var edge: Edge {
-                transitioningForwards ? .leading : .trailing
+                guard !animatingMeal else {
+                    return .bottom
+                }
+                return transitioningForwards ? .leading : .trailing
             }
-            print("Edge for previous transition: \(edge)")
+            
             return .move(edge: edge)
         }
+        
         return Group {
             if previousShowingEmpty {
-                DayView.EmptyMessage(date: previousDate)
+                DayView.EmptyMessage(date: previousDate, actionHandler: actionHandler)
 //                Text("Previous")
                     .frame(maxWidth: .infinity)
                     .transition(transition)
@@ -61,15 +91,19 @@ extension DayView.EmptyLayer {
     var currentContent: some View {
         var transition: AnyTransition {
             var edge: Edge {
-                transitioningForwards ? .trailing : .leading
+                guard !animatingMeal else {
+                    return .bottom
+                }
+
+                return transitioningForwards ? .trailing : .leading
             }
-            print("🗡 Edge for current transition: \(edge), while date is: \(date.calendarDayString)")
+            
             return .move(edge: edge)
         }
 
         return Group {
             if currentShowingEmpty {
-                DayView.EmptyMessage(date: date)
+                DayView.EmptyMessage(date: date, actionHandler: actionHandler)
 //                Text("Current")
                     .frame(maxWidth: .infinity)
                     .transition(transition)
@@ -86,8 +120,11 @@ extension DayView {
         let date: Date
         @State var markedAsFasted = false
         
-        init(date: Date) {
+        let actionHandler: (LogAction) -> ()
+
+        init(date: Date, actionHandler: @escaping (LogAction) -> ()) {
             self.date = date
+            self.actionHandler = actionHandler
         }
     }
 }
@@ -206,7 +243,7 @@ extension DayView.EmptyMessage {
         
         var button: some View {
             Button {
-//                actionHandler(.addMeal(nil))
+                actionHandler(.addMeal(nil))
             } label: {
                 label
             }
@@ -216,7 +253,7 @@ extension DayView.EmptyMessage {
         var customButton: some View {
             label
                 .onTapGesture {
-//                    actionHandler(.addMeal(nil))
+                    actionHandler(.addMeal(nil))
                 }
         }
         

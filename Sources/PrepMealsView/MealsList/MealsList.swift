@@ -6,7 +6,7 @@ import PrepCoreDataStack
 
 public struct MealsList: View {
     
-    let actionHandler: (MealsDiaryAction) -> ()
+    let actionHandler: (LogAction) -> ()
 
     let date: Date
     @Binding var meals: [DayMeal]
@@ -43,7 +43,7 @@ public struct MealsList: View {
         date: Date,
         markedAsFasted: Bool = false,
         meals: Binding<[DayMeal]>,
-        actionHandler: @escaping (MealsDiaryAction) -> ()
+        actionHandler: @escaping (LogAction) -> ()
     ) {
         self.initialMarkedAsFasted = markedAsFasted
         _markedAsFasted = State(initialValue: markedAsFasted)

@@ -17,7 +17,7 @@ extension MealsList.Meal {
         @Published var dateIsChanging: Bool = false
         @Published var isUpcomingMeal: Bool
         
-        let actionHandler: (MealsDiaryAction) -> ()
+        let actionHandler: (LogAction) -> ()
         
         var timer: Timer? = nil
         
@@ -25,7 +25,7 @@ extension MealsList.Meal {
             date: Date,
             meal: DayMeal,
             isUpcomingMeal: Bool,
-            actionHandler: @escaping (MealsDiaryAction) -> ()
+            actionHandler: @escaping (LogAction) -> ()
         ) {
             self.date = date
             self.meal = meal

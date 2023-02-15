@@ -13,12 +13,16 @@ public struct DayView: View {
     @State var nextTransitionIsForward = false
     @State var upcomingMealId: UUID? = nil
     @State var showingEmpty: Bool
+    
+    let actionHandler: (LogAction) -> ()
 
-    public init(date: Binding<Date>) {
+    public init(date: Binding<Date>, actionHandler: @escaping (LogAction) -> ()) {
         _date = date
         _viewModel = StateObject(wrappedValue: ViewModel(date: date.wrappedValue))
+        self.actionHandler = actionHandler
         
         let dayMeals = DataManager.shared.day(for: date.wrappedValue)?.meals ?? []
+        _dayMeals = State(initialValue: dayMeals)
         _showingEmpty = State(initialValue: dayMeals.isEmpty)
     }
     
@@ -29,20 +33,22 @@ public struct DayView: View {
             emptyViewLayer
         }
         .onChange(of: date, perform: dateChanged)
-        .onChange(of: viewModel.dayMeals, perform: dayMealsChanged)
-        .onChange(of: viewModel.showingEmpty, perform: showingEmptyChanged)
+        .onChange(of: viewModel.dayMeals, perform: viewModelDayMealsChanged)
+        .onChange(of: viewModel.showingEmpty, perform: viewModelShowingEmptyChanged)
     }
     
-    func showingEmptyChanged(to newValue: Bool) {
+    func viewModelShowingEmptyChanged(to newValue: Bool) {
         withAnimation {
             showingEmpty = newValue
         }
     }
     
-    func dayMealsChanged(to newValue: [DayMeal]) {
+    func viewModelDayMealsChanged(to newValue: [DayMeal]) {
         withAnimation {
-            print("Changing from \(self.dayMeals.count) items to \(newValue.count)")
             self.dayMeals = newValue
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            viewModel.animatingMeal = false
         }
     }
     
@@ -57,10 +63,13 @@ public struct DayView: View {
     
     var scrollViewLayer: some View {
         var transition: AnyTransition {
-            .asymmetric(
-                insertion: .move(edge: nextTransitionIsForward ? .trailing : .leading),
-                removal: .move(edge: nextTransitionIsForward ? .leading : .trailing)
-            )
+            var insertion: AnyTransition {
+                .move(edge: nextTransitionIsForward ? .trailing : .leading)
+            }
+            var removal: AnyTransition {
+                .move(edge: nextTransitionIsForward ? .leading : .trailing)
+            }
+            return .asymmetric(insertion: insertion, removal: removal)
         }
         
         return ScrollView(showsIndicators: false) {
@@ -78,7 +87,7 @@ public struct DayView: View {
     }
     
     var emptyViewLayer: some View {
-        EmptyLayer(date: $date)
+        EmptyLayer(date: $date, actionHandler: actionHandler, initialShowingEmpty: showingEmpty)
     }
     
     func mealView(for meal: DayMeal) -> some View {
@@ -91,7 +100,7 @@ public struct DayView: View {
             meal: meal,
             badgeWidths: .constant([:]),
             isUpcomingMeal: isUpcomingMealBinding,
-            actionHandler: { _ in }
+            actionHandler: actionHandler
         )
     }
 }
@@ -112,6 +121,8 @@ extension DayView {
         @Published var previousDate: Date = Date()
         @Published var showingEmpty: Bool = false
 
+        @Published var animatingMeal = false
+        
         var date: Date {
             didSet {
                 dateChanged(date)
@@ -125,17 +136,50 @@ extension DayView {
             self.day = day
             self.dayMeals = day?.meals ?? []
             self.showingEmpty = dayMeals.isEmpty
+            
+            addObservers()
         }
     }
 }
 
 extension DayView.ViewModel {
     
-    func dateChanged(_ newValue: Date) {
+    func addObservers() {
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(didAddMeal),
+            name: .didAddMeal, object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(didDeleteMeal),
+            name: .didDeleteMeal, object: nil
+        )
+    }
+    
+    @objc func didAddMeal() {
+        print("🎞 Setting animatingMeal to TRUE")
+        animatingMeal = true
+        reload()
+    }
+
+    @objc func didDeleteMeal() {
+        print("🎞 Setting animatingMeal to TRUE")
+        animatingMeal = true
+        reload()
+    }
+
+    func reload() {
+        load(for: date)
+    }
+    
+    func load(for date: Date) {
         let day = DataManager.shared.day(for: date)
         self.day = day
         self.dayMeals = day?.meals ?? []
         self.showingEmpty = dayMeals.isEmpty
+    }
+
+    func dateChanged(_ newValue: Date) {
+        load(for: newValue)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.previousDate = newValue
         }
