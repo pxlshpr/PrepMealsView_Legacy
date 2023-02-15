@@ -16,9 +16,9 @@ extension MealView {
         @Published var mealMacrosIndicatorWidth: CGFloat = FoodBadge.DefaultWidth
         @Published var dateIsChanging: Bool = false
         @Published var isUpcomingMeal: Bool
+        @Published var isAnimatingItemChange = false
         
-        
-        @Published var foodItems: [MealFoodItem]
+//        @Published var foodItems: [MealFoodItem]
         
         let actionHandler: (LogAction) -> ()
         
@@ -38,10 +38,10 @@ extension MealView {
             self.hasPassed = meal.timeDate < Date()
             self.actionHandler = actionHandler
             
-            self.foodItems = meal.foodItems
+//            self.foodItems = meal.foodItems
             
             self.mealMacrosIndicatorWidth = meal.macrosIndicatorWidth
-            addNotifications()
+//            addNotifications()
             scheduleUpdateTime()
         }
         
@@ -125,7 +125,7 @@ extension MealView.ViewModel {
         }
         
         /// Make sure we don't have it already so we don't double add it
-        guard !foodItems.contains(where: { $0.id == foodItem.id }) else {
+        guard !meal.foodItems.contains(where: { $0.id == foodItem.id }) else {
             return
         }
         
@@ -135,9 +135,13 @@ extension MealView.ViewModel {
         }
         
         let mealFoodItem = MealFoodItem(from: foodItem)
+        self.isAnimatingItemChange = true
         withAnimation(.interactiveSpring()) {
-            foodItems.append(mealFoodItem)
+            meal.foodItems.append(mealFoodItem)
             resetSortPositions(aroundFoodItemWithId: foodItem.id)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.isAnimatingItemChange = false
         }
         
 //        NotificationCenter.default.post(
@@ -154,11 +158,6 @@ extension MealView.ViewModel {
             return
         }
         
-        withAnimation(Bounce) {
-            /// Update our local array used to calculate macro indicator widths first
-//            self.meals.updateFoodItem(updatedFoodItem)
-        }
-
         /// Make sure this is the `MealView.ViewModel` for the `Meal` that the `FoodItem` belongs to before proceeding
         guard
             updatedFoodItem.meal?.id == meal.id,
@@ -194,28 +193,32 @@ extension MealView.ViewModel {
             return
         }
 
-        guard foodItems.contains(where: { $0.id == id }) else {
+        guard meal.foodItems.contains(where: { $0.id == id }) else {
             return
         }
         
-        guard let index = foodItems.firstIndex(where: { $0.id == id }) else {
+        guard let index = meal.foodItems.firstIndex(where: { $0.id == id }) else {
             return
         }
 
+        self.isAnimatingItemChange = true
         withAnimation(.interactiveSpring()) {
             print("Food before deletion:")
-            for foodItem in foodItems {
+            for foodItem in meal.foodItems {
                 print("    \(foodItem.food.emoji) - \(foodItem.food.name)")
             }
-            let _ = foodItems.remove(at: index)
+            let _ = meal.foodItems.remove(at: index)
 //            foodItems.removeAll(where: { $0.id == id })
             print("Food AFTER deletion:")
-            for foodItem in foodItems {
+            for foodItem in meal.foodItems {
                 print("    \(foodItem.food.emoji) - \(foodItem.food.name)")
             }
             resetSortPositions(aroundFoodItemWithId: nil)
         }
-        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.isAnimatingItemChange = false
+        }
+
 //        NotificationCenter.default.post(
 //            name: .didInvalidateBadgeWidths,
 //            object: nil,
@@ -230,13 +233,16 @@ extension MealView.ViewModel {
             return
         }
         
+        print("didUpdateFoodItems received with: \(foodItems.count) foodItems")
+        
         let initialMeal = meal
+        self.isAnimatingItemChange = true
         withAnimation {
             for foodItem in foodItems {
                 
                 /// If food item previously belong to this meal, remove it
-                if let index = meal.foodItems.firstIndex(where: { $0.id == foodItem.id }) {
-                    meal.foodItems.remove(at: index)
+                if let index = self.meal.foodItems.firstIndex(where: { $0.id == foodItem.id }) {
+                    self.meal.foodItems.remove(at: index)
                 }
                 
                 /// We're only interesting in items that belong to this meal
@@ -245,19 +251,19 @@ extension MealView.ViewModel {
                 }
                 
                 if let deletedAt = foodItem.deletedAt, deletedAt > 0 {
-                    guard let index = meal.foodItems.firstIndex(where: { $0.id == foodItem.id }) else {
+                    guard let index = self.meal.foodItems.firstIndex(where: { $0.id == foodItem.id }) else {
                         continue
                     }
-                    meal.foodItems.remove(at: index)
+                    self.meal.foodItems.remove(at: index)
                 }
 
                 
                 /// Either add or update it dending on if it exists or not
                 let mealFoodItem = MealFoodItem(from: foodItem)
-                if let index = meal.foodItems.firstIndex(where: { $0.id == foodItem.id }) {
-                    meal.foodItems[index] = mealFoodItem
+                if let index = self.meal.foodItems.firstIndex(where: { $0.id == foodItem.id }) {
+                    self.meal.foodItems[index] = mealFoodItem
                 } else {
-                    meal.foodItems.append(mealFoodItem)
+                    self.meal.foodItems.append(mealFoodItem)
                 }
             }
             
@@ -265,9 +271,12 @@ extension MealView.ViewModel {
 //            if let index = meals.firstIndex(where: { $0.id == meal.id }) {
 //                meals[index] = meal
 //            }
-            meal.foodItems.sort { $0.sortPosition < $1.sortPosition }
+            self.meal.foodItems.sort { $0.sortPosition < $1.sortPosition }
         }
-        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.isAnimatingItemChange = false
+        }
+
         if initialMeal != meal {
 //            cprint("\(meal.name) Sending didUpdateMeal")
             NotificationCenter.default.post(
@@ -307,9 +316,19 @@ extension MealView.ViewModel {
     func resetSortPositions(aroundFoodItemWithId id: UUID?) {
         let before = self.meal.foodItems
         
+        print("-- Before sorting:")
+        for foodItem in meal.foodItems {
+            print("    \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name)")
+        }
+        
         self.meal.foodItems.resetSortPositions(aroundFoodItemWithId: id)
         self.meal.foodItems.sort { $0.sortPosition < $1.sortPosition }
-        
+
+        print("-- After sorting:")
+        for foodItem in meal.foodItems {
+            print("    \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name)")
+        }
+
         for oldItem in before {
             guard let newItem = self.meal.foodItems.first(where: { $0.id == oldItem.id }) else {
                 /// We shouldn't get here
@@ -392,28 +411,28 @@ extension Array where Element == MealFoodItem {
             /// Now insert it where it actually belongs
             var newIndex = removed.sortPosition - 1
             
-//            cprint("🔀 newIndex for: \(removed.food.name) is \(newIndex)")
+            print("🔀 newIndex for: \(removed.food.name) is \(newIndex)")
             if newIndex > self.count {
                 newIndex = self.count
-//                cprint("🔀 Changed newIndex to \(newIndex) since it was out of bounds (greater than \(self.count))")
+                print("🔀 Changed newIndex to \(newIndex) since it was out of bounds (greater than \(self.count))")
             }
             
             if newIndex <= self.count , newIndex >= 0 {
-//                cprint("🔀 Inserting \(removed.food.name) at \(newIndex)")
+                print("🔀 Inserting \(removed.food.name) at \(newIndex)")
                 self.insert(removed, at: newIndex)
             } else {
-//                cprint("🔀 NOT Inserting \(removed.food.name) at \(newIndex) because it's out of bounds")
+                print("🔀 NOT Inserting \(removed.food.name) at \(newIndex) because it's out of bounds")
             }
         }
 
-//        cprint("🔀 Before re-number: \(map({ "\($0.sortPosition)" }).joined(separator: ", "))")
+        print("🔀 Before re-number: \(map({ "\($0.sortPosition)" }).joined(separator: ", "))")
 
         /// Finally, renumber all the items for the array just to be safe (can be optimised later)
         for i in self.indices {
             self[i].sortPosition = i + 1
         }
         
-//        cprint("🔀 After re-number: \(map({ "\($0.sortPosition)" }).joined(separator: ", "))")
+        print("🔀 After re-number: \(map({ "\($0.sortPosition)" }).joined(separator: ", "))")
     }
 }
 
@@ -447,6 +466,8 @@ extension MealView.ViewModel {
     
     var isEmpty: Bool {
         meal.foodItems.isEmpty
+        ||
+        meal.foodItems.allSatisfy({ $0.isSoftDeleted })
     }
     
     var headerString: String {

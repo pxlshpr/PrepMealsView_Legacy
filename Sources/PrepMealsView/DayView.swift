@@ -14,6 +14,8 @@ public struct DayView: View {
     @State var upcomingMealId: UUID? = nil
     @State var showingEmpty: Bool
     
+    @State var isAnimatingItemChange = false
+    
     let actionHandler: (LogAction) -> ()
 
     public init(date: Binding<Date>, actionHandler: @escaping (LogAction) -> ()) {
@@ -64,17 +66,29 @@ public struct DayView: View {
     var scrollViewLayer: some View {
         var transition: AnyTransition {
             var insertion: AnyTransition {
-                .move(edge: nextTransitionIsForward ? .trailing : .leading)
+                if isAnimatingItemChange {
+                    return .opacity
+                } else {
+                    return .move(edge: nextTransitionIsForward ? .trailing : .leading)
+                }
             }
             var removal: AnyTransition {
-                .move(edge: nextTransitionIsForward ? .leading : .trailing)
+                if isAnimatingItemChange {
+                    return .opacity
+                } else {
+                    return .move(edge: nextTransitionIsForward ? .leading : .trailing)
+                }
             }
             return .asymmetric(insertion: insertion, removal: removal)
         }
         
         return ScrollView(showsIndicators: false) {
-            ForEach(dayMeals) { meal in
-                mealView(for: meal)
+//            ForEach(dayMeals) { meal in
+//                mealView(for: meal)
+//                    .transition(transition)
+//            }
+            ForEach(Array(dayMeals.enumerated()), id: \.element.id) { (index, item) in
+                mealView(for: $dayMeals[index])
                     .transition(transition)
             }
             Color.clear
@@ -95,11 +109,33 @@ public struct DayView: View {
             get: { meal.id == upcomingMealId },
             set: { _ in }
         )
+        let mealBinding = Binding<DayMeal>(
+            get: { meal },
+            set: { _ in }
+        )
         return MealView(
             date: date,
             meal: meal,
+            mealBinding: mealBinding,
             badgeWidths: .constant([:]),
             isUpcomingMeal: isUpcomingMealBinding,
+            isAnimatingItemChange: $isAnimatingItemChange,
+            actionHandler: actionHandler
+        )
+    }
+    
+    func mealView(for meal: Binding<DayMeal>) -> some View {
+        let isUpcomingMealBinding = Binding<Bool>(
+            get: { meal.wrappedValue.id == upcomingMealId },
+            set: { _ in }
+        )
+        return MealView(
+            date: date,
+            meal: meal.wrappedValue,
+            mealBinding: meal,
+            badgeWidths: .constant([:]),
+            isUpcomingMeal: isUpcomingMealBinding,
+            isAnimatingItemChange: $isAnimatingItemChange,
             actionHandler: actionHandler
         )
     }
@@ -147,13 +183,104 @@ extension DayView.ViewModel {
     func addObservers() {
         NotificationCenter.default.addObserver(self, selector: #selector(didAddMeal), name: .didAddMeal, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(didDeleteMeal), name: .didDeleteMeal, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(didAddFoodItemToMeal), name: .didAddFoodItemToMeal, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(didDeleteFoodItemFromMeal), name: .didDeleteFoodItemFromMeal, object: nil)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(didUpdateMealFoodItem), name: .didUpdateMealFoodItem, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(didUpdateFoodItems), name: .didUpdateFoodItems, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(didUpdateMeal), name: .didUpdateMeal, object: nil)
     }
 
-    @objc func didDeleteFoodItemFromMeal() {
+    @objc func didAddFoodItemToMeal(notification: Notification) {
+        animatingMeal = true
+        reload()
+    }
+
+    @objc func didDeleteFoodItemFromMeal(notification: Notification) {
+        guard let userInfo = notification.userInfo as? [String: AnyObject],
+              let id = userInfo[Notification.Keys.uuid] as? UUID
+        else { return }
+        resetSortPositions(afterDeletingId: id)
+        animatingMeal = true
         reload()
     }
     
+    @objc func didUpdateMealFoodItem(notification: Notification) {
+        guard let userInfo = notification.userInfo as? [String: AnyObject],
+              let updatedFoodItem = userInfo[Notification.Keys.foodItem] as? FoodItem
+        else { return }
+        resetSortPositions(afterUpdating: updatedFoodItem)
+        animatingMeal = true
+        reload()
+    }
+
+    func resetSortPositions(afterUpdating updatedFoodItem: FoodItem) {
+        resetSortPositions(updatedFoodItem: updatedFoodItem)
+    }
+
+    func resetSortPositions(afterDeletingId deletedFoodItemId: UUID) {
+        resetSortPositions(deletedFoodItemId: deletedFoodItemId)
+    }
+    
+    private func resetSortPositions(updatedFoodItem: FoodItem? = nil, deletedFoodItemId: UUID? = nil) {
+        let id = updatedFoodItem?.id ?? deletedFoodItemId
+        for meal in dayMeals {
+            var mealCopy = meal
+            guard let existingIndex = mealCopy.foodItems.firstIndex(where: { $0.id == id })
+            else { continue }
+
+            let before = mealCopy.foodItems
+            
+            print("-- Before setting updated item:")
+            for foodItem in mealCopy.foodItems {
+                print("    \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name)")
+            }
+            
+            if let updatedFoodItem {
+                mealCopy.foodItems[existingIndex] = MealFoodItem(from: updatedFoodItem)
+            } else if let deletedFoodItemId {
+                mealCopy.foodItems.removeAll(where: { $0.id == deletedFoodItemId })
+            }
+            
+            print("-- Before sorting:")
+            for foodItem in mealCopy.foodItems {
+                print("    \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name)")
+            }
+
+            mealCopy.foodItems.resetSortPositions(aroundFoodItemWithId: updatedFoodItem?.id)
+            mealCopy.foodItems.sort { $0.sortPosition < $1.sortPosition }
+
+            print("-- After sorting:")
+            for foodItem in mealCopy.foodItems {
+                print("    \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name)")
+            }
+
+            for oldItem in before {
+                guard let newItem = mealCopy.foodItems.first(where: { $0.id == oldItem.id }) else {
+                    continue
+                }
+                if newItem.sortPosition != oldItem.sortPosition {
+                    do {
+                        print("-- Silently updating: \(newItem.sortPosition) \(newItem.food.emoji) \(newItem.food.name)")
+                        try DataManager.shared.silentlyUpdateSortPosition(for: newItem)
+                    } catch {
+                        cprint("Error updating sort position: \(error)")
+                    }
+                }
+            }
+            print(" ")
+        }
+    }
+    
+    @objc func didUpdateFoodItems(notification: Notification) {
+        animatingMeal = true
+        reload()
+    }
+    @objc func didUpdateMeal() {
+        animatingMeal = true
+        reload()
+    }
+
     @objc func didAddMeal() {
         animatingMeal = true
         reload()
@@ -172,6 +299,15 @@ extension DayView.ViewModel {
         let day = DataManager.shared.day(for: date)
         self.day = day
         self.dayMeals = day?.meals ?? []
+        print("----------")
+        print("DayView.load(for: \(date.calendarDayString)) — \(dayMeals.count) meals")
+        for meal in dayMeals {
+            print("    Meal: \(meal.name) @ \(meal.timeString)")
+            for foodItem in meal.foodItems {
+                print("        \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name) - \(foodItem.isSoftDeleted)")
+            }
+        }
+        print(" ")
         self.showingEmpty = dayMeals.isEmpty
     }
 

@@ -9,18 +9,24 @@ struct MealView: View {
     @StateObject var viewModel: ViewModel
     @Binding var badgeWidths: [UUID : CGFloat]
     @Binding var isUpcomingMeal: Bool
+    @Binding var isAnimatingItemChange: Bool
     
     @State var items: [MealFoodItem] = []
     
     let didDeleteFoodItemFromMeal = NotificationCenter.default.publisher(for: .didDeleteFoodItemFromMeal)
     
+    @Binding var meal: DayMeal
+    
     init(
         date: Date,
         meal: DayMeal,
+        mealBinding: Binding<DayMeal>,
         badgeWidths: Binding<[UUID : CGFloat]>,
         isUpcomingMeal: Binding<Bool>,
+        isAnimatingItemChange: Binding<Bool>,
         actionHandler: @escaping (LogAction) -> ()
     ) {
+        _meal = mealBinding
         let viewModel = ViewModel(
             date: date,
             meal: meal,
@@ -29,6 +35,7 @@ struct MealView: View {
         )
         _badgeWidths = badgeWidths
         _isUpcomingMeal = isUpcomingMeal
+        _isAnimatingItemChange = isAnimatingItemChange
         _viewModel = StateObject(wrappedValue: viewModel)
         _items = State(initialValue: meal.foodItems)
     }
@@ -63,6 +70,9 @@ struct MealView: View {
                 }
             }
             .onReceive(didDeleteFoodItemFromMeal, perform: didDeleteFoodItemFromMeal)
+            .onChange(of: viewModel.isAnimatingItemChange) {
+                self.isAnimatingItemChange = $0
+            }
     }
     
     func didDeleteFoodItemFromMeal(_ notification: Notification) {
@@ -103,22 +113,25 @@ struct MealView: View {
     }
 
     var itemRows: some View {
-        ForEach(viewModel.foodItems) { foodItem in
-            cell(for: foodItem)
-                .transition(
-                    .asymmetric(
-                        insertion: .move(edge: .trailing),
-                        removal: .move(edge: .trailing)
+//        ForEach(viewModel.meal.foodItems) { foodItem in
+        ForEach(meal.foodItems) { foodItem in
+            if !foodItem.isSoftDeleted {
+                cell(for: foodItem)
+                    .transition(
+                        .asymmetric(
+                            insertion: .move(edge: .trailing),
+                            removal: .move(edge: .trailing)
+                        )
                     )
-                )
-//            dropTargetView(for: foodItem)
+                dropTargetView(for: foodItem)
+            }
         }
     }
 
     var itemRowsWithBinding: some View {
-        ForEach(viewModel.foodItems.indices, id: \.self) { index in
-            cell(for: $viewModel.foodItems[index], index: index)
-            dropTargetView(for: viewModel.foodItems[index])
+        ForEach(viewModel.meal.foodItems.indices, id: \.self) { index in
+            cell(for: $viewModel.meal.foodItems[index], index: index)
+            dropTargetView(for: viewModel.meal.foodItems[index])
         }
     }
     
@@ -127,7 +140,7 @@ struct MealView: View {
             viewModel.actionHandler(.editFoodItem(mealFoodItem, viewModel.meal))
         } label: {
             Cell(item: mealFoodItem)
-                .opacity(0.5)
+//                .opacity(0.5)
                 .environmentObject(viewModel)
         }
         .draggable(mealFoodItem)
@@ -148,7 +161,7 @@ struct MealView: View {
                 Divider()
                 Button(role: .destructive) {
                     /// Make sure the context menu dismisses first, otherwise the deletion animation glitches
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         viewModel.actionHandler(
                             .deleteFoodItem(mealFoodItem, viewModel.meal)
                         )
