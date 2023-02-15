@@ -39,7 +39,7 @@ extension MealsList {
             },
             set: { _ in }
         )
-        return Meal(
+        return MealView(
             date: date,
             meal: meal,
             badgeWidths: $badgeWidths,

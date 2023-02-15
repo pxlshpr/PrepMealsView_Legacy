@@ -4,55 +4,40 @@ import PrepDataTypes
 import SwiftUISugar
 import FoodLabel
 
-extension MealsList {
-    struct Meal: View {
-        @Environment(\.colorScheme) var colorScheme
-        @StateObject var viewModel: MealsList.Meal.ViewModel
-        
-//        let didTapAddFood: (DayMeal) -> ()
-//        let didTapMealFoodItem: (MealFoodItem, DayMeal) -> ()
-        
-//        var meal: DayMeal
-        
-        @Binding var badgeWidths: [UUID : CGFloat]
-        @Binding var isUpcomingMeal: Bool
-        
-        init(
-            date: Date,
-            meal: DayMeal,
-//            meals: [DayMeal],
-            badgeWidths: Binding<[UUID : CGFloat]>,
-            isUpcomingMeal: Binding<Bool>,
-            actionHandler: @escaping (LogAction) -> ()
-//            didTapAddFood: @escaping (DayMeal) -> (),
-//            didTapEditMeal: @escaping (DayMeal) -> (),
-//            didTapMealFoodItem: @escaping (MealFoodItem, DayMeal) -> ()
-        ) {
-            let viewModel = MealsList.Meal.ViewModel(
-                date: date,
-                meal: meal,
-                isUpcomingMeal: isUpcomingMeal.wrappedValue,
-//                meals: meals,
-                actionHandler: actionHandler
-//                didTapAddFood: didTapAddFood,
-//                didTapEditMeal: didTapEditMeal,
-//                didTapMealFoodItem: didTapMealFoodItem
-            )
-            _badgeWidths = badgeWidths
-            _isUpcomingMeal = isUpcomingMeal
-            _viewModel = StateObject(wrappedValue: viewModel)
-//            self.meal = meal
-//            self.didTapAddFood = didTapAddFood
-//            self.didTapMealFoodItem = didTapMealFoodItem
-        }
-
-        @State var showingDropOptions: Bool = false
-//        @State var droppedFoodItem: MealFoodItem? = nil
+struct MealView: View {
+    @Environment(\.colorScheme) var colorScheme
+    @StateObject var viewModel: ViewModel
+    @Binding var badgeWidths: [UUID : CGFloat]
+    @Binding var isUpcomingMeal: Bool
+    
+    @State var items: [MealFoodItem] = []
+    
+    let didDeleteFoodItemFromMeal = NotificationCenter.default.publisher(for: .didDeleteFoodItemFromMeal)
+    
+    init(
+        date: Date,
+        meal: DayMeal,
+        badgeWidths: Binding<[UUID : CGFloat]>,
+        isUpcomingMeal: Binding<Bool>,
+        actionHandler: @escaping (LogAction) -> ()
+    ) {
+        let viewModel = ViewModel(
+            date: date,
+            meal: meal,
+            isUpcomingMeal: isUpcomingMeal.wrappedValue,
+            actionHandler: actionHandler
+        )
+        _badgeWidths = badgeWidths
+        _isUpcomingMeal = isUpcomingMeal
+        _viewModel = StateObject(wrappedValue: viewModel)
+        _items = State(initialValue: meal.foodItems)
     }
-}
 
-extension MealsList.Meal {
+    @State var showingDropOptions: Bool = false
+//    @State var droppedFoodItem: MealFoodItem? = nil
+    
     var body: some View {
+//        mealContent
         content
             .contentShape(Rectangle())
             .onChange(of: viewModel.droppedFoodItem, perform: droppedFoodItemChanged)
@@ -77,19 +62,17 @@ extension MealsList.Meal {
                     viewModel.isUpcomingMeal = newValue
                 }
             }
+            .onReceive(didDeleteFoodItemFromMeal, perform: didDeleteFoodItemFromMeal)
     }
     
-    func isUpcomingMealChanged(_ newValue: Bool) {
-        viewModel.isUpcomingMeal = newValue
-    }
-    
-    func droppedFoodItemChanged(to droppedFoodItem: MealFoodItem?) {
-        showingDropOptions = droppedFoodItem != nil
-    }
-    
-    func showingDropOptionsChanged(to newValue: Bool) {
-        if !showingDropOptions {
-            viewModel.resetDrop()
+    func didDeleteFoodItemFromMeal(_ notification: Notification) {
+        guard let userInfo = notification.userInfo as? [String: AnyObject],
+              let id = userInfo[Notification.Keys.uuid] as? UUID,
+              items.contains(where: { $0.id == id })
+        else { return }
+
+        withAnimation {
+            items.removeAll(where: { $0.id == id })
         }
     }
     
@@ -114,6 +97,119 @@ extension MealsList.Meal {
         }
     }
     
+    @ViewBuilder
+    var mealContent: some View {
+        itemRows
+    }
+
+    var itemRows: some View {
+        ForEach(viewModel.foodItems) { foodItem in
+            cell(for: foodItem)
+                .transition(
+                    .asymmetric(
+                        insertion: .move(edge: .trailing),
+                        removal: .move(edge: .trailing)
+                    )
+                )
+//            dropTargetView(for: foodItem)
+        }
+    }
+
+    var itemRowsWithBinding: some View {
+        ForEach(viewModel.foodItems.indices, id: \.self) { index in
+            cell(for: $viewModel.foodItems[index], index: index)
+            dropTargetView(for: viewModel.foodItems[index])
+        }
+    }
+    
+    func cell(for mealFoodItem: MealFoodItem) -> some View {
+        return Button {
+            viewModel.actionHandler(.editFoodItem(mealFoodItem, viewModel.meal))
+        } label: {
+            Cell(item: mealFoodItem)
+                .opacity(0.5)
+                .environmentObject(viewModel)
+        }
+        .draggable(mealFoodItem)
+        .contextMenu(menuItems: {
+            Section(mealFoodItem.food.name) {
+                Button {
+                    viewModel.actionHandler(
+                        .editFoodItem(mealFoodItem, viewModel.meal)
+                    )
+                } label: {
+                    Label("Edit", systemImage: "pencil")
+                }
+                Button {
+                    
+                } label: {
+                    Label("Duplicate", systemImage: "plus.square.on.square")
+                }
+                Divider()
+                Button(role: .destructive) {
+                    /// Make sure the context menu dismisses first, otherwise the deletion animation glitches
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                        viewModel.actionHandler(
+                            .deleteFoodItem(mealFoodItem, viewModel.meal)
+                        )
+                    }
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
+        }, preview: {
+            FoodLabel(data: .constant(mealFoodItem.foodLabelData))
+        })
+    }
+
+//    var itemRows: some View {
+//        ForEach(viewModel.meal.foodItems.indices, id: \.self) { index in
+//            cell(for: $viewModel.meal.foodItems[index], index: index)
+//                .transition(.asymmetric(insertion: .move(edge: .top), removal: .scale))
+//            dropTargetView(for: viewModel.meal.foodItems[index])
+//        }
+//    }
+    
+    var header: some View {
+        MealView.Header()
+            .environmentObject(viewModel)
+            .contentShape(Rectangle())
+            .if(!viewModel.isEmpty, transform: { view in
+                view
+                    .dropDestination(
+                        for: MealFoodItem.self,
+                        action: handleDrop,
+                        isTargeted: handleDropIsTargeted
+                    )
+            })
+    }
+    
+    var footer: some View {
+        let binding = Binding<CGFloat>(
+            get: { badgeWidths[viewModel.meal.id] ?? 0 },
+            set: { _ in }
+        )
+        return MealView.Footer(
+            badgeWidth: binding
+        )
+        .environmentObject(viewModel)
+    }
+    
+    func isUpcomingMealChanged(_ newValue: Bool) {
+        viewModel.isUpcomingMeal = newValue
+    }
+    
+    func droppedFoodItemChanged(to droppedFoodItem: MealFoodItem?) {
+        showingDropOptions = droppedFoodItem != nil
+    }
+    
+    func showingDropOptionsChanged(to newValue: Bool) {
+        if !showingDropOptions {
+            viewModel.resetDrop()
+        }
+    }
+    
+
     var content_legacy: some View {
         ZStack {
             VStack(spacing: 0) {
@@ -135,52 +231,6 @@ extension MealsList.Meal {
         }
     }
     
-    var header: some View {
-        MealsList.Meal.Header()
-            .environmentObject(viewModel)
-            .contentShape(Rectangle())
-            .if(!viewModel.isEmpty, transform: { view in
-                view
-                    .dropDestination(
-                        for: MealFoodItem.self,
-                        action: handleDrop,
-                        isTargeted: handleDropIsTargeted
-                    )
-            })
-    }
-    
-    var footer: some View {
-        let binding = Binding<CGFloat>(
-            get: { badgeWidths[viewModel.meal.id] ?? 0 },
-            set: { _ in }
-        )
-        return MealsList.Meal.Footer(
-            badgeWidth: binding
-        )
-        .environmentObject(viewModel)
-    }
-    
-    @ViewBuilder
-    var mealContent: some View {
-        itemRows
-//        list
-    }
-    
-    var list: some View {
-        List {
-            ForEach(viewModel.meal.foodItems.indices, id: \.self) { index in
-                cell(for: $viewModel.meal.foodItems[index], index: index)
-            }
-        }
-    }
-    
-    var itemRows: some View {
-        ForEach(viewModel.meal.foodItems.indices, id: \.self) { index in
-//            cell(at: index)
-            cell(for: $viewModel.meal.foodItems[index], index: index)
-            dropTargetView(for: viewModel.meal.foodItems[index])
-        }
-    }
     
     @ViewBuilder
     func dropTargetView(for mealFoodItem: MealFoodItem) -> some View {
@@ -272,7 +322,9 @@ extension MealsList.Meal {
                     }
                     Divider()
                     Button(role: .destructive) {
-                        
+                        viewModel.actionHandler(
+                            .deleteFoodItem(mealFoodItem.wrappedValue, viewModel.meal)
+                        )
                     } label: {
                         Label("Delete", systemImage: "trash")
                     }

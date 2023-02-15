@@ -3,10 +3,10 @@ import SwiftHaptics
 import PrepDataTypes
 import PrepViews
 
-extension MealsList.Meal {
+extension MealView {
     struct Footer: View {
         @Environment(\.colorScheme) var colorScheme
-        @EnvironmentObject var viewModel: MealsList.Meal.ViewModel
+        @EnvironmentObject var viewModel: MealView.ViewModel
         
         @AppStorage(UserDefaultsKeys.showingBadgesForFoods) private var showingBadgesForFoods = false
 
@@ -23,7 +23,7 @@ extension MealsList.Meal {
     }
 }
 
-extension MealsList.Meal.Footer {
+extension MealView.Footer {
     var body: some View {
         content
             .onReceive(didDeleteFoodItemFromMeal, perform: didDeleteFoodItemFromMeal)

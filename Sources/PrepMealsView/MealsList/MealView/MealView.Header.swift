@@ -4,7 +4,7 @@ import SwiftUISugar
 import PrepDataTypes
 import PrepCoreDataStack
 
-extension MealsList.Meal {
+extension MealView {
     
     struct Header: View {
         @EnvironmentObject var viewModel: ViewModel
@@ -12,7 +12,7 @@ extension MealsList.Meal {
     }
 }
 
-extension MealsList.Meal.Header {
+extension MealView.Header {
     
     var body: some View {
         content

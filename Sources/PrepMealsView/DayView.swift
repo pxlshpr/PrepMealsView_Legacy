@@ -95,7 +95,7 @@ public struct DayView: View {
             get: { meal.id == upcomingMealId },
             set: { _ in }
         )
-        return MealsList.Meal(
+        return MealView(
             date: date,
             meal: meal,
             badgeWidths: .constant([:]),
@@ -145,24 +145,21 @@ extension DayView {
 extension DayView.ViewModel {
     
     func addObservers() {
-        NotificationCenter.default.addObserver(
-            self, selector: #selector(didAddMeal),
-            name: .didAddMeal, object: nil
-        )
-        NotificationCenter.default.addObserver(
-            self, selector: #selector(didDeleteMeal),
-            name: .didDeleteMeal, object: nil
-        )
+        NotificationCenter.default.addObserver(self, selector: #selector(didAddMeal), name: .didAddMeal, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(didDeleteMeal), name: .didDeleteMeal, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(didDeleteFoodItemFromMeal), name: .didDeleteFoodItemFromMeal, object: nil)
+    }
+
+    @objc func didDeleteFoodItemFromMeal() {
+        reload()
     }
     
     @objc func didAddMeal() {
-        print("🎞 Setting animatingMeal to TRUE")
         animatingMeal = true
         reload()
     }
 
     @objc func didDeleteMeal() {
-        print("🎞 Setting animatingMeal to TRUE")
         animatingMeal = true
         reload()
     }

@@ -2,7 +2,7 @@ import SwiftUI
 import PrepDataTypes
 import PrepCoreDataStack
 
-extension MealsList.Meal {
+extension MealView {
     class ViewModel: ObservableObject {
         
         let date: Date
@@ -17,6 +17,9 @@ extension MealsList.Meal {
         @Published var dateIsChanging: Bool = false
         @Published var isUpcomingMeal: Bool
         
+        
+        @Published var foodItems: [MealFoodItem]
+        
         let actionHandler: (LogAction) -> ()
         
         var timer: Timer? = nil
@@ -27,11 +30,15 @@ extension MealsList.Meal {
             isUpcomingMeal: Bool,
             actionHandler: @escaping (LogAction) -> ()
         ) {
+            print("MealView.ViewModel.init for \(meal.name) on \(date.calendarDayString)")
+
             self.date = date
             self.meal = meal
             self.isUpcomingMeal = isUpcomingMeal
             self.hasPassed = meal.timeDate < Date()
             self.actionHandler = actionHandler
+            
+            self.foodItems = meal.foodItems
             
             self.mealMacrosIndicatorWidth = meal.macrosIndicatorWidth
             addNotifications()
@@ -44,7 +51,7 @@ extension MealsList.Meal {
                 fireAt: meal.timeDate,
                 interval: 0,
                 target: self,
-                selector: #selector(updatehasPassed),
+                selector: #selector(updateHasPassed),
                 userInfo: nil,
                 repeats: false
             )
@@ -53,7 +60,7 @@ extension MealsList.Meal {
             cprint("⏲ Scheduled timer for \(meal.name) @ \(meal.timeDate.shortTime)")
         }
         
-        @objc func updatehasPassed() {
+        @objc func updateHasPassed() {
             cprint("⏲ Timer fired for \(meal.name) ...")
 
             let hasPassed = meal.timeDate <= Date()
@@ -108,7 +115,7 @@ extension MealsList.Meal {
     }
 }
 
-extension MealsList.Meal.ViewModel {
+extension MealView.ViewModel {
     
     @objc func didAddFoodItemToMeal(notification: Notification) {
         guard let userInfo = notification.userInfo as? [String: AnyObject],
@@ -118,15 +125,10 @@ extension MealsList.Meal.ViewModel {
         }
         
         /// Make sure we don't have it already so we don't double add it
-        guard !meal.foodItems.contains(where: { $0.id == foodItem.id }) else {
+        guard !foodItems.contains(where: { $0.id == foodItem.id }) else {
             return
         }
         
-        withAnimation(Bounce) {
-            /// Update our local array used to calculate macro indicator widths first
-//            self.meals.addFoodItem(foodItem)
-        }
-
         /// Make sure this is the `MealView.ViewModel` for the `Meal` that the `FoodItem` belongs to before proceeding
         guard foodItem.meal?.id == meal.id else {
             return
@@ -134,15 +136,15 @@ extension MealsList.Meal.ViewModel {
         
         let mealFoodItem = MealFoodItem(from: foodItem)
         withAnimation(.interactiveSpring()) {
-            meal.foodItems.append(mealFoodItem)
+            foodItems.append(mealFoodItem)
             resetSortPositions(aroundFoodItemWithId: foodItem.id)
         }
         
-        NotificationCenter.default.post(
-            name: .didInvalidateBadgeWidths,
-            object: nil,
-            userInfo: [Notification.Keys.date : date]
-        )
+//        NotificationCenter.default.post(
+//            name: .didInvalidateBadgeWidths,
+//            object: nil,
+//            userInfo: [Notification.Keys.date : date]
+//        )
     }
     
     @objc func didUpdateMealFoodItem(notification: Notification) {
@@ -184,30 +186,41 @@ extension MealsList.Meal.ViewModel {
     }
 
     @objc func didDeleteFoodItemFromMeal(notification: Notification) {
+        print("Sending notification")
+
         guard let userInfo = notification.userInfo as? [String: AnyObject],
               let id = userInfo[Notification.Keys.uuid] as? UUID
         else {
             return
         }
 
-        withAnimation(Bounce) {
-//            self.meals.deleteFoodItem(with: id)
-        }
-
-        guard meal.foodItems.contains(where: { $0.id == id }) else {
+        guard foodItems.contains(where: { $0.id == id }) else {
             return
         }
         
+        guard let index = foodItems.firstIndex(where: { $0.id == id }) else {
+            return
+        }
+
         withAnimation(.interactiveSpring()) {
-            meal.foodItems.removeAll(where: { $0.id == id })
+            print("Food before deletion:")
+            for foodItem in foodItems {
+                print("    \(foodItem.food.emoji) - \(foodItem.food.name)")
+            }
+            let _ = foodItems.remove(at: index)
+//            foodItems.removeAll(where: { $0.id == id })
+            print("Food AFTER deletion:")
+            for foodItem in foodItems {
+                print("    \(foodItem.food.emoji) - \(foodItem.food.name)")
+            }
             resetSortPositions(aroundFoodItemWithId: nil)
         }
         
-        NotificationCenter.default.post(
-            name: .didInvalidateBadgeWidths,
-            object: nil,
-            userInfo: [Notification.Keys.date : date]
-        )
+//        NotificationCenter.default.post(
+//            name: .didInvalidateBadgeWidths,
+//            object: nil,
+//            userInfo: [Notification.Keys.date : date]
+//        )
     }
     
     @objc func didUpdateFoodItems(notification: Notification) {
@@ -283,13 +296,13 @@ extension MealsList.Meal.ViewModel {
 //            self.mealMacrosIndicatorWidth = self.calculatedMealMacrosIndicatorWidth
 //            cprint("\(meal.name) now has width: \(macrosIndicatorWidth)")
         }
-        updatehasPassed()
+        updateHasPassed()
         scheduleUpdateTime()
     }
 }
 
 
-extension MealsList.Meal.ViewModel {
+extension MealView.ViewModel {
     
     func resetSortPositions(aroundFoodItemWithId id: UUID?) {
         let before = self.meal.foodItems
@@ -419,7 +432,7 @@ extension DayMeal {
     }
 }
 
-extension MealsList.Meal.ViewModel {
+extension MealView.ViewModel {
     
     var isInFuture: Bool {
         meal.timeDate >= Date()
@@ -505,7 +518,7 @@ extension MealsList.Meal.ViewModel {
 
 import PrepViews
 
-extension MealsList.Meal.ViewModel {
+extension MealView.ViewModel {
     
 //    var energyValuesInKcalDecreasing: [Double] {
 //        meals

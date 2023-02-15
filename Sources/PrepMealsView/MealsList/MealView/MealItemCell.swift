@@ -9,7 +9,7 @@ struct MealItemCell: View {
     
     @Environment(\.colorScheme) var colorScheme
     
-    @EnvironmentObject var viewModel: MealsList.Meal.ViewModel
+    @EnvironmentObject var viewModel: MealView.ViewModel
     
     @AppStorage(UserDefaultsKeys.showingFoodEmojis) private var showingFoodEmojis = true
     @AppStorage(UserDefaultsKeys.showingFoodDetails) private var showingFoodDetails = false
@@ -296,7 +296,7 @@ extension UTType {
 }
 
 
-extension MealsList.Meal.ViewModel {
+extension MealView.ViewModel {
     var isTargetingLastCell: Bool {
         dragTargetFoodItemId == meal.foodItems.last?.id
     }
