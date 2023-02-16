@@ -8,7 +8,7 @@ extension MealView {
         @Environment(\.colorScheme) var colorScheme
         @EnvironmentObject var viewModel: MealView.ViewModel
         
-        @AppStorage(UserDefaultsKeys.showingBadgesForFoods) private var showingBadgesForFoods = false
+        @AppStorage(UserDefaultsKeys.showingBadgesForFoods) var showingBadgesForFoods = PrepConstants.DefaultPreferences.showingBadgesForFoods
 
         @Binding var badgeWidth: CGFloat
         

@@ -11,9 +11,9 @@ extension MealView {
         
         @EnvironmentObject var viewModel: MealView.ViewModel
         
-        @AppStorage(UserDefaultsKeys.showingFoodEmojis) private var showingFoodEmojis = true
-        @AppStorage(UserDefaultsKeys.showingFoodDetails) private var showingFoodDetails = false
-        @AppStorage(UserDefaultsKeys.showingBadgesForFoods) private var showingBadgesForFoods = false
+        @AppStorage(UserDefaultsKeys.showingBadgesForFoods) var showingBadgesForFoods = PrepConstants.DefaultPreferences.showingBadgesForFoods
+        @AppStorage(UserDefaultsKeys.showingFoodDetails) var showingFoodDetails = PrepConstants.DefaultPreferences.showingFoodDetails
+        @AppStorage(UserDefaultsKeys.showingFoodEmojis) var showingFoodEmojis = PrepConstants.DefaultPreferences.showingFoodEmojis
 
         let item: MealFoodItem
         

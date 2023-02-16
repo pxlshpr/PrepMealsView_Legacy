@@ -40,12 +40,14 @@ public struct DayView: View {
     }
     
     func viewModelShowingEmptyChanged(to newValue: Bool) {
+        print("🧨 viewModelShowingEmptyChanged to \(newValue)")
         withAnimation {
             showingEmpty = newValue
         }
     }
     
     func viewModelDayMealsChanged(to newValue: [DayMeal]) {
+        print("🧨 viewModelShowingEmptyChanged and has \(newValue.count)")
         withAnimation {
             self.dayMeals = newValue
         }
@@ -206,9 +208,24 @@ extension DayView.ViewModel {
         NotificationCenter.default.addObserver(self, selector: #selector(didUpdateMeal), name: .didUpdateMeal, object: nil)
         
         NotificationCenter.default.addObserver(self, selector: #selector(didSetBadgeWidths), name: .didSetBadgeWidths, object: nil)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(initialSyncCompleted), name: .initialSyncCompleted, object: nil)
+
+    }
+    
+    @objc func initialSyncCompleted(notification: Notification) {
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) {
+            print("🧨 initialSyncCompleted reload")
+            self.animatingMeal = true
+            self.reload()
+//        }
     }
     
     @objc func didSetBadgeWidths(notification: Notification) {
+        guard let userInfo = notification.userInfo as? [String: AnyObject],
+              let date = userInfo[Notification.Keys.date] as? Date,
+              date == self.date
+        else { return }
         print("💯 Received didSetBadgeWidths, calling reload()")
         reload()
     }
@@ -321,16 +338,16 @@ extension DayView.ViewModel {
         let day = DataManager.shared.day(for: date)
         self.day = day
         self.dayMeals = day?.meals ?? []
-        print("💯 ----------")
-        print("💯 DayView.load(for: \(date.calendarDayString)) — \(dayMeals.count) meals")
+        print("🧨 ----------")
+        print("🧨 DayView.load(for: \(date.calendarDayString)) — \(dayMeals.count) meals")
         for meal in dayMeals {
-            print("💯    Meal: \(meal.name) @ \(meal.timeString)")
+            print("🧨    Meal: \(meal.name) @ \(meal.timeString)")
             for foodItem in meal.foodItems {
-                print("💯        \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name) - \(foodItem.badgeWidth)")
+                print("🧨        \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name) - \(foodItem.badgeWidth)")
             }
         }
-        print("💯 ")
         self.showingEmpty = dayMeals.isEmpty
+        print("🧨 ")
     }
 
     func dateChanged(_ newValue: Date) {
