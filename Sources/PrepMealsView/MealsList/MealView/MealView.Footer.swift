@@ -134,11 +134,11 @@ extension MealView.Footer {
         }
         
         //TODO: Look into why this binding of the width still doesn't fix it? Maybe the calculation is wrong
-        var macrosIndicator: some View {
+        var foodBadge: some View {
 //            Color.clear
             let binding = Binding<CGFloat>(
                 get: {
-                    let width = badgeWidth
+                    let width = viewModel.meal.badgeWidth
                     return width
                 },
                 set: { _ in }
@@ -155,7 +155,7 @@ extension MealView.Footer {
             HStack {
 //                if showingMealMacros {
                 if !showingBadgesForFoods {
-                    macrosIndicator
+                    foodBadge
                         .transition(.scale)
                 }
                 energyLabel

@@ -86,7 +86,40 @@ struct MealView: View {
         }
     }
     
+
     var content: some View {
+        var cellsLayer: some View {
+            VStack(spacing: 0) {
+                Color.clear
+                    .frame(height: 44)
+                dropTargetForMeal
+                mealContent
+                Color.clear
+                    .frame(height: 50)
+            }
+        }
+        
+        var headerLayer: some View {
+            VStack(spacing: 0) {
+                header
+                Spacer()
+            }
+        }
+        var footerLayer: some View {
+            VStack(spacing: 0) {
+                Spacer()
+                footer
+            }
+        }
+        
+        return ZStack {
+            cellsLayer
+            headerLayer
+            footerLayer
+        }
+    }
+    
+    var content_latest_legacy: some View {
         ZStack {
             VStack(spacing: 0) {
                 Color.clear

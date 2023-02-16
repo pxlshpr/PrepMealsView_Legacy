@@ -50,17 +50,12 @@ extension MealView.Cell {
                     .padding(.trailing, 10)
                     .opacity(viewModel.hasPassed ? 0.7 : 1)
             }
-//            isEatenToggle
         }
     }
     
     var foodBadge: some View {
-//        Color.clear
         let widthBinding = Binding<CGFloat>(
-//            get: { viewModel.calculateMacrosIndicatorWidth(of: item) },
-            //TODO: This needs to be something stored in the cell that gets recalculated dynamically to changes
-//            get: { item.macrosIndicatorWidth },
-            get: { 0 },
+            get: { item.badgeWidth },
             set: { _ in }
         )
         return FoodBadge(

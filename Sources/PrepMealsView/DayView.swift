@@ -54,9 +54,14 @@ public struct DayView: View {
         }
     }
     
+    @State var id = UUID()
+
     func dateChanged(to newDate: Date) {
         self.nextTransitionIsForward = newDate > viewModel.date
         viewModel.date = date
+        withAnimation {
+            id = UUID()
+        }
     }
         
     var backgroundLayer: Color {
@@ -82,11 +87,21 @@ public struct DayView: View {
             return .asymmetric(insertion: insertion, removal: removal)
         }
         
+        var summaryView: some View {
+            ZStack {
+                Color.clear
+                    .frame(height: 150)
+                Text("Summary pager goes here")
+            }
+            /// ** Important ** This explicit height on the encompassing `ZStack` is crucial to ensure that
+            /// the separator heights of the `MealView`'s don't get messed up (it's a wierd bug that's device dependent).
+            .frame(height: 150)
+            .id(id)
+            .transition(transition)
+        }
+        
         return ScrollView(showsIndicators: false) {
-//            ForEach(dayMeals) { meal in
-//                mealView(for: meal)
-//                    .transition(transition)
-//            }
+            summaryView
             ForEach(Array(dayMeals.enumerated()), id: \.element.id) { (index, item) in
                 mealView(for: $dayMeals[index])
                     .transition(transition)
@@ -189,6 +204,13 @@ extension DayView.ViewModel {
         NotificationCenter.default.addObserver(self, selector: #selector(didUpdateMealFoodItem), name: .didUpdateMealFoodItem, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(didUpdateFoodItems), name: .didUpdateFoodItems, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(didUpdateMeal), name: .didUpdateMeal, object: nil)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(didSetBadgeWidths), name: .didSetBadgeWidths, object: nil)
+    }
+    
+    @objc func didSetBadgeWidths(notification: Notification) {
+        print("💯 Received didSetBadgeWidths, calling reload()")
+        reload()
     }
 
     @objc func didAddFoodItemToMeal(notification: Notification) {
@@ -299,15 +321,15 @@ extension DayView.ViewModel {
         let day = DataManager.shared.day(for: date)
         self.day = day
         self.dayMeals = day?.meals ?? []
-        print("----------")
-        print("DayView.load(for: \(date.calendarDayString)) — \(dayMeals.count) meals")
+        print("💯 ----------")
+        print("💯 DayView.load(for: \(date.calendarDayString)) — \(dayMeals.count) meals")
         for meal in dayMeals {
-            print("    Meal: \(meal.name) @ \(meal.timeString)")
+            print("💯    Meal: \(meal.name) @ \(meal.timeString)")
             for foodItem in meal.foodItems {
-                print("        \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name) - \(foodItem.isSoftDeleted)")
+                print("💯        \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name) - \(foodItem.badgeWidth)")
             }
         }
-        print(" ")
+        print("💯 ")
         self.showingEmpty = dayMeals.isEmpty
     }
 

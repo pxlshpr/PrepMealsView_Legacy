@@ -29,7 +29,7 @@ extension MealView.Header {
     }
     
     var content: some View {
-        ZStack(alignment: .top) {
+        var menuButtonLayer: some View {
             HStack {
                 Spacer()
                 mealMenuButton
@@ -38,11 +38,19 @@ extension MealView.Header {
             .background(
                 listRowBackground
             )
+        }
+        
+        var titleButtonLayer: some View {
             HStack {
                 titleButton
                 Spacer()
             }
             .frame(height: 65)
+        }
+        
+        return ZStack(alignment: .top) {
+            menuButtonLayer
+            titleButtonLayer
         }
     }
     

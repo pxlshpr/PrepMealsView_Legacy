@@ -60,7 +60,7 @@ struct MealItemCell: View {
 //            get: { viewModel.calculateMacrosIndicatorWidth(of: item) },
             //TODO: This needs to be something stored in the cell that gets recalculated dynamically to changes
 //            get: { item.macrosIndicatorWidth },
-            get: { badgeWidth },
+            get: { item.badgeWidth },
             set: { _ in }
         )
         return FoodBadge(

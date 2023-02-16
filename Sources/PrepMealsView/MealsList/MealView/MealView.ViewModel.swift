@@ -13,7 +13,7 @@ extension MealView {
         @Published var droppedFoodItem: MealFoodItem? = nil
         @Published var dropRecipient: MealFoodItem? = nil
         @Published var targetId: UUID? = nil
-        @Published var mealMacrosIndicatorWidth: CGFloat = FoodBadge.DefaultWidth
+//        @Published var mealMacrosIndicatorWidth: CGFloat = FoodBadge.DefaultWidth
         @Published var dateIsChanging: Bool = false
         @Published var isUpcomingMeal: Bool
         @Published var isAnimatingItemChange = false
@@ -39,8 +39,7 @@ extension MealView {
             self.actionHandler = actionHandler
             
 //            self.foodItems = meal.foodItems
-            
-            self.mealMacrosIndicatorWidth = meal.macrosIndicatorWidth
+//            self.mealMacrosIndicatorWidth = meal.badgeWidth
 //            addNotifications()
             scheduleUpdateTime()
         }

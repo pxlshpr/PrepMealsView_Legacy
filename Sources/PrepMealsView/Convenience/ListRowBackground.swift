@@ -56,9 +56,5 @@ struct ListRowBackground: View {
     var separator: some View {
         Color(hex: colorScheme == .light ? DiarySeparatorLineColor.light : DiarySeparatorLineColor.dark)
             .frame(height: 0.18)
-//        Rectangle()
-//            .frame(height: 0.18)
-//            .background(Color(.separator))
-//            .opacity(colorScheme == .light ? 0.225 : 0.225)
     }
 }
