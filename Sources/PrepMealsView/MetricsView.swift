@@ -37,8 +37,8 @@ struct MetricsView: View {
             page2.tag(2)
             page3.tag(3)
         }
-        .tabViewStyle(.page(indexDisplayMode: .always))
-        .frame(height: 180)
+        .tabViewStyle(.page(indexDisplayMode: .never))
+        .frame(height: 130)
         .onAppear(perform: appeared)
         .onReceive(shouldUpdateMetrics, perform: update)
         .onReceive(didAddFoodItem, perform: update)
@@ -61,7 +61,7 @@ struct MetricsView: View {
                 }
             }
         }
-        .frame(height: 150)
+        .frame(height: 130)
     }
     
     var page2: some View {
@@ -93,6 +93,7 @@ struct MetricsView: View {
     
     var backgroundColor: Color {
         colorScheme == .light ? Color(.systemGroupedBackground) : Color(hex: "191919")
+//        Color.accentColor
     }
     
     func energyRow(_ proxy: GeometryProxy) -> some View {
@@ -105,6 +106,7 @@ struct MetricsView: View {
                     p: data.protein,
                     width: .constant(proxy.size.width)
                 )
+                .frame(height: 12)
             }
             
             var meter: some View {

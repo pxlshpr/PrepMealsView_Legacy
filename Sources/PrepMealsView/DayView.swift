@@ -120,6 +120,7 @@ public struct DayView: View {
             Divider()
             scrollView
         }
+//        .background(Color.accentColor)
         .background(backgroundLayer)
     }
     
