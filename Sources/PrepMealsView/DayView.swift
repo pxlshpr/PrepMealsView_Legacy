@@ -89,7 +89,6 @@ public struct DayView: View {
         
         var metricsView: some View {
             MetricsView(date: $date)
-                .padding(.horizontal, 10)
 //            .padding(.horizontal, 20)
 //            /// ** Important ** This explicit height on the encompassing `ZStack` is crucial to ensure that
 //            /// the separator heights of the `MealView`'s don't get messed up (it's a wierd bug that's device dependent).

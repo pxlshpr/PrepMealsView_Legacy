@@ -168,13 +168,30 @@ struct MealView: View {
 //    }
     
     func cell(for mealFoodItem: MealFoodItem) -> some View {
-        return Button {
-            viewModel.actionHandler(.editFoodItem(mealFoodItem, viewModel.meal))
-        } label: {
+        
+        var label: some View {
             Cell(item: mealFoodItem)
 //                .opacity(0.5)
                 .environmentObject(viewModel)
         }
+        
+        var button: some View {
+            Button {
+                viewModel.actionHandler(.editFoodItem(mealFoodItem, viewModel.meal))
+            } label: {
+                label
+            }
+        }
+        
+        var labelWithTapGesture: some View {
+            label
+                .onTapGesture {
+                    viewModel.actionHandler(.editFoodItem(mealFoodItem, viewModel.meal))
+                }
+        }
+        
+//        return button
+        return labelWithTapGesture
         .draggable(mealFoodItem)
         .contextMenu(menuItems: {
             Section(mealFoodItem.food.name) {

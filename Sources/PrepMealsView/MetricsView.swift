@@ -38,7 +38,7 @@ struct MetricsView: View {
             page3.tag(3)
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
-        .frame(height: 130)
+        .frame(height: 140)
         .onAppear(perform: appeared)
         .onReceive(shouldUpdateMetrics, perform: update)
         .onReceive(didAddFoodItem, perform: update)
@@ -54,22 +54,25 @@ struct MetricsView: View {
             GeometryReader { proxy in
                 ZStack(alignment: .top) {
                     backgroundColor
-                    VStack(spacing: 5) {
+                    VStack(spacing: 10) {
                         energyRow(proxy)
                         macros(proxy)
                     }
                 }
             }
         }
-        .frame(height: 130)
+        .padding(.horizontal, 10)
+        .frame(height: 140)
     }
     
     var page2: some View {
         Text("Page 2")
+            .padding(.horizontal, 10)
     }
 
     var page3: some View {
         Text("Page 3")
+            .padding(.horizontal, 10)
     }
 
     func appeared() {
@@ -139,6 +142,7 @@ struct MetricsView: View {
                 Color.clear
                     .animatedEnergyRemainingValue(value: data.energyRemaining)
             }
+            .padding(.horizontal, 10)
             energyView
         }
     }

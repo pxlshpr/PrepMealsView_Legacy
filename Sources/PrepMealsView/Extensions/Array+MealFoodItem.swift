@@ -12,7 +12,7 @@ extension Array where Element == MealFoodItem {
         return true
     }
     
-    mutating func resetSortPositions(aroundFoodItemWithId id: UUID?) {
+    mutating func resetSortPositions(aroundFoodItemWithId id: UUID?, movingForwards: Bool = false) {
         
         /// Don't continue if the sort positions are valid
         guard !hasValidSortPositions else {
@@ -27,29 +27,29 @@ extension Array where Element == MealFoodItem {
             let removed = self.remove(at: currentIndex)
             
             /// Now insert it where it actually belongs
-            var newIndex = removed.sortPosition - 1
+            var newIndex = removed.sortPosition - (movingForwards ? 2 : 1)
             
-            print("🔀 newIndex for: \(removed.food.name) is \(newIndex)")
+            cprint("🔀 newIndex for: \(removed.food.name) is \(newIndex)")
             if newIndex > self.count {
                 newIndex = self.count
-                print("🔀 Changed newIndex to \(newIndex) since it was out of bounds (greater than \(self.count))")
+                cprint("🔀 Changed newIndex to \(newIndex) since it was out of bounds (greater than \(self.count))")
             }
             
             if newIndex <= self.count , newIndex >= 0 {
-                print("🔀 Inserting \(removed.food.name) at \(newIndex)")
+                cprint("🔀 Inserting \(removed.food.name) at \(newIndex)")
                 self.insert(removed, at: newIndex)
             } else {
-                print("🔀 NOT Inserting \(removed.food.name) at \(newIndex) because it's out of bounds")
+                cprint("🔀 NOT Inserting \(removed.food.name) at \(newIndex) because it's out of bounds")
             }
         }
 
-        print("🔀 Before re-number: \(map({ "\($0.sortPosition)" }).joined(separator: ", "))")
+        cprint("🔀 Before re-number: \(map({ "\($0.sortPosition)" }).joined(separator: ", "))")
 
         /// Finally, renumber all the items for the array just to be safe (can be optimised later)
         for i in self.indices {
             self[i].sortPosition = i + 1
         }
         
-        print("🔀 After re-number: \(map({ "\($0.sortPosition)" }).joined(separator: ", "))")
+        cprint("🔀 After re-number: \(map({ "\($0.sortPosition)" }).joined(separator: ", "))")
     }
 }

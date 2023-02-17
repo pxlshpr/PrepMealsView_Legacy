@@ -160,6 +160,11 @@ extension MealView.ViewModel {
         
         withAnimation(.interactiveSpring()) {
             
+            cprint("🔀-- Before setting updated item:")
+            for foodItem in self.meal.foodItems {
+                cprint("🔀    \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name)")
+            }
+
             /// Replace the existing `MealFoodItem` with the updated one
             self.meal.foodItems[existingIndex] = MealFoodItem(from: updatedFoodItem)
             
@@ -179,7 +184,7 @@ extension MealView.ViewModel {
     }
 
     @objc func didDeleteFoodItemFromMeal(notification: Notification) {
-        print("Sending notification")
+        cprint("Sending notification")
 
         guard let userInfo = notification.userInfo as? [String: AnyObject],
               let id = userInfo[Notification.Keys.uuid] as? UUID
@@ -197,15 +202,15 @@ extension MealView.ViewModel {
 
         self.isAnimatingItemChange = true
         withAnimation(.interactiveSpring()) {
-            print("Food before deletion:")
+            cprint("Food before deletion:")
             for foodItem in meal.foodItems {
-                print("    \(foodItem.food.emoji) - \(foodItem.food.name)")
+                cprint("    \(foodItem.food.emoji) - \(foodItem.food.name)")
             }
             let _ = meal.foodItems.remove(at: index)
 //            foodItems.removeAll(where: { $0.id == id })
-            print("Food AFTER deletion:")
+            cprint("Food AFTER deletion:")
             for foodItem in meal.foodItems {
-                print("    \(foodItem.food.emoji) - \(foodItem.food.name)")
+                cprint("    \(foodItem.food.emoji) - \(foodItem.food.name)")
             }
             resetSortPositions(aroundFoodItemWithId: nil)
         }
@@ -227,7 +232,7 @@ extension MealView.ViewModel {
             return
         }
         
-        print("didUpdateFoodItems received with: \(foodItems.count) foodItems")
+        cprint("didUpdateFoodItems received with: \(foodItems.count) foodItems")
         
         let initialMeal = meal
         self.isAnimatingItemChange = true
@@ -310,17 +315,17 @@ extension MealView.ViewModel {
     func resetSortPositions(aroundFoodItemWithId id: UUID?) {
         let before = self.meal.foodItems
         
-        print("-- Before sorting:")
+        cprint("-- Before sorting:")
         for foodItem in meal.foodItems {
-            print("    \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name)")
+            cprint("    \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name)")
         }
         
         self.meal.foodItems.resetSortPositions(aroundFoodItemWithId: id)
         self.meal.foodItems.sort { $0.sortPosition < $1.sortPosition }
 
-        print("-- After sorting:")
+        cprint("-- After sorting:")
         for foodItem in meal.foodItems {
-            print("    \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name)")
+            cprint("    \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name)")
         }
 
         for oldItem in before {

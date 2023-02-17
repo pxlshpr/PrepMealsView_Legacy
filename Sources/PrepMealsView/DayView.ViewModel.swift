@@ -120,44 +120,51 @@ extension DayView.ViewModel {
 
             let before = mealCopy.foodItems
             
-            print("-- Before setting updated item:")
+            cprint("🔀-- Before (2) setting updated item:")
             for foodItem in mealCopy.foodItems {
-                print("    \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name)")
+                cprint("🔀    \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name)")
             }
             
+            var movingForwards: Bool = false
             if let updatedFoodItem {
+                let oldPosition = mealCopy.foodItems[existingIndex].sortPosition
+                let newPosition = updatedFoodItem.sortPosition
+                movingForwards = newPosition > oldPosition
                 mealCopy.foodItems[existingIndex] = MealFoodItem(from: updatedFoodItem)
             } else if let deletedFoodItemId {
                 mealCopy.foodItems.removeAll(where: { $0.id == deletedFoodItemId })
             }
             
-            print("-- Before sorting:")
+            cprint("🔀-- Before sorting:")
             for foodItem in mealCopy.foodItems {
-                print("    \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name)")
+                cprint("🔀    \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name)")
             }
 
-            mealCopy.foodItems.resetSortPositions(aroundFoodItemWithId: updatedFoodItem?.id)
+            mealCopy.foodItems.resetSortPositions(
+                aroundFoodItemWithId: updatedFoodItem?.id,
+                movingForwards: movingForwards
+            )
             mealCopy.foodItems.sort { $0.sortPosition < $1.sortPosition }
 
-            print("-- After sorting:")
+            cprint("🔀-- After sorting:")
             for foodItem in mealCopy.foodItems {
-                print("    \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name)")
+                cprint("🔀    \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name)")
             }
 
             for oldItem in before {
                 guard let newItem = mealCopy.foodItems.first(where: { $0.id == oldItem.id }) else {
                     continue
                 }
-                if newItem.sortPosition != oldItem.sortPosition {
+//                if newItem.sortPosition != oldItem.sortPosition {
                     do {
-                        print("-- Silently updating: \(newItem.sortPosition) \(newItem.food.emoji) \(newItem.food.name)")
+                        cprint("🔀-- Silently updating: \(newItem.sortPosition) \(newItem.food.emoji) \(newItem.food.name)")
                         try DataManager.shared.silentlyUpdateSortPosition(for: newItem)
                     } catch {
-                        cprint("Error updating sort position: \(error)")
+                        cprint("🔀 Error updating sort position: \(error)")
                     }
-                }
+//                }
             }
-            print(" ")
+            cprint(" ")
         }
     }
     
