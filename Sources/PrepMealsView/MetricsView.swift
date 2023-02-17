@@ -10,7 +10,7 @@ struct MetricsView: View {
     
     @Binding var date: Date
     
-    @State var nutrients: DayNutrients
+    @State var data: MetricsData
     
     let shouldUpdateMetrics = NotificationCenter.default.publisher(for: .shouldUpdateMetrics)
     let didAddFoodItem = NotificationCenter.default.publisher(for: .didAddFoodItemToMeal)
@@ -21,13 +21,13 @@ struct MetricsView: View {
     
     init(date: Binding<Date>) {
         _date = date
-//        let nutrients: DayNutrients
+//        let nutrients: MetricsData
 //        if let dayNutrients = DataManager.shared.nutrients(for: date.wrappedValue) {
 //            nutrients = dayNutrients
 //        } else {
 //            nutrients = .zero
 //        }
-        _nutrients = State(initialValue: .zero)
+        _data = State(initialValue: .zero)
     }
     
     
@@ -44,7 +44,7 @@ struct MetricsView: View {
             }
         }
         .frame(height: 150)
-        .onAppear(perform: loadData)
+        .onAppear(perform: appeared)
         .onReceive(shouldUpdateMetrics, perform: update)
         .onReceive(didAddFoodItem, perform: update)
         .onReceive(didDeleteFoodItemFromMeal, perform: update)
@@ -53,11 +53,17 @@ struct MetricsView: View {
         .onReceive(didDeleteMeal, perform: update)
     }
     
-    func loadData() {
+    func appeared() {
+        loadData(isInitialLoad: true)
+    }
+    
+    func loadData(isInitialLoad: Bool = false) {
         Task {
-            let dayNutrients = try await DataManager.shared.nutrients(for: date)
-            withAnimation {
-                self.nutrients = dayNutrients
+            let dayNutrients = try await DataManager.shared.metricsData(for: date)
+            DispatchQueue.main.asyncAfter(deadline: .now() + (isInitialLoad ? 0.3 : 0)) {
+                withAnimation {
+                self.data = dayNutrients
+                }
             }
         }
     }
@@ -71,19 +77,43 @@ struct MetricsView: View {
     }
     
     func energyRow(_ proxy: GeometryProxy) -> some View {
-        VStack(spacing: 4) {
-            HStack {
-                Color.clear
-                    .animatedEnergyValue(value: nutrients.energy)
-//                Text("\(nutrients.energy.formattedEnergy) kcal")
-//                    .font(.system(.title3, design: .rounded, weight: .semibold))
+        
+        var energyView: some View {
+            var badge: some View {
+                FoodBadge(
+                    c: data.carb,
+                    f: data.fat,
+                    p: data.protein,
+                    width: .constant(proxy.size.width)
+                )
             }
-            FoodBadge(
-                c: nutrients.carb,
-                f: nutrients.fat,
-                p: nutrients.protein,
-                width: .constant(proxy.size.width)
-            )
+            
+            var meter: some View {
+                NutrientMeter(viewModel: .init(get: {
+                    .init(
+                        component: .energy,
+                        goalLower: data.energyLower,
+                        goalUpper: data.energyUpper,
+                        planned: data.energy,
+                        eaten: 0
+                    )
+                }, set: { _ in }))
+                .frame(height: 12)
+            }
+            
+            return Group {
+                if data.haveEnergyGoal {
+                    meter
+                } else {
+                    badge
+                }
+            }
+        }
+        
+        return VStack(spacing: 4) {
+            Color.clear
+                .animatedEnergyValue(value: data.energy)
+            energyView
         }
     }
     
@@ -100,31 +130,90 @@ struct MetricsView: View {
             //            Color(.tertiarySystemBackground)
         }
         
+        func macroView(for macro: Macro) -> some View {
+            
+            var goalLower: Double? {
+                switch macro {
+                case .carb:
+                    return data.carbLower
+                case .fat:
+                    return data.fatLower
+                case .protein:
+                    return data.proteinLower
+                }
+            }
+            
+            var goalUpper: Double? {
+                switch macro {
+                case .carb:
+                    return data.carbUpper
+                case .fat:
+                    return data.fatUpper
+                case .protein:
+                    return data.proteinUpper
+                }
+            }
+            
+            var value: Double {
+                switch macro {
+                case .carb:
+                    return data.carb
+                case .fat:
+                    return data.fat
+                case .protein:
+                    return data.protein
+                }
+            }
+
+            var meterView: some View {
+                NutrientMeter(viewModel: .init(get: {
+                    .init(
+                        component: macro.nutrientMeterComponent,
+                        goalLower: goalLower,
+                        goalUpper: goalUpper,
+                        planned: value,
+                        eaten: 0
+                    )
+                }, set: { _ in }))
+                .frame(height: 7)
+                .padding(.top, 5)
+                .padding(.bottom, 1)
+            }
+            
+            var meterOpacity: CGFloat {
+                data.haveGoal(for: macro) ? 1 : 0
+            }
+            
+            return VStack(spacing: 0) {
+                HStack {
+                    RoundedRectangle(cornerRadius: 2, style: .continuous)
+                        .fill(macro.fillColor(for: colorScheme).gradient)
+                        .frame(width: 10, height: 10)
+                    Text(macro.abbreviatedDescription)
+                        .font(.system(.footnote, design: .rounded, weight: .regular))
+                        .foregroundColor(.secondary)
+                    Spacer()
+                }
+                meterView
+                    .opacity(meterOpacity)
+                HStack {
+                    Spacer()
+                    Color.clear
+                        .animatedMacroValue(value: data.value(for: macro))
+                }
+            }
+            .padding(.vertical, 5)
+            .padding(.horizontal, 10)
+            .frame(width: macroWidth)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(backgroundColor)
+            )
+        }
+        
         return HStack(spacing: spacing) {
             ForEach(Macro.allCases, id: \.self) { macro in
-                VStack {
-                    HStack {
-                        RoundedRectangle(cornerRadius: 2, style: .continuous)
-                            .fill(macro.fillColor(for: colorScheme).gradient)
-                            .frame(width: 10, height: 10)
-                        Text(macro.abbreviatedDescription)
-                            .font(.system(.footnote, design: .rounded, weight: .regular))
-                            .foregroundColor(.secondary)
-                        Spacer()
-                    }
-                    HStack {
-                        Spacer()
-                        Color.clear
-                            .animatedMacroValue(value: nutrients.value(for: macro))
-                    }
-                }
-                .padding(.vertical, 5)
-                .padding(.horizontal, 10)
-                .frame(width: macroWidth)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(backgroundColor)
-                )
+                macroView(for: macro)
             }
         }
     }
