@@ -40,14 +40,12 @@ public struct DayView: View {
     }
     
     func viewModelShowingEmptyChanged(to newValue: Bool) {
-        print("🧨 viewModelShowingEmptyChanged to \(newValue)")
         withAnimation {
             showingEmpty = newValue
         }
     }
     
     func viewModelDayMealsChanged(to newValue: [DayMeal]) {
-        print("🧨 viewModelShowingEmptyChanged and has \(newValue.count)")
         withAnimation {
             self.dayMeals = newValue
         }
@@ -89,21 +87,20 @@ public struct DayView: View {
             return .asymmetric(insertion: insertion, removal: removal)
         }
         
-        var summaryView: some View {
-            ZStack {
-                Color.clear
-                    .frame(height: 150)
-                Text("Summary pager goes here")
-            }
-            /// ** Important ** This explicit height on the encompassing `ZStack` is crucial to ensure that
-            /// the separator heights of the `MealView`'s don't get messed up (it's a wierd bug that's device dependent).
+        var metricsView: some View {
+            MetricsView(date: $date)
+            .padding(.horizontal, 20)
             .frame(height: 150)
+//            .padding(.horizontal, 20)
+//            /// ** Important ** This explicit height on the encompassing `ZStack` is crucial to ensure that
+//            /// the separator heights of the `MealView`'s don't get messed up (it's a wierd bug that's device dependent).
+//            .frame(height: 150)
             .id(id)
             .transition(transition)
         }
         
         return ScrollView(showsIndicators: false) {
-            summaryView
+            metricsView
             ForEach(Array(dayMeals.enumerated()), id: \.element.id) { (index, item) in
                 mealView(for: $dayMeals[index])
                     .transition(transition)
@@ -132,9 +129,7 @@ public struct DayView: View {
         )
         return MealView(
             date: date,
-            meal: meal,
             mealBinding: mealBinding,
-            badgeWidths: .constant([:]),
             isUpcomingMeal: isUpcomingMealBinding,
             isAnimatingItemChange: $isAnimatingItemChange,
             actionHandler: actionHandler
@@ -148,9 +143,7 @@ public struct DayView: View {
         )
         return MealView(
             date: date,
-            meal: meal.wrappedValue,
             mealBinding: meal,
-            badgeWidths: .constant([:]),
             isUpcomingMeal: isUpcomingMealBinding,
             isAnimatingItemChange: $isAnimatingItemChange,
             actionHandler: actionHandler
@@ -198,24 +191,31 @@ extension DayView {
 extension DayView.ViewModel {
     
     func addObservers() {
-        NotificationCenter.default.addObserver(self, selector: #selector(didAddMeal), name: .didAddMeal, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(didDeleteMeal), name: .didDeleteMeal, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(didAddFoodItemToMeal), name: .didAddFoodItemToMeal, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(didDeleteFoodItemFromMeal), name: .didDeleteFoodItemFromMeal, object: nil)
-        
+        NotificationCenter.default.addObserver(self, selector: #selector(didDeleteMeal), name: .didDeleteMeal, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(didUpdateMealFoodItem), name: .didUpdateMealFoodItem, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(didUpdateFoodItems), name: .didUpdateFoodItems, object: nil)
+
+        NotificationCenter.default.addObserver(self, selector: #selector(didAddMeal), name: .didAddMeal, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(didUpdateMeal), name: .didUpdateMeal, object: nil)
-        
+
         NotificationCenter.default.addObserver(self, selector: #selector(didSetBadgeWidths), name: .didSetBadgeWidths, object: nil)
         
         NotificationCenter.default.addObserver(self, selector: #selector(initialSyncCompleted), name: .initialSyncCompleted, object: nil)
 
+        NotificationCenter.default.addObserver(self, selector: #selector(shouldRefreshDay), name: .shouldRefreshDay, object: nil)
+
+    }
+    
+    @objc func shouldRefreshDay(notification: Notification) {
+        animatingMeal = true
+        self.reload()
     }
     
     @objc func initialSyncCompleted(notification: Notification) {
 //        DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) {
-            print("🧨 initialSyncCompleted reload")
+            cprint("📩 initialSyncCompleted → DayView")
             self.animatingMeal = true
             self.reload()
 //        }
@@ -226,11 +226,12 @@ extension DayView.ViewModel {
               let date = userInfo[Notification.Keys.date] as? Date,
               date == self.date
         else { return }
-        print("💯 Received didSetBadgeWidths, calling reload()")
+        cprint("📩 didSetBadgeWidths → DayView")
         reload()
     }
 
     @objc func didAddFoodItemToMeal(notification: Notification) {
+        cprint("📩 didAddFoodItemToMeal → DayView")
         animatingMeal = true
         reload()
     }
@@ -239,6 +240,7 @@ extension DayView.ViewModel {
         guard let userInfo = notification.userInfo as? [String: AnyObject],
               let id = userInfo[Notification.Keys.uuid] as? UUID
         else { return }
+        cprint("📩 didDeleteFoodItemFromMeal → DayView")
         resetSortPositions(afterDeletingId: id)
         animatingMeal = true
         reload()
@@ -248,6 +250,7 @@ extension DayView.ViewModel {
         guard let userInfo = notification.userInfo as? [String: AnyObject],
               let updatedFoodItem = userInfo[Notification.Keys.foodItem] as? FoodItem
         else { return }
+        cprint("📩 didDeleteFoodItemFromMeal → DayView")
         resetSortPositions(afterUpdating: updatedFoodItem)
         animatingMeal = true
         reload()
@@ -312,20 +315,29 @@ extension DayView.ViewModel {
     }
     
     @objc func didUpdateFoodItems(notification: Notification) {
+        cprint("📩 didUpdateFoodItems → DayView")
         animatingMeal = true
         reload()
     }
+    
     @objc func didUpdateMeal() {
+        cprint("📩 didUpdateMeal → DayView")
         animatingMeal = true
         reload()
     }
 
     @objc func didAddMeal() {
+        cprint("📩 didAddMeal → DayView, calling reload()")
         animatingMeal = true
         reload()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            cprint("📩     (2s later) calling reload() again")
+            self.reload()
+        }
     }
 
     @objc func didDeleteMeal() {
+        cprint("📩 didDeleteMeal → DayView")
         animatingMeal = true
         reload()
     }
@@ -338,16 +350,16 @@ extension DayView.ViewModel {
         let day = DataManager.shared.day(for: date)
         self.day = day
         self.dayMeals = day?.meals ?? []
-        print("🧨 ----------")
-        print("🧨 DayView.load(for: \(date.calendarDayString)) — \(dayMeals.count) meals")
+        cprint("🧨 ----------")
+        cprint("🧨 DayView.load(for: \(date.calendarDayString)) — \(dayMeals.count) meals")
         for meal in dayMeals {
-            print("🧨    Meal: \(meal.name) @ \(meal.timeString)")
+            cprint("🧨    Meal: \(meal.name) @ \(meal.timeString)")
             for foodItem in meal.foodItems {
-                print("🧨        \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name) - \(foodItem.badgeWidth)")
+                cprint("🧨        \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name) - \(foodItem.badgeWidth)")
             }
         }
         self.showingEmpty = dayMeals.isEmpty
-        print("🧨 ")
+        cprint("🧨 ")
     }
 
     func dateChanged(_ newValue: Date) {

@@ -10,8 +10,6 @@ extension MealView {
         
         @AppStorage(UserDefaultsKeys.showingBadgesForFoods) var showingBadgesForFoods = PrepConstants.DefaultPreferences.showingBadgesForFoods
 
-        @Binding var badgeWidth: CGFloat
-        
 //        @State var refreshBool = false
         //TODO: CoreData
 //        @ObservedObject var meal: Meal

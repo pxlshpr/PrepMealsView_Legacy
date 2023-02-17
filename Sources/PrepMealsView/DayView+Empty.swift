@@ -14,6 +14,7 @@ extension DayView {
         @State var currentShowingEmpty: Bool = true
         @State var animatingMeal: Bool = false
         
+        let shouldRefreshDay = NotificationCenter.default.publisher(for: .shouldRefreshDay)
         let didAddMeal = NotificationCenter.default.publisher(for: .didAddMeal)
         let didDeleteMeal = NotificationCenter.default.publisher(for: .didDeleteMeal)
         let initialSyncCompleted = NotificationCenter.default.publisher(for: .initialSyncCompleted)
@@ -35,6 +36,12 @@ extension DayView.EmptyLayer {
             .onReceive(didAddMeal, perform: animateMealInsertionOrRemoval)
             .onReceive(didDeleteMeal, perform: animateMealInsertionOrRemoval)
             .onReceive(initialSyncCompleted, perform: initialSyncCompleted)
+            .onReceive(shouldRefreshDay, perform: shouldRefreshDay)
+    }
+    
+    func shouldRefreshDay(_ notification: Notification) {
+        animatingMeal = true
+        reload()
     }
     
     func initialSyncCompleted(_ notification: Notification) {
@@ -53,6 +60,11 @@ extension DayView.EmptyLayer {
     
     func load(for date: Date) {
         let current = DataManager.shared.isDateEmpty(date)
+        
+        guard currentShowingEmpty != current else {
+            return
+        }
+        
         self.previousShowingEmpty = self.currentShowingEmpty
         self.currentShowingEmpty = false
         withAnimation {

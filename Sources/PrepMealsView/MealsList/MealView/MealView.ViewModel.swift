@@ -18,6 +18,8 @@ extension MealView {
         @Published var isUpcomingMeal: Bool
         @Published var isAnimatingItemChange = false
         
+        @Published var energyValueInKcal: Double
+        
 //        @Published var foodItems: [MealFoodItem]
         
         let actionHandler: (LogAction) -> ()
@@ -30,17 +32,19 @@ extension MealView {
             isUpcomingMeal: Bool,
             actionHandler: @escaping (LogAction) -> ()
         ) {
-            print("MealView.ViewModel.init for \(meal.name) on \(date.calendarDayString)")
+            cprint("MealView.ViewModel.init for \(meal.name) on \(date.calendarDayString)")
 
             self.date = date
             self.meal = meal
+            self.energyValueInKcal = meal.energyValueInKcal
+            
             self.isUpcomingMeal = isUpcomingMeal
             self.hasPassed = meal.timeDate < Date()
             self.actionHandler = actionHandler
             
 //            self.foodItems = meal.foodItems
 //            self.mealMacrosIndicatorWidth = meal.badgeWidth
-//            addNotifications()
+            addNotifications()
             scheduleUpdateTime()
         }
         
@@ -80,36 +84,25 @@ extension MealView {
         }
 
         func addNotifications() {
-            NotificationCenter.default.addObserver(
-                self, selector: #selector(didAddFoodItemToMeal),
-                name: .didAddFoodItemToMeal, object: nil)
+//            NotificationCenter.default.addObserver(
+//                self, selector: #selector(didAddFoodItemToMeal),
+//                name: .didAddFoodItemToMeal, object: nil)
 
             NotificationCenter.default.addObserver(
                 self, selector: #selector(didUpdateMealFoodItem),
                 name: .didUpdateMealFoodItem, object: nil)
 
-            NotificationCenter.default.addObserver(
-                self, selector: #selector(didDeleteFoodItemFromMeal),
-                name: .didDeleteFoodItemFromMeal, object: nil)
-
-            NotificationCenter.default.addObserver(
-                self, selector: #selector(didUpdateFoodItems),
-                name: .didUpdateFoodItems, object: nil)
-
-            NotificationCenter.default.addObserver(
-                self, selector: #selector(didUpdateMeal),
-                name: .didUpdateMeal, object: nil)
-            
-
-    //            NotificationCenter.default.addObserver(
-    //                self, selector: #selector(diaryWillChangeDate),
-    //                name: .weekPagerWillChangeDate, object: nil)
-    //            NotificationCenter.default.addObserver(
-    //                self, selector: #selector(diaryWillChangeDate),
-    //                name: .didPickDateOnDayView, object: nil)
-    //            NotificationCenter.default.addObserver(
-    //                self, selector: #selector(diaryWillChangeDate),
-    //                name: .dayPagerWillChangeDate, object: nil)
+//            NotificationCenter.default.addObserver(
+//                self, selector: #selector(didDeleteFoodItemFromMeal),
+//                name: .didDeleteFoodItemFromMeal, object: nil)
+//
+//            NotificationCenter.default.addObserver(
+//                self, selector: #selector(didUpdateFoodItems),
+//                name: .didUpdateFoodItems, object: nil)
+//
+//            NotificationCenter.default.addObserver(
+//                self, selector: #selector(didUpdateMeal),
+//                name: .didUpdateMeal, object: nil)
         }
     }
 }
@@ -172,6 +165,8 @@ extension MealView.ViewModel {
             
             /// Re-sort the `foodItems` in case we moved an item within a meal
             resetSortPositions(aroundFoodItemWithId: updatedFoodItem.id)
+            
+            energyValueInKcal = self.meal.energyValueInKcal
         }
         
         NotificationCenter.default.post(
@@ -345,111 +340,6 @@ extension MealView.ViewModel {
     
 }
 
-//TODO: Move this elsewhere
-let Bounce: Animation = .interactiveSpring(response: 0.35, dampingFraction: 0.66, blendDuration: 0.35)
-
-import PrepDataTypes
-
-extension Array where Element == DayMeal {
-    
-    mutating func addFoodItem(_ foodItem: FoodItem) {
-        guard let mealIndex = firstIndex(where: { $0.id == foodItem.meal?.id }) else {
-            return
-        }
-        self[mealIndex].foodItems.append(MealFoodItem(from: foodItem))
-    }
-    
-    mutating func updateFoodItem(_ foodItem: FoodItem) {
-        guard let mealIndex = firstIndex(where: { $0.id == foodItem.meal?.id }),
-              let foodItemIndex = self[mealIndex].foodItems.firstIndex(where: { $0.id == foodItem.id })
-        else {
-            return
-        }
-        self[mealIndex].foodItems[foodItemIndex] = MealFoodItem(from: foodItem)
-    }
-    
-    mutating func deleteFoodItem(with id: UUID) {
-        var mealIndex: Int? = nil
-        var f: Int? = nil
-        for i in indices {
-            if let foodItemIndex = self[i].foodItems.firstIndex(where: { $0.id == id }) {
-                mealIndex = i
-                f = foodItemIndex
-            }
-        }
-        guard let mealIndex, let f else { return }
-        self[mealIndex].foodItems.remove(at: f)
-    }
-
-}
-extension Array where Element == MealFoodItem {
-    
-    var hasValidSortPositions: Bool {
-        for i in self.indices {
-            guard self[i].sortPosition == i + 1 else {
-                return false
-            }
-        }
-        return true
-    }
-    
-    mutating func resetSortPositions(aroundFoodItemWithId id: UUID?) {
-        
-        /// Don't continue if the sort positions are valid
-        guard !hasValidSortPositions else {
-            return
-        }
-        
-        if let id {
-            /// First get the index and remove the `foodItem`
-            guard let currentIndex = self.firstIndex(where: { $0.id == id }) else {
-                return
-            }
-            let removed = self.remove(at: currentIndex)
-            
-            /// Now insert it where it actually belongs
-            var newIndex = removed.sortPosition - 1
-            
-            print("🔀 newIndex for: \(removed.food.name) is \(newIndex)")
-            if newIndex > self.count {
-                newIndex = self.count
-                print("🔀 Changed newIndex to \(newIndex) since it was out of bounds (greater than \(self.count))")
-            }
-            
-            if newIndex <= self.count , newIndex >= 0 {
-                print("🔀 Inserting \(removed.food.name) at \(newIndex)")
-                self.insert(removed, at: newIndex)
-            } else {
-                print("🔀 NOT Inserting \(removed.food.name) at \(newIndex) because it's out of bounds")
-            }
-        }
-
-        print("🔀 Before re-number: \(map({ "\($0.sortPosition)" }).joined(separator: ", "))")
-
-        /// Finally, renumber all the items for the array just to be safe (can be optimised later)
-        for i in self.indices {
-            self[i].sortPosition = i + 1
-        }
-        
-        print("🔀 After re-number: \(map({ "\($0.sortPosition)" }).joined(separator: ", "))")
-    }
-}
-
-extension Array where Element == DayMeal {
-    var nextPlannedMeal: DayMeal? {
-        self
-            .filter { Date().timeIntervalSince($0.timeDate) < 0 }
-            .sorted(by: { Date().timeIntervalSince($0.timeDate) > Date().timeIntervalSince($1.timeDate) })
-            .first
-    }
-}
-
-extension DayMeal {
-    var timeDate: Date {
-        Date(timeIntervalSince1970: time)
-    }
-}
-
 extension MealView.ViewModel {
     
     var isInFuture: Bool {
@@ -536,6 +426,57 @@ extension MealView.ViewModel {
     }
 }
 
+extension MealView.ViewModel {
+    var isTargetingLastCell: Bool {
+        dragTargetFoodItemId == meal.foodItems.last?.id
+    }
+    
+    var shouldShowFooterTopSeparatorBinding: Binding<Bool> {
+        Binding<Bool>(
+            get: {
+                /// if we're currently targeting last cell, don't show it
+                guard !self.isTargetingLastCell else { return false }
+                
+                /// Otherwise only show it if we're not empty
+                return !self.meal.foodItems.isEmpty
+            },
+            set: { _ in }
+        )
+    }
+    
+    func shouldShowTopSeparator(for item: MealFoodItem) -> Bool {
+        /// if the meal header is being targeted on and this is the first cell
+//        if targetId == meal.id, item.id == meal.foodItems.first?.id {
+//            return true
+//        }
+        
+        return false
+    }
+    
+    func shouldShowBottomSeparator(for item: MealFoodItem) -> Bool {
+        /// If this cell is being targeted,  and its the last one, show it
+//        if item.id == meal.foodItems.last?.id, dragTargetFoodItemId == item.id {
+//            return true
+//        }
+        
+        return false
+    }
+
+    func shouldShowDivider(for item: MealFoodItem) -> Bool {
+        /// if this is the last cell, never show it
+        if item.id == meal.foodItems.last?.id {
+            return false
+        }
+        
+        /// If this cell is being targeted, don't show it
+        if dragTargetFoodItemId == item.id {
+            return false
+        }
+        
+        return true
+    }
+}
+
 import PrepViews
 
 extension MealView.ViewModel {
@@ -589,19 +530,4 @@ extension MealView.ViewModel {
 //        )
 //    }
     
-}
-
-extension DayMeal {
-    var energyValuesInKcalDecreasing: [Double] {
-        foodItems
-            .map { $0.scaledValueForEnergyInKcal }
-            .sorted { $0 > $1 }
-    }
-    var largestEnergyInKcal: Double {
-        energyValuesInKcalDecreasing.first ?? 0
-    }
-    
-    var smallestEnergyInKcal: Double {
-        energyValuesInKcalDecreasing.last ?? 0
-    }
 }

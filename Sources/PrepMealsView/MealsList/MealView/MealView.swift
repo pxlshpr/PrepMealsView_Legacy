@@ -7,7 +7,6 @@ import FoodLabel
 struct MealView: View {
     @Environment(\.colorScheme) var colorScheme
     @StateObject var viewModel: ViewModel
-    @Binding var badgeWidths: [UUID : CGFloat]
     @Binding var isUpcomingMeal: Bool
     @Binding var isAnimatingItemChange: Bool
     
@@ -19,9 +18,7 @@ struct MealView: View {
     
     init(
         date: Date,
-        meal: DayMeal,
         mealBinding: Binding<DayMeal>,
-        badgeWidths: Binding<[UUID : CGFloat]>,
         isUpcomingMeal: Binding<Bool>,
         isAnimatingItemChange: Binding<Bool>,
         actionHandler: @escaping (LogAction) -> ()
@@ -29,11 +26,10 @@ struct MealView: View {
         _meal = mealBinding
         let viewModel = ViewModel(
             date: date,
-            meal: meal,
+            meal: mealBinding.wrappedValue,
             isUpcomingMeal: isUpcomingMeal.wrappedValue,
             actionHandler: actionHandler
         )
-        _badgeWidths = badgeWidths
         _isUpcomingMeal = isUpcomingMeal
         _isAnimatingItemChange = isAnimatingItemChange
         _viewModel = StateObject(wrappedValue: viewModel)
@@ -72,6 +68,9 @@ struct MealView: View {
             .onReceive(didDeleteFoodItemFromMeal, perform: didDeleteFoodItemFromMeal)
             .onChange(of: viewModel.isAnimatingItemChange) {
                 self.isAnimatingItemChange = $0
+            }
+            .onChange(of: meal) { newValue in
+                viewModel.meal = newValue
             }
     }
     
@@ -161,12 +160,12 @@ struct MealView: View {
         }
     }
 
-    var itemRowsWithBinding: some View {
-        ForEach(viewModel.meal.foodItems.indices, id: \.self) { index in
-            cell(for: $viewModel.meal.foodItems[index], index: index)
-            dropTargetView(for: viewModel.meal.foodItems[index])
-        }
-    }
+//    var itemRowsWithBinding: some View {
+//        ForEach(viewModel.meal.foodItems.indices, id: \.self) { index in
+//            cell(for: $viewModel.meal.foodItems[index], index: index)
+//            dropTargetView(for: viewModel.meal.foodItems[index])
+//        }
+//    }
     
     func cell(for mealFoodItem: MealFoodItem) -> some View {
         return Button {
@@ -231,14 +230,8 @@ struct MealView: View {
     }
     
     var footer: some View {
-        let binding = Binding<CGFloat>(
-            get: { badgeWidths[viewModel.meal.id] ?? 0 },
-            set: { _ in }
-        )
-        return MealView.Footer(
-            badgeWidth: binding
-        )
-        .environmentObject(viewModel)
+        MealView.Footer()
+            .environmentObject(viewModel)
     }
     
     func isUpcomingMealChanged(_ newValue: Bool) {
@@ -302,106 +295,106 @@ struct MealView: View {
         }
     }
     
-    func cell(for mealFoodItem: Binding<MealFoodItem>, index: Int) -> some View {
-        
-        let badgeWidthBinding = Binding<CGFloat>(
-            get: {
-                badgeWidths[mealFoodItem.id] ?? 0
-            },
-            set: { _ in }
-        )
-        
-        var label: some View {
-            var yellow: some View {
-                ZStack {
-                    Color.yellow
-                    Text(viewModel.meal.foodItems[index].food.name)
-                }
-                .frame(height: 40)
-            }
-            var mealItemCell: some View {
-                MealItemCell(
-                    item: mealFoodItem,
-                    index: index,
-                    badgeWidth: badgeWidthBinding
-                )
-                .environmentObject(viewModel)
-            }
-            
-//            return yellow
-            return mealItemCell
-        }
-        
-        var button: some View {
-            Button {
-                viewModel.actionHandler(.editFoodItem(mealFoodItem.wrappedValue, viewModel.meal))
-    //            viewModel.didTapMealFoodItem(mealFoodItem, viewModel.meal)
-            } label: {
-                label
-            }
-        }
-        
-        
-        var asLabel: some View {
-            label
-                .onTapGesture {
-                    viewModel.actionHandler(.editFoodItem(mealFoodItem.wrappedValue, viewModel.meal))
-                }
-        }
-        
-        return button
-//        return asLabel
-            .draggable(mealFoodItem.wrappedValue)
-            .contextMenu(menuItems: {
-                Section(mealFoodItem.food.name.wrappedValue) {
-                    Button {
-                        viewModel.actionHandler(
-                            .editFoodItem(mealFoodItem.wrappedValue, viewModel.meal)
-                        )
-                    } label: {
-                        Label("Edit", systemImage: "pencil")
-                    }
-                    Button {
-                        
-                    } label: {
-                        Label("Duplicate", systemImage: "plus.square.on.square")
-                    }
-                    Divider()
-                    Button(role: .destructive) {
-                        viewModel.actionHandler(
-                            .deleteFoodItem(mealFoodItem.wrappedValue, viewModel.meal)
-                        )
-                    } label: {
-                        Label("Delete", systemImage: "trash")
-                    }
-                }
-            }, preview: {
-                FoodLabel(data: .constant(mealFoodItem.wrappedValue.foodLabelData))
-//                ZStack {
+//    func cell(for mealFoodItem: Binding<MealFoodItem>, index: Int) -> some View {
 //
-//                    Color.blue
-//                        .frame(width: 300, height: 1300)
+//        let badgeWidthBinding = Binding<CGFloat>(
+//            get: {
+//                badgeWidths[mealFoodItem.id] ?? 0
+//            },
+//            set: { _ in }
+//        )
+//
+//        var label: some View {
+//            var yellow: some View {
+//                ZStack {
+//                    Color.yellow
+//                    Text(viewModel.meal.foodItems[index].food.name)
 //                }
-//                VStack(alignment: .leading) {
-//                    HStack {
-//                        Text(mealFoodItem.wrappedValue.food.emoji)
-//                        Text(mealFoodItem.wrappedValue.food.name)
+//                .frame(height: 40)
+//            }
+//            var mealItemCell: some View {
+//                MealItemCell(
+//                    item: mealFoodItem,
+//                    index: index,
+//                    badgeWidth: badgeWidthBinding
+//                )
+//                .environmentObject(viewModel)
+//            }
+//
+////            return yellow
+//            return mealItemCell
+//        }
+//
+//        var button: some View {
+//            Button {
+//                viewModel.actionHandler(.editFoodItem(mealFoodItem.wrappedValue, viewModel.meal))
+//    //            viewModel.didTapMealFoodItem(mealFoodItem, viewModel.meal)
+//            } label: {
+//                label
+//            }
+//        }
+//
+//
+//        var asLabel: some View {
+//            label
+//                .onTapGesture {
+//                    viewModel.actionHandler(.editFoodItem(mealFoodItem.wrappedValue, viewModel.meal))
+//                }
+//        }
+//
+//        return button
+////        return asLabel
+//            .draggable(mealFoodItem.wrappedValue)
+//            .contextMenu(menuItems: {
+//                Section(mealFoodItem.food.name.wrappedValue) {
+//                    Button {
+//                        viewModel.actionHandler(
+//                            .editFoodItem(mealFoodItem.wrappedValue, viewModel.meal)
+//                        )
+//                    } label: {
+//                        Label("Edit", systemImage: "pencil")
 //                    }
-//                    if let detail = mealFoodItem.wrappedValue.food.detail {
-//                        Text(detail)
+//                    Button {
+//
+//                    } label: {
+//                        Label("Duplicate", systemImage: "plus.square.on.square")
 //                    }
-//                    if let brand = mealFoodItem.wrappedValue.food.brand {
-//                        Text(brand)
+//                    Divider()
+//                    Button(role: .destructive) {
+//                        viewModel.actionHandler(
+//                            .deleteFoodItem(mealFoodItem.wrappedValue, viewModel.meal)
+//                        )
+//                    } label: {
+//                        Label("Delete", systemImage: "trash")
 //                    }
 //                }
-            })
-        .transition(
-            .asymmetric(
-                insertion: .move(edge: .top),
-                removal: .scale
-            )
-        )
-    }
+//            }, preview: {
+//                FoodLabel(data: .constant(mealFoodItem.wrappedValue.foodLabelData))
+////                ZStack {
+////
+////                    Color.blue
+////                        .frame(width: 300, height: 1300)
+////                }
+////                VStack(alignment: .leading) {
+////                    HStack {
+////                        Text(mealFoodItem.wrappedValue.food.emoji)
+////                        Text(mealFoodItem.wrappedValue.food.name)
+////                    }
+////                    if let detail = mealFoodItem.wrappedValue.food.detail {
+////                        Text(detail)
+////                    }
+////                    if let brand = mealFoodItem.wrappedValue.food.brand {
+////                        Text(brand)
+////                    }
+////                }
+//            })
+//        .transition(
+//            .asymmetric(
+//                insertion: .move(edge: .top),
+//                removal: .scale
+//            )
+//        )
+//    }
     
     //MARK: - Drag and Drop related
     

@@ -41,9 +41,7 @@ extension MealsList {
         )
         return MealView(
             date: date,
-            meal: meal,
             mealBinding: .constant(meal),
-            badgeWidths: $badgeWidths,
             isUpcomingMeal: isUpcomingMealBinding,
             isAnimatingItemChange: .constant(false),
             actionHandler: actionHandler
