@@ -7,9 +7,10 @@ import PrepCoreDataStack
 struct MetricsView: View {
     
     @Environment(\.colorScheme) var colorScheme
-    
+
+    @AppStorage(UserDefaultsKeys.lastSelectedMetricsTab) var lastSelectedMetricsTab = 1
+
     @Binding var date: Date
-    
     @State var data: MetricsData
     
     let shouldUpdateMetrics = NotificationCenter.default.publisher(for: .shouldUpdateMetrics)
@@ -30,20 +31,14 @@ struct MetricsView: View {
         _data = State(initialValue: .zero)
     }
     
-    
     var body: some View {
-        Group {
-            GeometryReader { proxy in
-                ZStack {
-                    backgroundColor
-                    VStack {
-                        energyRow(proxy)
-                        macros(proxy)
-                    }
-                }
-            }
+        TabView(selection: $lastSelectedMetricsTab) {
+            energyAndMacrosPage.tag(1)
+            page2.tag(2)
+            page3.tag(3)
         }
-        .frame(height: 150)
+        .tabViewStyle(.page(indexDisplayMode: .always))
+        .frame(height: 180)
         .onAppear(perform: appeared)
         .onReceive(shouldUpdateMetrics, perform: update)
         .onReceive(didAddFoodItem, perform: update)
@@ -53,6 +48,30 @@ struct MetricsView: View {
         .onReceive(didDeleteMeal, perform: update)
     }
     
+    
+    var energyAndMacrosPage: some View {
+        Group {
+            GeometryReader { proxy in
+                ZStack(alignment: .top) {
+                    backgroundColor
+                    VStack(spacing: 5) {
+                        energyRow(proxy)
+                        macros(proxy)
+                    }
+                }
+            }
+        }
+        .frame(height: 150)
+    }
+    
+    var page2: some View {
+        Text("Page 2")
+    }
+
+    var page3: some View {
+        Text("Page 3")
+    }
+
     func appeared() {
         loadData(isInitialLoad: true)
     }
@@ -110,9 +129,14 @@ struct MetricsView: View {
             }
         }
         
-        return VStack(spacing: 4) {
-            Color.clear
-                .animatedEnergyValue(value: data.energy)
+        return VStack(spacing: 5) {
+            HStack(alignment: .firstTextBaseline) {
+                Color.clear
+                    .animatedEnergyValue(value: data.energy)
+                Spacer()
+                Color.clear
+                    .animatedEnergyRemainingValue(value: data.energyRemaining)
+            }
             energyView
         }
     }
@@ -304,6 +328,51 @@ extension View {
         modifier(AnimatableEnergyValue(value: value))
     }
 }
+
+struct AnimatableEnergyRemainingValue: AnimatableModifier {
+    
+    @Environment(\.colorScheme) var colorScheme
+    @State var size: CGSize = .zero
+    
+    var value: Double
+    
+    var animatableData: Double {
+        get { value }
+        set { value = newValue }
+    }
+    
+    func body(content: Content) -> some View {
+        content
+            .frame(width: size.width, height: size.height)
+            .overlay(
+                animatedLabel
+                    .readSize { size in
+                        self.size = size
+                    }
+            )
+    }
+    
+    var animatedLabel: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 2) {
+            Text(value.formattedEnergy)
+                .font(.system(.headline, design: .rounded, weight: .medium))
+                .foregroundColor(Color(.secondaryLabel))
+            Text("kcal")
+                .font(.system(.body, design: .rounded, weight: .regular))
+                .foregroundColor(Color(.tertiaryLabel))
+        }
+        .frame(maxWidth: .infinity)
+        .multilineTextAlignment(.trailing)
+        .fixedSize(horizontal: true, vertical: false)
+    }
+}
+
+extension View {
+    func animatedEnergyRemainingValue(value: Double) -> some View {
+        modifier(AnimatableEnergyRemainingValue(value: value))
+    }
+}
+
 extension Macro {
     var abbreviatedDescription: String {
         switch self {
