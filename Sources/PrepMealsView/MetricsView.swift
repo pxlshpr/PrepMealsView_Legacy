@@ -126,11 +126,11 @@ struct MetricsView: View {
             }
             
             return Group {
-                if data.haveEnergyGoal {
+//                if data.haveEnergyGoal {
                     meter
-                } else {
-                    badge
-                }
+//                } else {
+//                    badge
+//                }
             }
         }
         
