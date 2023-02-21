@@ -10,6 +10,8 @@ struct MealView: View {
     @Binding var isUpcomingMeal: Bool
     @Binding var isAnimatingItemChange: Bool
     
+    @AppStorage(UserDefaultsKeys.showingBadgesForFoods) var showingBadgesForFoods = PrepConstants.DefaultPreferences.showingBadgesForFoods
+
     let didDeleteFoodItemFromMeal = NotificationCenter.default.publisher(for: .didDeleteFoodItemFromMeal)
     let swapMealFoodItemPositions = NotificationCenter.default.publisher(for: .swapMealFoodItemPositions)
     let removeMealFoodItemForMove = NotificationCenter.default.publisher(for: .removeMealFoodItemForMove)
@@ -81,9 +83,7 @@ struct MealView: View {
                 self.isAnimatingItemChange = $0
             }
             .onChange(of: meal) { newValue in
-//                withAnimation {
-                    viewModel.meal = newValue
-//                }
+                viewModel.meal = newValue
                 withAnimation {
                     foodItems = newValue.foodItems
                 }
@@ -229,11 +229,27 @@ struct MealView: View {
                 dropTargetView(for: foodItem)
             }
         }
-        
-//        if foodItems.filter({ !$0.isSoftDeleted }).isEmpty {
-//            Text("Empty")
-//                .transition(.scale)
-//        }
+        if foodItems.filter({ !$0.isSoftDeleted }).isEmpty,
+//           viewModel.dragTargetFoodItemId == nil,
+           viewModel.targetId == nil
+        {
+            Text("Empty")
+                .font(.body)
+                .fontWeight(.light)
+                .foregroundColor(Color(.tertiaryLabel))
+                .padding(.leading, 20)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 12)
+                .background(
+                    Group {
+                        colorScheme == .light
+                        ? Color(.secondarySystemGroupedBackground)
+                        : Color(hex: "232323")
+                    }
+                        .opacity(colorScheme == .light ? 0.75 : 0.5)
+                )
+                .transition(.scale)
+        }
     }
     
     func cell(for mealFoodItem: MealFoodItem) -> some View {
@@ -291,8 +307,9 @@ struct MealView: View {
     }
 
     var header: some View {
-        MealView.Header()
-            .environmentObject(viewModel)
+//        MealView.Header()
+//            .environmentObject(viewModel)
+        headerView
             .contentShape(Rectangle())
             .if(!viewModel.isEmpty, transform: { view in
                 view
@@ -305,8 +322,9 @@ struct MealView: View {
     }
     
     var footer: some View {
-        MealView.Footer(meal: meal)
-            .environmentObject(viewModel)
+        footerView
+//        MealView.Footer(meal: meal)
+//            .environmentObject(viewModel)
     }
     
     func isUpcomingMealChanged(_ newValue: Bool) {
@@ -428,6 +446,7 @@ struct MealView: View {
         Haptics.selectionFeedback()
         withAnimation(.interactiveSpring()) {
             viewModel.targetId = isTargeted ? viewModel.meal.id : nil
+            
         }
     }
 }
