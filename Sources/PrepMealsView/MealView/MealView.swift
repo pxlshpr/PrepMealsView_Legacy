@@ -232,8 +232,8 @@ struct MealView: View {
         if shouldShowEmptyCell {
             Text("Empty")
                 .font(.body)
-//                .fontWeight(.light)
-                .fontWeight(.regular)
+                .fontWeight(.light)
+//                .fontWeight(.regular)
                 .foregroundColor(Color(.tertiaryLabel))
                 .padding(.leading, 20)
                 .frame(maxWidth: .infinity, alignment: .leading)
