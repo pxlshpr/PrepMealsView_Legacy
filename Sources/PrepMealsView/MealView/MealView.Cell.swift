@@ -92,7 +92,7 @@ extension MealView.Cell {
     }
 
     func getShouldShowDropTargetView() -> Bool {
-        if let id = dragTargetFoodItemId, item.id == id {
+        if let dragTargetFoodItemId, item.id == dragTargetFoodItemId {
             return true
         }
         
@@ -169,9 +169,9 @@ extension MealView.Cell {
     
     func handleDropIsTargeted(_ isTargeted: Bool) {
         print("🤳 \(item.food.name) isTargeted changed to: \(isTargeted)")
+        
         Haptics.selectionFeedback()
         withAnimation(.interactiveSpring()) {
-//            viewModel.dragTargetFoodItemId = isTargeted ? item.id : nil
             dragTargetFoodItemId = isTargeted ? item.id : nil
         }
     }

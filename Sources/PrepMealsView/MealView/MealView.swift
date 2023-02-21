@@ -27,8 +27,6 @@ struct MealView: View {
     @State var isMovingItem = false
     @State var showingDropOptions: Bool = false
     
-    @State var energyValueInKcal: Double
-    
     init(
         date: Date,
         dayViewModel: DayView.ViewModel,
@@ -55,8 +53,6 @@ struct MealView: View {
         let shouldShowEmptyCell: Bool = mealBinding.wrappedValue.foodItems
             .filter({ !$0.isSoftDeleted }).isEmpty
         _shouldShowEmptyCell = State(initialValue: shouldShowEmptyCell)
-        
-        _energyValueInKcal = State(initialValue: mealBinding.wrappedValue.energyValueInKcal)
     }
 
     var body: some View {
