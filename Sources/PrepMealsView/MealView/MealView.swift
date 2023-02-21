@@ -229,10 +229,7 @@ struct MealView: View {
                 dropTargetView(for: foodItem)
             }
         }
-        if foodItems.filter({ !$0.isSoftDeleted }).isEmpty,
-//           viewModel.dragTargetFoodItemId == nil,
-           viewModel.targetId == nil
-        {
+        if shouldShowEmptyCell {
             Text("Empty")
                 .font(.body)
                 .fontWeight(.light)
@@ -250,6 +247,21 @@ struct MealView: View {
                 )
                 .transition(.scale)
         }
+    }
+    
+    var shouldShowEmptyCell: Bool {
+        guard foodItems.filter({ !$0.isSoftDeleted }).isEmpty,
+              viewModel.targetId == nil else {
+            return false
+        }
+        
+        /// If we're showing drop options for the meal header (ie. empty meal), which we
+        /// infer by checking if the dropReceipient is nil
+        if showingDropOptions, viewModel.dropRecipient == nil {
+            return false
+        }
+        
+        return true
     }
     
     func cell(for mealFoodItem: MealFoodItem) -> some View {
@@ -369,8 +381,9 @@ struct MealView: View {
         }
         
         if showingDropOptions,
-           let droppedFoodItem = viewModel.droppedFoodItem,
-           droppedFoodItem.id == id {
+           let dropRecipient = viewModel.dropRecipient,
+           dropRecipient.id == mealFoodItem.id
+        {
             return true
         }
         
@@ -392,9 +405,21 @@ struct MealView: View {
     
     //MARK: - Drag and Drop related
     
+    var shouldShowDropTargetViewForMeal: Bool {
+        if viewModel.targetId == viewModel.meal.id {
+            return true
+        }
+        
+        if showingDropOptions, viewModel.dropRecipient == nil {
+            return true
+        }
+        
+        return false
+    }
+    
     @ViewBuilder
     var dropTargetForMeal: some View {
-        if viewModel.targetId == viewModel.meal.id {
+        if shouldShowDropTargetViewForMeal {
             dropTargetView
                 .if(!viewModel.isEmpty) { view in
                     view.padding(.bottom, 12)
