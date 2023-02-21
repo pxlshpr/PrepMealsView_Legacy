@@ -101,8 +101,14 @@ struct MealView: View {
     }
     
     func updateShouldShowDropTargetForMeal() {
-        withAnimation(isMovingItem ? .none : .interactiveSpring()) {
+        if isMovingItem {
+            print("🔅 NOT animating")
             self.shouldShowDropTargetViewForMeal = getShouldShowDropTargetViewForMeal()
+        } else {
+            print("🔅 Animating")
+            withAnimation(.interactiveSpring()) {
+                self.shouldShowDropTargetViewForMeal = getShouldShowDropTargetViewForMeal()
+            }
         }
     }
 
@@ -151,9 +157,10 @@ struct MealView: View {
               let target = userInfo[Notification.Keys.targetItemPosition] as? Int
         else { return }
         
-        print("☎️ Swapping \(source-1) and \(target-1) in \(meal.name)")
+        print("☎️ Moving \(source) to \(target) in \(meal.name)")
         withAnimation {
-            foodItems.swapAt(source-1, target-1)
+            foodItems.move(from: source, to: target)
+//            foodItems.swapAt(source-1, target-1)
         }
         
         for i in foodItems.indices {
@@ -492,12 +499,12 @@ struct MealView: View {
     func dropConfirmationActions() -> some View {
         Button("Move") {
             guard let foodItem = viewModel.droppedFoodItem else { return }
+            isMovingItem = true
             dayViewModel.moveItem(
                 foodItem,
                 to: viewModel.meal,
                 after: viewModel.dropRecipient
             )
-            isMovingItem = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                 isMovingItem = false
             }
@@ -717,5 +724,23 @@ extension MealView.DragPreview {
         .frame(width: 200)
         .background(Color(.systemBackground))
         .contentShape([.dragPreview], RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+extension Array where Element: Equatable
+{
+    mutating func move(_ element: Element, to newIndex: Index) {
+        if let oldIndex: Int = self.firstIndex(of: element) { self.move(from: oldIndex, to: newIndex) }
+    }
+}
+
+extension Array
+{
+    mutating func move(from oldIndex: Index, to newIndex: Index) {
+        // Don't work for free and use swap when indices are next to each other - this
+        // won't rebuild array and will be super efficient.
+        if oldIndex == newIndex { return }
+        if abs(newIndex - oldIndex) == 1 { return self.swapAt(oldIndex, newIndex) }
+        self.insert(self.remove(at: oldIndex), at: newIndex)
     }
 }

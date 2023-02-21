@@ -71,8 +71,14 @@ extension MealView.Cell {
     }
     
     func updateShouldShowDropTargetView() {
-        withAnimation(isMovingItem ? .none : .interactiveSpring()) {
+        if isMovingItem {
+            print("🔅 NOT animating")
             self.shouldShowDropTargetView = getShouldShowDropTargetView()
+        } else {
+            print("🔅 Animating")
+            withAnimation(.interactiveSpring()) {
+                self.shouldShowDropTargetView = getShouldShowDropTargetView()
+            }
         }
     }
     

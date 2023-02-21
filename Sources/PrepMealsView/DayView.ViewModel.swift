@@ -250,8 +250,8 @@ extension DayView.ViewModel {
             
             NotificationCenter.default.post(name: .swapMealFoodItemPositions, object: nil, userInfo: [
                 Notification.Keys.mealId: sourceMealId,
-                Notification.Keys.sourceItemPosition: sourcePosition,
-                Notification.Keys.targetItemPosition: targetPosition
+                Notification.Keys.sourceItemPosition: sourcePosition - 1,
+                Notification.Keys.targetItemPosition: targetPosition - 1
             ])
 
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
