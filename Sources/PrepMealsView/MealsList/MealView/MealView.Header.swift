@@ -107,29 +107,22 @@ extension MealView.Header {
                         upcomingLabel
                     }
                     .padding(.leading, 20)
+                    .frame(height: 44)
+                    .padding(.trailing, 20)
+                    .draggable(viewModel.meal) {
+                        MealView.DragPreview(meal: viewModel.meal)
+                    }
                     .frame(maxHeight: .infinity)
                     .padding(.bottom, 16.75)
                     .contentShape(Rectangle())
                 }
                 
-                var actualButton: some View {
-                    Button {
-                        tappedEditMeal()
-                    } label: {
-                        label
-                    }
-                    .buttonStyle(.plain)
-                }
-                
-                var labelAsButton: some View {
+                return Button {
+                    tappedEditMeal()
+                } label: {
                     label
-//                        .onTapGesture {
-//                            tappedEditMeal()
-//                        }
                 }
-                
-                return actualButton
-//                return labelAsButton
+                .buttonStyle(.plain)
             }
             
             return HStack {
@@ -219,6 +212,7 @@ extension MealView.Header {
         var deleteMealButton: some View {
             Button(role: .destructive) {
                 do {
+                    Haptics.warningFeedback()
                     try DataManager.shared.deleteMeal(viewModel.meal)
                 } catch {
                     cprint("Couldn't delete meal: \(error)")

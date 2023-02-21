@@ -6,6 +6,7 @@ public struct DayView: View {
     
     @Environment(\.colorScheme) var colorScheme
     @Binding var date: Date
+    @Binding var dragTargetFoodItemId: UUID?
     @StateObject var viewModel: ViewModel
     
     @State var dayMeals: [DayMeal] = []
@@ -18,8 +19,13 @@ public struct DayView: View {
     
     let actionHandler: (LogAction) -> ()
 
-    public init(date: Binding<Date>, actionHandler: @escaping (LogAction) -> ()) {
+    public init(
+        date: Binding<Date>,
+        dragTargetFoodItemId: Binding<UUID?>,
+        actionHandler: @escaping (LogAction) -> ()
+    ) {
         _date = date
+        _dragTargetFoodItemId = dragTargetFoodItemId
         _viewModel = StateObject(wrappedValue: ViewModel(date: date.wrappedValue))
         self.actionHandler = actionHandler
         
@@ -127,24 +133,6 @@ public struct DayView: View {
         EmptyLayer(date: $date, actionHandler: actionHandler, initialShowingEmpty: showingEmpty)
     }
     
-    func mealView(for meal: DayMeal) -> some View {
-        let isUpcomingMealBinding = Binding<Bool>(
-            get: { meal.id == upcomingMealId },
-            set: { _ in }
-        )
-        let mealBinding = Binding<DayMeal>(
-            get: { meal },
-            set: { _ in }
-        )
-        return MealView(
-            date: date,
-            mealBinding: mealBinding,
-            isUpcomingMeal: isUpcomingMealBinding,
-            isAnimatingItemChange: $isAnimatingItemChange,
-            actionHandler: actionHandler
-        )
-    }
-    
     func mealView(for meal: Binding<DayMeal>) -> some View {
         let isUpcomingMealBinding = Binding<Bool>(
             get: { meal.wrappedValue.id == upcomingMealId },
@@ -152,6 +140,8 @@ public struct DayView: View {
         )
         return MealView(
             date: date,
+            dayViewModel: viewModel,
+            dragTargetFoodItemId: $dragTargetFoodItemId,
             mealBinding: meal,
             isUpcomingMeal: isUpcomingMealBinding,
             isAnimatingItemChange: $isAnimatingItemChange,

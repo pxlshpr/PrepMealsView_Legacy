@@ -16,8 +16,11 @@ extension MealView {
         @AppStorage(UserDefaultsKeys.showingFoodEmojis) var showingFoodEmojis = PrepConstants.DefaultPreferences.showingFoodEmojis
 
         let item: MealFoodItem
+       
+        @Binding var dragTargetFoodItemId: UUID?
         
-        init(item: MealFoodItem) {
+        init(item: MealFoodItem, dragTargetFoodItemId: Binding<UUID?>) {
+            _dragTargetFoodItemId = dragTargetFoodItemId
             self.item = item
         }
     }
@@ -73,9 +76,11 @@ extension MealView.Cell {
     }
     
     func handleDropIsTargeted(_ isTargeted: Bool) {
+        print("🤳 \(item.food.name) isTargeted changed to: \(isTargeted)")
         Haptics.selectionFeedback()
         withAnimation(.interactiveSpring()) {
-            viewModel.dragTargetFoodItemId = isTargeted ? item.id : nil
+//            viewModel.dragTargetFoodItemId = isTargeted ? item.id : nil
+            dragTargetFoodItemId = isTargeted ? item.id : nil
         }
     }
     
@@ -190,5 +195,51 @@ extension MealView.Cell {
         
         return view
             .multilineTextAlignment(.leading)
+    }
+}
+
+extension MealView.Cell {
+    struct DragPreview: View {
+        let item: MealFoodItem
+    }
+}
+
+extension MealView.Cell.DragPreview {
+    var body: some View {
+        HStack(spacing: 2) {
+            Text(item.food.emoji)
+                .font(.largeTitle)
+            Text(item.food.name)
+                .font(.title3)
+//                .bold()
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(3)
+        .clippedText()
+        .background(Color(.systemBackground))
+        .frame(width: 200)
+        .contentShape([.dragPreview], RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+struct ClippedText: ViewModifier {
+    func body(content: Content) -> some View {
+        ZStack(alignment: .leading) {
+            content.hidden().layoutPriority(1)
+            content.fixedSize(horizontal: true, vertical: false)
+            HStack {
+                Spacer()
+                LinearGradient(colors: [.clear, Color(.systemBackground)], startPoint: .leading, endPoint: .trailing)
+                    .frame(width: 50)
+            }
+        }
+        .clipped()
+    }
+}
+
+extension View {
+    func clippedText() -> some View {
+        self.modifier(ClippedText())
     }
 }

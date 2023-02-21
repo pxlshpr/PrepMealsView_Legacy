@@ -1,11 +1,13 @@
 import SwiftUI
 import PrepDataTypes
 import PrepCoreDataStack
+import SwiftHaptics
 
 //MARK: - DayView.EmptyLayer
 
 extension DayView {
     struct EmptyLayer: View {
+        @Environment(\.colorScheme) var colorScheme
         @Binding var date: Date
         let actionHandler: (LogAction) -> ()
 
@@ -13,6 +15,8 @@ extension DayView {
         @State var previousShowingEmpty: Bool = false
         @State var currentShowingEmpty: Bool = true
         @State var animatingMeal: Bool = false
+        
+        @State var isTargetedForDrop: Bool = false
         
         let shouldRefreshDay = NotificationCenter.default.publisher(for: .shouldRefreshDay)
         let didAddMeal = NotificationCenter.default.publisher(for: .didAddMeal)
@@ -84,6 +88,16 @@ extension DayView.EmptyLayer {
             previousContent
             currentContent
         }
+        .dropDestination(
+            for: MealFoodItem.self,
+            action: { items, location in
+                return true
+            }, isTargeted: { isTargeted in
+                Haptics.selectionFeedback()
+                withAnimation {
+                    isTargetedForDrop = isTargeted
+                }
+            })
     }
     
     var previousContent: some View {
@@ -100,7 +114,7 @@ extension DayView.EmptyLayer {
         
         return Group {
             if previousShowingEmpty {
-                DayView.EmptyMessage(date: previousDate, actionHandler: actionHandler)
+                DayView.EmptyMessage(date: previousDate, isTargetedForDrop: $isTargetedForDrop, actionHandler: actionHandler)
 //                Text("Previous")
                     .frame(maxWidth: .infinity)
                     .transition(transition)
@@ -123,10 +137,13 @@ extension DayView.EmptyLayer {
 
         return Group {
             if currentShowingEmpty {
-                DayView.EmptyMessage(date: date, actionHandler: actionHandler)
-//                Text("Current")
-                    .frame(maxWidth: .infinity)
-                    .transition(transition)
+                DayView.EmptyMessage(
+                    date: date,
+                    isTargetedForDrop: $isTargetedForDrop,
+                    actionHandler: actionHandler
+                )
+                .frame(maxWidth: .infinity)
+                .transition(transition)
             }
         }
     }
@@ -140,9 +157,13 @@ extension DayView {
         let date: Date
         @State var markedAsFasted = false
         
+        @State var messageSize: CGSize = .zero
+        
         let actionHandler: (LogAction) -> ()
+        @Binding var isTargetedForDrop: Bool
 
-        init(date: Date, actionHandler: @escaping (LogAction) -> ()) {
+        init(date: Date, isTargetedForDrop: Binding<Bool>, actionHandler: @escaping (LogAction) -> ()) {
+            _isTargetedForDrop = isTargetedForDrop
             self.date = date
             self.actionHandler = actionHandler
         }
@@ -152,14 +173,9 @@ extension DayView {
 extension DayView.EmptyMessage {
     @ViewBuilder
     var body: some View {
-        optionalBody
-    }
-    
-    var optionalBody: some View {
         ZStack {
             background
             emptyMessageLayer
-//                .padding(.bottom, PrepConstants.bottomBarHeight / 2.0)
         }
         /// This is essential to make sure it doesn't shift vertically when we're resigning focus from the
         /// proxy text field (which we use to mitigate the tap target movement bug with sheets)
@@ -173,14 +189,50 @@ extension DayView.EmptyMessage {
     var emptyMessageLayer: some View {
         VStack {
             Spacer()
-            emptyMessage
+            ZStack {
+//                emptyMessage
+//                    .blur(radius: isTargetedForDrop ? 2.0 : 0)
+//                    .readSize { size in
+//                        messageSize = size
+//                    }
+                if isTargetedForDrop {
+                    dropTargetView
+                } else {
+                    emptyMessage
+                        .readSize { size in
+                            messageSize = size
+                        }
+                }
+            }
             Spacer()
         }
         .edgesIgnoringSafeArea(.all)
     }
     
-    var emptyMessage: some View {
-        content
+    var dropTargetView: some View {
+        Text("Drop food here")
+            .bold()
+            .foregroundColor(.primary)
+//            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity)
+            .frame(height: messageSize.height)
+            .padding(.horizontal, 20)
+            .padding(.horizontal, 50)
+            .background(
+                RoundedRectangle(cornerRadius: 15, style: .continuous)
+                    .foregroundColor(
+                        Color.accentColor.opacity(colorScheme == .dark ? 0.4 : 0.2)
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 15, style: .continuous)
+                    .stroke(
+                        Color(.tertiaryLabel),
+                        style: StrokeStyle(lineWidth: 1, dash: [5])
+                    )
+            )
+            .padding(.horizontal, 12)
+            .opacity(0.8)
     }
     
     var emptyString: String {
@@ -189,7 +241,7 @@ extension DayView.EmptyMessage {
         : "You haven't prepped any meals yet"
     }
     
-    var content: some View {
+    var emptyMessage: some View {
         HStack {
             Spacer()
             VStack {

@@ -10,19 +10,26 @@ struct MealView: View {
     @Binding var isUpcomingMeal: Bool
     @Binding var isAnimatingItemChange: Bool
     
-    @State var items: [MealFoodItem] = []
-    
     let didDeleteFoodItemFromMeal = NotificationCenter.default.publisher(for: .didDeleteFoodItemFromMeal)
-    
+    let swapMealFoodItemPositions = NotificationCenter.default.publisher(for: .swapMealFoodItemPositions)
+    let removeMealFoodItemForMove = NotificationCenter.default.publisher(for: .removeMealFoodItemForMove)
+    let insertMealFoodItemForMove = NotificationCenter.default.publisher(for: .insertMealFoodItemForMove)
+
     @Binding var meal: DayMeal
+    @Binding var dragTargetFoodItemId: UUID?
+    @ObservedObject var dayViewModel: DayView.ViewModel
     
     init(
         date: Date,
+        dayViewModel: DayView.ViewModel,
+        dragTargetFoodItemId: Binding<UUID?>,
         mealBinding: Binding<DayMeal>,
         isUpcomingMeal: Binding<Bool>,
         isAnimatingItemChange: Binding<Bool>,
         actionHandler: @escaping (LogAction) -> ()
     ) {
+        self.dayViewModel = dayViewModel
+        _dragTargetFoodItemId = dragTargetFoodItemId
         _meal = mealBinding
         let viewModel = ViewModel(
             date: date,
@@ -33,7 +40,7 @@ struct MealView: View {
         _isUpcomingMeal = isUpcomingMeal
         _isAnimatingItemChange = isAnimatingItemChange
         _viewModel = StateObject(wrappedValue: viewModel)
-        _items = State(initialValue: meal.foodItems)
+//        _items = State(initialValue: meal.foodItems)
     }
 
     @State var showingDropOptions: Bool = false
@@ -66,22 +73,85 @@ struct MealView: View {
                 }
             }
             .onReceive(didDeleteFoodItemFromMeal, perform: didDeleteFoodItemFromMeal)
+            .onReceive(swapMealFoodItemPositions, perform: swapMealFoodItemPositions)
+            .onReceive(removeMealFoodItemForMove, perform: removeMealFoodItemForMove)
+            .onReceive(insertMealFoodItemForMove, perform: insertMealFoodItemForMove)
             .onChange(of: viewModel.isAnimatingItemChange) {
                 self.isAnimatingItemChange = $0
             }
             .onChange(of: meal) { newValue in
                 viewModel.meal = newValue
             }
+            .onChange(of: dragTargetFoodItemId) { newValue in
+                viewModel.dragTargetFoodItemId = newValue
+            }
+    }
+
+    func removeMealFoodItemForMove(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let mealId = userInfo[Notification.Keys.mealId] as? UUID,
+              meal.id == mealId,
+              let source = userInfo[Notification.Keys.sourceItemPosition] as? Int
+        else { return }
+        
+        print("☎️ Removing \(self.meal.foodItems[source-1].food.name) from: \(source-1) in \(meal.name)")
+        
+        withAnimation {
+            let _ = meal.foodItems.remove(at: source-1)
+        }
+        
+        for i in meal.foodItems.indices {
+            meal.foodItems[i].sortPosition = i + 1
+        }
+
+    }
+    
+    func insertMealFoodItemForMove(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let mealId = userInfo[Notification.Keys.mealId] as? UUID,
+              meal.id == mealId,
+              let foodItem = userInfo[Notification.Keys.foodItem] as? MealFoodItem,
+              let target = userInfo[Notification.Keys.targetItemPosition] as? Int
+        else { return }
+        
+        print("☎️ Inserting \(foodItem.food.name) at: \(target) in \(meal.name)")
+        
+        withAnimation {
+            meal.foodItems.insert(foodItem, at: target-1)
+        }
+        
+        for i in meal.foodItems.indices {
+            meal.foodItems[i].sortPosition = i + 1
+        }
+    }
+
+    func swapMealFoodItemPositions(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let mealId = userInfo[Notification.Keys.mealId] as? UUID,
+              meal.id == mealId,
+              let source = userInfo[Notification.Keys.sourceItemPosition] as? Int,
+              let target = userInfo[Notification.Keys.targetItemPosition] as? Int
+        else { return }
+        
+        print("☎️ Swapping \(source-1) and \(target-1) in \(meal.name)")
+        withAnimation {
+//            items.swapAt(source-1, target-1)
+            meal.foodItems.swapAt(source-1, target-1)
+        }
+        
+        for i in meal.foodItems.indices {
+            meal.foodItems[i].sortPosition = i + 1
+        }
     }
     
     func didDeleteFoodItemFromMeal(_ notification: Notification) {
         guard let userInfo = notification.userInfo as? [String: AnyObject],
               let id = userInfo[Notification.Keys.uuid] as? UUID,
-              items.contains(where: { $0.id == id })
+              meal.foodItems.contains(where: { $0.id == id } )
         else { return }
 
         withAnimation {
-            items.removeAll(where: { $0.id == id })
+            meal.foodItems.removeAll(where: { $0.id == id })
         }
     }
     
@@ -170,7 +240,7 @@ struct MealView: View {
     func cell(for mealFoodItem: MealFoodItem) -> some View {
         
         var label: some View {
-            Cell(item: mealFoodItem)
+            Cell(item: mealFoodItem, dragTargetFoodItemId: $dragTargetFoodItemId)
 //                .opacity(0.5)
                 .environmentObject(viewModel)
         }
@@ -190,38 +260,40 @@ struct MealView: View {
                 }
         }
         
-//        return button
-        return labelWithTapGesture
-        .draggable(mealFoodItem)
-        .contextMenu(menuItems: {
-            Section(mealFoodItem.food.name) {
-                Button {
-                    viewModel.actionHandler(
-                        .editFoodItem(mealFoodItem, viewModel.meal)
-                    )
-                } label: {
-                    Label("Edit", systemImage: "pencil")
-                }
-                Button {
-                    
-                } label: {
-                    Label("Duplicate", systemImage: "plus.square.on.square")
-                }
-                Divider()
-                Button(role: .destructive) {
-                    /// Make sure the context menu dismisses first, otherwise the deletion animation glitches
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        viewModel.actionHandler(
-                            .deleteFoodItem(mealFoodItem, viewModel.meal)
-                        )
-                    }
-                } label: {
-                    Label("Delete", systemImage: "trash")
-                }
+        return button
+//        return labelWithTapGesture
+            .draggable(mealFoodItem) {
+                MealView.Cell.DragPreview(item: mealFoodItem)
             }
-        }, preview: {
-            FoodLabel(data: .constant(mealFoodItem.foodLabelData))
-        })
+            .contextMenu(menuItems: {
+                Section(mealFoodItem.food.name) {
+                    Button {
+                        viewModel.actionHandler(
+                            .editFoodItem(mealFoodItem, viewModel.meal)
+                        )
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                    Button {
+                        
+                    } label: {
+                        Label("Duplicate", systemImage: "plus.square.on.square")
+                    }
+                    Divider()
+                    Button(role: .destructive) {
+                        /// Make sure the context menu dismisses first, otherwise the deletion animation glitches
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            viewModel.actionHandler(
+                                .deleteFoodItem(mealFoodItem, viewModel.meal)
+                            )
+                        }
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
+            }, preview: {
+                FoodLabel(data: .constant(mealFoodItem.foodLabelData))
+            })
     }
 
 //    var itemRows: some View {
@@ -290,7 +362,8 @@ struct MealView: View {
     
     @ViewBuilder
     func dropTargetView(for mealFoodItem: MealFoodItem) -> some View {
-        if let id = viewModel.dragTargetFoodItemId,
+//        if let id = viewModel.dragTargetFoodItemId,
+       if let id = dragTargetFoodItemId,
             mealFoodItem.id == id
         {
             dropTargetView
@@ -456,7 +529,13 @@ struct MealView: View {
     @ViewBuilder
     func dropConfirmationActions() -> some View {
         Button("Move") {
-            viewModel.tappedMoveForDrop()
+            guard let foodItem = viewModel.droppedFoodItem else { return }
+            dayViewModel.moveItem(
+                foodItem,
+                to: viewModel.meal,
+                after: viewModel.dropRecipient
+            )
+//            viewModel.tappedMoveForDrop()
         }
         Button("Duplicate") {
             viewModel.tappedDuplicateForDrop()
@@ -641,5 +720,35 @@ extension NutrientType {
         default:
             return false
         }
+    }
+}
+
+extension MealView {
+    struct DragPreview: View {
+        let meal: DayMeal
+    }
+}
+
+extension MealView.DragPreview {
+    var body: some View {
+        HStack(spacing: 2) {
+            Text(meal.timeString)
+                .bold()
+                .font(.title2)
+            Text("•")
+                .font(.title2)
+                .foregroundColor(.secondary)
+            Text(meal.name)
+                .font(.title)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.vertical, 3)
+        .padding(.horizontal, 6)
+        .clippedText()
+        .frame(height: 40)
+        .frame(width: 200)
+        .background(Color(.systemBackground))
+        .contentShape([.dragPreview], RoundedRectangle(cornerRadius: 12))
     }
 }

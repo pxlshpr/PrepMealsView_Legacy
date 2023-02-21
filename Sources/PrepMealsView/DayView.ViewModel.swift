@@ -1,6 +1,7 @@
 import SwiftUI
 import PrepDataTypes
 import PrepCoreDataStack
+import SwiftHaptics
 
 extension DayView {
     class ViewModel: ObservableObject {
@@ -221,5 +222,65 @@ extension DayView.ViewModel {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.previousDate = newValue
         }
+    }
+}
+
+extension DayView.ViewModel {
+    func moveItem(_ foodItem: MealFoodItem, to targetMeal: DayMeal, after targetFoodItem: MealFoodItem?) {
+     
+        //TODO: Try a different approach here
+        /// [ ] If moving to another meal, remove it and the re-sort the numbers
+        ///     [ ] On the other meal, receive it, insert it where expected, then re-sort the numbers
+        /// [ ] If moving within the same meal, swap it and re-sort the numbers
+        /// [ ] After all have been re-sorting, then only set the items to be synced
+        ///     [ ] Try and avoid pausing sync
+
+        guard let meal = meal(of: foodItem) else { return }
+        
+        let sourcePosition = foodItem.sortPosition
+        let targetPosition: Int
+        if let targetFoodItem {
+            if targetMeal.id == meal.id {
+                targetPosition = targetFoodItem.sortPosition
+            } else {
+                targetPosition = targetFoodItem.sortPosition + 1
+            }
+        } else {
+            targetPosition = 1
+        }
+
+        if meal.id == targetMeal.id {
+            
+            print("☎️ Moving within same meal from: \(sourcePosition) to: \(targetPosition)")
+            
+            NotificationCenter.default.post(name: .swapMealFoodItemPositions, object: nil, userInfo: [
+                Notification.Keys.mealId: meal.id,
+                Notification.Keys.sourceItemPosition: sourcePosition,
+                Notification.Keys.targetItemPosition: targetPosition
+            ])
+
+        } else {
+            
+            print("☎️ Moving to another meal from: \(sourcePosition) to: \(targetPosition)")
+
+            NotificationCenter.default.post(name: .removeMealFoodItemForMove, object: nil, userInfo: [
+                Notification.Keys.mealId: meal.id,
+                Notification.Keys.sourceItemPosition: sourcePosition
+            ])
+
+            NotificationCenter.default.post(name: .insertMealFoodItemForMove, object: nil, userInfo: [
+                Notification.Keys.mealId: targetMeal.id,
+                Notification.Keys.foodItem: foodItem,
+                Notification.Keys.targetItemPosition: targetPosition
+            ])
+        }
+    }
+    
+    func meal(of foodItem: MealFoodItem) -> DayMeal? {
+        dayMeals.first(where: {
+            $0.foodItems.contains(where: {
+                $0.id == foodItem.id
+            })
+        })
     }
 }

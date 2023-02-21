@@ -3,16 +3,19 @@ import PrepDataTypes
 import PrepCoreDataStack
 
 extension MealView {
+    
     class ViewModel: ObservableObject {
         
         let date: Date
         
         @Published var meal: DayMeal
         @Published var hasPassed: Bool
+        
         @Published var dragTargetFoodItemId: UUID? = nil
         @Published var droppedFoodItem: MealFoodItem? = nil
         @Published var dropRecipient: MealFoodItem? = nil
         @Published var targetId: UUID? = nil
+        
 //        @Published var mealMacrosIndicatorWidth: CGFloat = FoodBadge.DefaultWidth
         @Published var dateIsChanging: Bool = false
         @Published var isUpcomingMeal: Bool
@@ -180,7 +183,7 @@ extension MealView.ViewModel {
             userInfo: [Notification.Keys.date : date]
         )
 
-        SyncManager.shared.resume()
+//        SyncManager.shared.resume()
     }
 
     @objc func didDeleteFoodItemFromMeal(notification: Notification) {
@@ -315,17 +318,17 @@ extension MealView.ViewModel {
     func resetSortPositions(aroundFoodItemWithId id: UUID?) {
         let before = self.meal.foodItems
         
-        cprint("-- Before sorting:")
+        print("🔃 -- Before sorting:")
         for foodItem in meal.foodItems {
-            cprint("    \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name)")
+            print("🔃    \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name)")
         }
         
         self.meal.foodItems.resetSortPositions(aroundFoodItemWithId: id)
         self.meal.foodItems.sort { $0.sortPosition < $1.sortPosition }
 
-        cprint("-- After sorting:")
+        print("🔃 -- After sorting:")
         for foodItem in meal.foodItems {
-            cprint("    \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name)")
+            print("🔃    \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name)")
         }
 
         for oldItem in before {
@@ -387,10 +390,7 @@ extension MealView.ViewModel {
     func tappedMoveForDrop() {
         guard let droppedFoodItem else { return }
         do {
-            SyncManager.shared.pause()
-//            cprint("🔀 Before move: \(meal.foodItems.map({ "\($0.sortPosition)" }).joined(separator: ", "))")
             try DataManager.shared.moveMealItem(droppedFoodItem, to: meal, after: dropRecipient)
-//            resetDrop()
         } catch {
             cprint("Error moving dropped food item: \(error)")
         }
