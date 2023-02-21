@@ -101,7 +101,7 @@ struct MealView: View {
     }
     
     func updateShouldShowDropTargetForMeal() {
-        withAnimation(.interactiveSpring()) {
+        withAnimation(isMovingItem ? .none : .interactiveSpring()) {
             self.shouldShowDropTargetViewForMeal = getShouldShowDropTargetViewForMeal()
         }
     }
@@ -517,8 +517,9 @@ struct MealView: View {
     
     func handleDropIsTargeted(_ isTargeted: Bool) {
         Haptics.selectionFeedback()
-        withAnimation(isMovingItem ? .none : .interactiveSpring()) {
-            viewModel.targetId = isTargeted ? viewModel.meal.id : nil            
+        withAnimation(.interactiveSpring()) {
+            viewModel.targetId = isTargeted ? viewModel.meal.id : nil
+            
         }
     }
 }
