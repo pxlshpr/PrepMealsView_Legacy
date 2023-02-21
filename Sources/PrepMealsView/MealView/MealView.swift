@@ -363,13 +363,24 @@ struct MealView: View {
         }
     }
     
+    func shouldShowDropTargetView(for mealFoodItem: MealFoodItem) -> Bool {
+        if let id = dragTargetFoodItemId, mealFoodItem.id == id {
+            return true
+        }
+        
+        if showingDropOptions,
+           let droppedFoodItem = viewModel.droppedFoodItem,
+           droppedFoodItem.id == id {
+            return true
+        }
+        
+        return false
+    }
     
     @ViewBuilder
     func dropTargetView(for mealFoodItem: MealFoodItem) -> some View {
 //        if let id = viewModel.dragTargetFoodItemId,
-       if let id = dragTargetFoodItemId,
-            mealFoodItem.id == id
-        {
+       if shouldShowDropTargetView(for: mealFoodItem) {
             dropTargetView
                 .padding(.top, 12)
                 .if(foodItems.last?.id != mealFoodItem.id) {
