@@ -22,6 +22,8 @@ struct MealView: View {
     @Binding var dragTargetFoodItemId: UUID?
     @ObservedObject var dayViewModel: DayView.ViewModel
     
+    @State var shouldShowDropTargetViewForMeal: Bool = false
+    
     init(
         date: Date,
         dayViewModel: DayView.ViewModel,
@@ -91,6 +93,17 @@ struct MealView: View {
             .onChange(of: dragTargetFoodItemId) { newValue in
                 viewModel.dragTargetFoodItemId = newValue
             }
+            .onChange(of: viewModel.targetId, perform: targetIdChanged)
+    }
+    
+    func targetIdChanged(_ newValue: UUID?) {
+        updateShouldShowDropTargetForMeal()
+    }
+    
+    func updateShouldShowDropTargetForMeal() {
+        withAnimation(.interactiveSpring()) {
+            self.shouldShowDropTargetViewForMeal = getShouldShowDropTargetViewForMeal()
+        }
     }
 
     func removeMealFoodItemForMove(_ notification: Notification) {
@@ -226,7 +239,7 @@ struct MealView: View {
                             removal: .move(edge: .trailing)
                         )
                     )
-                dropTargetView(for: foodItem)
+//                dropTargetView(for: foodItem)
             }
         }
         if shouldShowEmptyCell {
@@ -246,7 +259,7 @@ struct MealView: View {
                     }
                         .opacity(colorScheme == .light ? 0.75 : 0.5)
                 )
-                .transition(.scale)
+                .transition(.opacity)
         }
     }
     
@@ -264,13 +277,23 @@ struct MealView: View {
         
         return true
     }
+    @State var isMovingItem = false
     
     func cell(for mealFoodItem: MealFoodItem) -> some View {
         
         var label: some View {
-            Cell(item: mealFoodItem, dragTargetFoodItemId: $dragTargetFoodItemId)
-//                .opacity(0.5)
-                .environmentObject(viewModel)
+            let isLastItemOfMealBinding = Binding<Bool>(
+                get: { foodItems.last?.id == mealFoodItem.id },
+                set: { _ in }
+            )
+            return Cell(
+                item: mealFoodItem,
+                showingDropOptions: $showingDropOptions,
+                dragTargetFoodItemId: $dragTargetFoodItemId,
+                isLastItemOfMeal: isLastItemOfMealBinding,
+                isMovingItem: $isMovingItem
+            )
+            .environmentObject(viewModel)
         }
         
         var button: some View {
@@ -318,13 +341,19 @@ struct MealView: View {
                 FoodLabel(data: .constant(mealFoodItem.foodLabelData))
             })
     }
-
+    
     var header: some View {
-//        MealView.Header()
-//            .environmentObject(viewModel)
-        headerView
+        var shouldShowDropDestination: Bool {
+            if !viewModel.isEmpty {
+                return true
+            }
+            
+            return false
+        }
+
+        return headerView
             .contentShape(Rectangle())
-            .if(!viewModel.isEmpty, transform: { view in
+            .if(shouldShowDropDestination, transform: { view in
                 view
                     .dropDestination(
                         for: MealFoodItem.self,
@@ -352,6 +381,8 @@ struct MealView: View {
         if !showingDropOptions {
             viewModel.resetDrop()
         }
+        
+        updateShouldShowDropTargetForMeal()
     }
     
 
@@ -406,7 +437,7 @@ struct MealView: View {
     
     //MARK: - Drag and Drop related
     
-    var shouldShowDropTargetViewForMeal: Bool {
+    func getShouldShowDropTargetViewForMeal() -> Bool {
         if viewModel.targetId == viewModel.meal.id {
             return true
         }
@@ -449,6 +480,7 @@ struct MealView: View {
                     )
             )
             .padding(.horizontal, 12)
+            .transition(.opacity)
     }
     
     var dropConfirmationTitle: String {
@@ -465,6 +497,10 @@ struct MealView: View {
                 to: viewModel.meal,
                 after: viewModel.dropRecipient
             )
+            isMovingItem = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                isMovingItem = false
+            }
 //            viewModel.tappedMoveForDrop()
         }
         Button("Duplicate") {
@@ -481,9 +517,8 @@ struct MealView: View {
     
     func handleDropIsTargeted(_ isTargeted: Bool) {
         Haptics.selectionFeedback()
-        withAnimation(.interactiveSpring()) {
-            viewModel.targetId = isTargeted ? viewModel.meal.id : nil
-            
+        withAnimation(isMovingItem ? .none : .interactiveSpring()) {
+            viewModel.targetId = isTargeted ? viewModel.meal.id : nil            
         }
     }
 }

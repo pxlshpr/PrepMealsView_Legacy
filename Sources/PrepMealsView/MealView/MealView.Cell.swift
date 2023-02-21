@@ -19,7 +19,21 @@ extension MealView {
        
         @Binding var dragTargetFoodItemId: UUID?
         
-        init(item: MealFoodItem, dragTargetFoodItemId: Binding<UUID?>) {
+        @Binding var showingDropOptions: Bool
+        @Binding var isLastItemOfMeal: Bool
+        @Binding var isMovingItem: Bool
+        @State var shouldShowDropTargetView: Bool = false
+        
+        init(
+            item: MealFoodItem,
+            showingDropOptions: Binding<Bool>,
+            dragTargetFoodItemId: Binding<UUID?>,
+            isLastItemOfMeal: Binding<Bool>,
+            isMovingItem: Binding<Bool>
+        ) {
+            _isMovingItem = isMovingItem
+            _isLastItemOfMeal = isLastItemOfMeal
+            _showingDropOptions = showingDropOptions
             _dragTargetFoodItemId = dragTargetFoodItemId
             self.item = item
         }
@@ -29,13 +43,87 @@ extension MealView {
 extension MealView.Cell {
     
     var body: some View {
-        content
-            .background(listRowBackground)
-            .dropDestination(
-                for: MealFoodItem.self,
-                action: handleDrop,
-                isTargeted: handleDropIsTargeted
+        VStack(spacing: 0) {
+            content
+                .background(listRowBackground)
+                .dropDestination(
+                    for: MealFoodItem.self,
+                    action: handleDrop,
+                    isTargeted: handleDropIsTargeted
+                )
+                .onChange(of: showingDropOptions, perform: showingDropOptionsChanged)
+                .onChange(of: dragTargetFoodItemId, perform: dragTargetFoodItemIdChanged)
+                .onChange(of: viewModel.dropRecipient, perform: dropRecipientChanged)
+            optionalDropTargetView
+        }
+    }
+    
+    func dropRecipientChanged(_ newValue: MealFoodItem?) {
+        updateShouldShowDropTargetView()
+    }
+    
+    func dragTargetFoodItemIdChanged(_ newValue: UUID?) {
+        updateShouldShowDropTargetView()
+    }
+    
+    func showingDropOptionsChanged(_ newValue: Bool) {
+        updateShouldShowDropTargetView()
+    }
+    
+    func updateShouldShowDropTargetView() {
+        withAnimation(isMovingItem ? .none : .interactiveSpring()) {
+            self.shouldShowDropTargetView = getShouldShowDropTargetView()
+        }
+    }
+    
+    @ViewBuilder
+    var optionalDropTargetView: some View {
+       if shouldShowDropTargetView {
+            dropTargetView
+                .padding(.top, 12)
+                .if(!isLastItemOfMeal) {
+                    $0.padding(.bottom, 12)
+                }
+        }
+    }
+
+    func getShouldShowDropTargetView() -> Bool {
+        if let id = dragTargetFoodItemId, item.id == id {
+            return true
+        }
+        
+        if showingDropOptions,
+           let dropRecipient = viewModel.dropRecipient,
+           dropRecipient.id == item.id
+        {
+            return true
+        }
+        
+        return false
+    }
+    
+    var dropTargetView: some View {
+        Text("Drop food here")
+            .bold()
+            .foregroundColor(.primary)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 20)
+            .background(
+                RoundedRectangle(cornerRadius: 15, style: .continuous)
+                    .foregroundColor(
+                        Color.accentColor.opacity(colorScheme == .dark ? 0.4 : 0.2)
+                    )
             )
+            .overlay(
+                RoundedRectangle(cornerRadius: 15, style: .continuous)
+                    .stroke(
+                        Color(.tertiaryLabel),
+                        style: StrokeStyle(lineWidth: 1, dash: [5])
+                    )
+            )
+            .padding(.horizontal, 12)
+            .transition(.opacity)
     }
     
     var content: some View {
