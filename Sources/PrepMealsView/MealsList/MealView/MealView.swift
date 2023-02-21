@@ -16,6 +16,7 @@ struct MealView: View {
     let insertMealFoodItemForMove = NotificationCenter.default.publisher(for: .insertMealFoodItemForMove)
 
     @Binding var meal: DayMeal
+    @State var foodItems: [MealFoodItem]
     @Binding var dragTargetFoodItemId: UUID?
     @ObservedObject var dayViewModel: DayView.ViewModel
     
@@ -31,6 +32,7 @@ struct MealView: View {
         self.dayViewModel = dayViewModel
         _dragTargetFoodItemId = dragTargetFoodItemId
         _meal = mealBinding
+        _foodItems = State(initialValue: mealBinding.wrappedValue.foodItems)
         let viewModel = ViewModel(
             date: date,
             meal: mealBinding.wrappedValue,
@@ -40,7 +42,6 @@ struct MealView: View {
         _isUpcomingMeal = isUpcomingMeal
         _isAnimatingItemChange = isAnimatingItemChange
         _viewModel = StateObject(wrappedValue: viewModel)
-//        _items = State(initialValue: meal.foodItems)
     }
 
     @State var showingDropOptions: Bool = false
@@ -80,7 +81,12 @@ struct MealView: View {
                 self.isAnimatingItemChange = $0
             }
             .onChange(of: meal) { newValue in
-                viewModel.meal = newValue
+//                withAnimation {
+                    viewModel.meal = newValue
+//                }
+                withAnimation {
+                    foodItems = newValue.foodItems
+                }
             }
             .onChange(of: dragTargetFoodItemId) { newValue in
                 viewModel.dragTargetFoodItemId = newValue
@@ -94,16 +100,15 @@ struct MealView: View {
               let source = userInfo[Notification.Keys.sourceItemPosition] as? Int
         else { return }
         
-        print("☎️ Removing \(self.meal.foodItems[source-1].food.name) from: \(source-1) in \(meal.name)")
+        print("☎️ Removing \(self.foodItems[source-1].food.name) from: \(source-1) in \(meal.name)")
         
         withAnimation {
-            let _ = meal.foodItems.remove(at: source-1)
+            let _ = foodItems.remove(at: source-1)
         }
         
-        for i in meal.foodItems.indices {
-            meal.foodItems[i].sortPosition = i + 1
+        for i in foodItems.indices {
+            foodItems[i].sortPosition = i + 1
         }
-
     }
     
     func insertMealFoodItemForMove(_ notification: Notification) {
@@ -117,11 +122,11 @@ struct MealView: View {
         print("☎️ Inserting \(foodItem.food.name) at: \(target) in \(meal.name)")
         
         withAnimation {
-            meal.foodItems.insert(foodItem, at: target-1)
+            foodItems.insert(foodItem, at: target-1)
         }
         
-        for i in meal.foodItems.indices {
-            meal.foodItems[i].sortPosition = i + 1
+        for i in foodItems.indices {
+            foodItems[i].sortPosition = i + 1
         }
     }
 
@@ -135,23 +140,22 @@ struct MealView: View {
         
         print("☎️ Swapping \(source-1) and \(target-1) in \(meal.name)")
         withAnimation {
-//            items.swapAt(source-1, target-1)
-            meal.foodItems.swapAt(source-1, target-1)
+            foodItems.swapAt(source-1, target-1)
         }
         
-        for i in meal.foodItems.indices {
-            meal.foodItems[i].sortPosition = i + 1
+        for i in foodItems.indices {
+            foodItems[i].sortPosition = i + 1
         }
     }
     
     func didDeleteFoodItemFromMeal(_ notification: Notification) {
         guard let userInfo = notification.userInfo as? [String: AnyObject],
               let id = userInfo[Notification.Keys.uuid] as? UUID,
-              meal.foodItems.contains(where: { $0.id == id } )
+              foodItems.contains(where: { $0.id == id } )
         else { return }
 
         withAnimation {
-            meal.foodItems.removeAll(where: { $0.id == id })
+            foodItems.removeAll(where: { $0.id == id })
         }
     }
     
@@ -162,7 +166,7 @@ struct MealView: View {
                 Color.clear
                     .frame(height: 44)
                 dropTargetForMeal
-                mealContent
+                itemRows
                 Color.clear
                     .frame(height: 50)
             }
@@ -194,7 +198,7 @@ struct MealView: View {
                 Color.clear
                     .frame(height: 44)
                 dropTargetForMeal
-                mealContent
+                itemRows
                 Color.clear
                     .frame(height: 50)
             }
@@ -210,13 +214,10 @@ struct MealView: View {
     }
     
     @ViewBuilder
-    var mealContent: some View {
-        itemRows
-    }
-
     var itemRows: some View {
 //        ForEach(viewModel.meal.foodItems) { foodItem in
-        ForEach(meal.foodItems) { foodItem in
+//        ForEach(meal.foodItems) { foodItem in
+        ForEach(foodItems) { foodItem in
             if !foodItem.isSoftDeleted {
                 cell(for: foodItem)
                     .transition(
@@ -228,14 +229,12 @@ struct MealView: View {
                 dropTargetView(for: foodItem)
             }
         }
-    }
-
-//    var itemRowsWithBinding: some View {
-//        ForEach(viewModel.meal.foodItems.indices, id: \.self) { index in
-//            cell(for: $viewModel.meal.foodItems[index], index: index)
-//            dropTargetView(for: viewModel.meal.foodItems[index])
+        
+//        if foodItems.filter({ !$0.isSoftDeleted }).isEmpty {
+//            Text("Empty")
+//                .transition(.scale)
 //        }
-//    }
+    }
     
     func cell(for mealFoodItem: MealFoodItem) -> some View {
         
@@ -253,57 +252,44 @@ struct MealView: View {
             }
         }
         
-        var labelWithTapGesture: some View {
-            label
-                .onTapGesture {
-                    viewModel.actionHandler(.editFoodItem(mealFoodItem, viewModel.meal))
+        @ViewBuilder
+        var menuItems: some View {
+            Section(mealFoodItem.food.name) {
+                Button {
+                    viewModel.actionHandler(
+                        .editFoodItem(mealFoodItem, viewModel.meal)
+                    )
+                } label: {
+                    Label("Edit", systemImage: "pencil")
                 }
+                Button {
+                    
+                } label: {
+                    Label("Duplicate", systemImage: "plus.square.on.square")
+                }
+                Divider()
+                Button(role: .destructive) {
+                    /// Make sure the context menu dismisses first, otherwise the deletion animation glitches
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        viewModel.actionHandler(
+                            .deleteFoodItem(mealFoodItem, viewModel.meal)
+                        )
+                    }
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
         }
         
         return button
-//        return labelWithTapGesture
             .draggable(mealFoodItem) {
                 MealView.Cell.DragPreview(item: mealFoodItem)
             }
-            .contextMenu(menuItems: {
-                Section(mealFoodItem.food.name) {
-                    Button {
-                        viewModel.actionHandler(
-                            .editFoodItem(mealFoodItem, viewModel.meal)
-                        )
-                    } label: {
-                        Label("Edit", systemImage: "pencil")
-                    }
-                    Button {
-                        
-                    } label: {
-                        Label("Duplicate", systemImage: "plus.square.on.square")
-                    }
-                    Divider()
-                    Button(role: .destructive) {
-                        /// Make sure the context menu dismisses first, otherwise the deletion animation glitches
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            viewModel.actionHandler(
-                                .deleteFoodItem(mealFoodItem, viewModel.meal)
-                            )
-                        }
-                    } label: {
-                        Label("Delete", systemImage: "trash")
-                    }
-                }
-            }, preview: {
+            .contextMenu(menuItems: { menuItems }, preview: {
                 FoodLabel(data: .constant(mealFoodItem.foodLabelData))
             })
     }
 
-//    var itemRows: some View {
-//        ForEach(viewModel.meal.foodItems.indices, id: \.self) { index in
-//            cell(for: $viewModel.meal.foodItems[index], index: index)
-//                .transition(.asymmetric(insertion: .move(edge: .top), removal: .scale))
-//            dropTargetView(for: viewModel.meal.foodItems[index])
-//        }
-//    }
-    
     var header: some View {
         MealView.Header()
             .environmentObject(viewModel)
@@ -319,7 +305,7 @@ struct MealView: View {
     }
     
     var footer: some View {
-        MealView.Footer()
+        MealView.Footer(meal: meal)
             .environmentObject(viewModel)
     }
     
@@ -344,7 +330,7 @@ struct MealView: View {
                 Color.clear
                     .frame(height: 44)
                 dropTargetForMeal
-                mealContent
+                itemRows
                 Color.clear
                     .frame(height: 50)
             }
@@ -368,123 +354,12 @@ struct MealView: View {
         {
             dropTargetView
                 .padding(.top, 12)
-                .if(viewModel.meal.foodItems.last?.id != mealFoodItem.id) {
+                .if(foodItems.last?.id != mealFoodItem.id) {
                     $0.padding(.bottom, 12)
                 }
         }
     }
 
-    func cell(at index: Int) -> some View {
-        Button {
-        } label: {
-            ZStack {
-                Color.yellow
-                Text(viewModel.meal.foodItems[index].food.name)
-            }
-            .frame(height: 40)
-        }
-    }
-    
-//    func cell(for mealFoodItem: Binding<MealFoodItem>, index: Int) -> some View {
-//
-//        let badgeWidthBinding = Binding<CGFloat>(
-//            get: {
-//                badgeWidths[mealFoodItem.id] ?? 0
-//            },
-//            set: { _ in }
-//        )
-//
-//        var label: some View {
-//            var yellow: some View {
-//                ZStack {
-//                    Color.yellow
-//                    Text(viewModel.meal.foodItems[index].food.name)
-//                }
-//                .frame(height: 40)
-//            }
-//            var mealItemCell: some View {
-//                MealItemCell(
-//                    item: mealFoodItem,
-//                    index: index,
-//                    badgeWidth: badgeWidthBinding
-//                )
-//                .environmentObject(viewModel)
-//            }
-//
-////            return yellow
-//            return mealItemCell
-//        }
-//
-//        var button: some View {
-//            Button {
-//                viewModel.actionHandler(.editFoodItem(mealFoodItem.wrappedValue, viewModel.meal))
-//    //            viewModel.didTapMealFoodItem(mealFoodItem, viewModel.meal)
-//            } label: {
-//                label
-//            }
-//        }
-//
-//
-//        var asLabel: some View {
-//            label
-//                .onTapGesture {
-//                    viewModel.actionHandler(.editFoodItem(mealFoodItem.wrappedValue, viewModel.meal))
-//                }
-//        }
-//
-//        return button
-////        return asLabel
-//            .draggable(mealFoodItem.wrappedValue)
-//            .contextMenu(menuItems: {
-//                Section(mealFoodItem.food.name.wrappedValue) {
-//                    Button {
-//                        viewModel.actionHandler(
-//                            .editFoodItem(mealFoodItem.wrappedValue, viewModel.meal)
-//                        )
-//                    } label: {
-//                        Label("Edit", systemImage: "pencil")
-//                    }
-//                    Button {
-//
-//                    } label: {
-//                        Label("Duplicate", systemImage: "plus.square.on.square")
-//                    }
-//                    Divider()
-//                    Button(role: .destructive) {
-//                        viewModel.actionHandler(
-//                            .deleteFoodItem(mealFoodItem.wrappedValue, viewModel.meal)
-//                        )
-//                    } label: {
-//                        Label("Delete", systemImage: "trash")
-//                    }
-//                }
-//            }, preview: {
-//                FoodLabel(data: .constant(mealFoodItem.wrappedValue.foodLabelData))
-////                ZStack {
-////
-////                    Color.blue
-////                        .frame(width: 300, height: 1300)
-////                }
-////                VStack(alignment: .leading) {
-////                    HStack {
-////                        Text(mealFoodItem.wrappedValue.food.emoji)
-////                        Text(mealFoodItem.wrappedValue.food.name)
-////                    }
-////                    if let detail = mealFoodItem.wrappedValue.food.detail {
-////                        Text(detail)
-////                    }
-////                    if let brand = mealFoodItem.wrappedValue.food.brand {
-////                        Text(brand)
-////                    }
-////                }
-//            })
-//        .transition(
-//            .asymmetric(
-//                insertion: .move(edge: .top),
-//                removal: .scale
-//            )
-//        )
-//    }
     
     //MARK: - Drag and Drop related
     

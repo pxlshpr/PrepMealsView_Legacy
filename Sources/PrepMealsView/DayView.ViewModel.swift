@@ -228,19 +228,14 @@ extension DayView.ViewModel {
 extension DayView.ViewModel {
     func moveItem(_ foodItem: MealFoodItem, to targetMeal: DayMeal, after targetFoodItem: MealFoodItem?) {
      
-        //TODO: Try a different approach here
-        /// [ ] If moving to another meal, remove it and the re-sort the numbers
-        ///     [ ] On the other meal, receive it, insert it where expected, then re-sort the numbers
-        /// [ ] If moving within the same meal, swap it and re-sort the numbers
-        /// [ ] After all have been re-sorting, then only set the items to be synced
-        ///     [ ] Try and avoid pausing sync
-
-        guard let meal = meal(of: foodItem) else { return }
+        guard let sourceMealId = foodItem.mealId else {
+            return
+        }
         
         let sourcePosition = foodItem.sortPosition
         let targetPosition: Int
         if let targetFoodItem {
-            if targetMeal.id == meal.id {
+            if targetMeal.id == sourceMealId {
                 targetPosition = targetFoodItem.sortPosition
             } else {
                 targetPosition = targetFoodItem.sortPosition + 1
@@ -249,22 +244,30 @@ extension DayView.ViewModel {
             targetPosition = 1
         }
 
-        if meal.id == targetMeal.id {
+        if sourceMealId == targetMeal.id {
             
             print("☎️ Moving within same meal from: \(sourcePosition) to: \(targetPosition)")
             
             NotificationCenter.default.post(name: .swapMealFoodItemPositions, object: nil, userInfo: [
-                Notification.Keys.mealId: meal.id,
+                Notification.Keys.mealId: sourceMealId,
                 Notification.Keys.sourceItemPosition: sourcePosition,
                 Notification.Keys.targetItemPosition: targetPosition
             ])
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                DataManager.shared.swapMealItem(
+                    at: sourcePosition - 1, /// `- 1` to convert from 1-based position to 0-based index
+                    and: targetPosition - 1,
+                    inMealWithId: sourceMealId
+                )
+            }
 
         } else {
             
             print("☎️ Moving to another meal from: \(sourcePosition) to: \(targetPosition)")
 
             NotificationCenter.default.post(name: .removeMealFoodItemForMove, object: nil, userInfo: [
-                Notification.Keys.mealId: meal.id,
+                Notification.Keys.mealId: sourceMealId,
                 Notification.Keys.sourceItemPosition: sourcePosition
             ])
 
@@ -273,14 +276,13 @@ extension DayView.ViewModel {
                 Notification.Keys.foodItem: foodItem,
                 Notification.Keys.targetItemPosition: targetPosition
             ])
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                DataManager.shared.moveMealItem(
+                    at: sourcePosition - 1, inMealWithId: sourceMealId,
+                    to: targetPosition - 1, inMealWithId: targetMeal.id
+                )
+            }
         }
-    }
-    
-    func meal(of foodItem: MealFoodItem) -> DayMeal? {
-        dayMeals.first(where: {
-            $0.foodItems.contains(where: {
-                $0.id == foodItem.id
-            })
-        })
     }
 }

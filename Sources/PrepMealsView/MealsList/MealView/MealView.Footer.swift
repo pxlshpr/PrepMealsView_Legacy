@@ -18,6 +18,12 @@ extension MealView {
 //        let didTapAddFood: (DayMeal) -> ()
         
         let didDeleteFoodItemFromMeal = NotificationCenter.default.publisher(for: .didDeleteFoodItemFromMeal)
+        
+        let meal: DayMeal
+        
+        init(meal: DayMeal) {
+            self.meal = meal
+        }
     }
 }
 
@@ -136,8 +142,8 @@ extension MealView.Footer {
 //            Color.clear
             let binding = Binding<CGFloat>(
                 get: {
-                    let width = viewModel.meal.badgeWidth
-                    return width
+//                    viewModel.meal.badgeWidth
+                    meal.badgeWidth
                 },
                 set: { _ in }
             )
