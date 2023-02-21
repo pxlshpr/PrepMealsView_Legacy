@@ -23,6 +23,11 @@ struct MealView: View {
     @ObservedObject var dayViewModel: DayView.ViewModel
     
     @State var shouldShowDropTargetViewForMeal: Bool = false
+    @State var shouldShowEmptyCell: Bool
+    @State var isMovingItem = false
+    @State var showingDropOptions: Bool = false
+    
+    @State var energyValueInKcal: Double
     
     init(
         date: Date,
@@ -46,11 +51,14 @@ struct MealView: View {
         _isUpcomingMeal = isUpcomingMeal
         _isAnimatingItemChange = isAnimatingItemChange
         _viewModel = StateObject(wrappedValue: viewModel)
+        
+        let shouldShowEmptyCell: Bool = mealBinding.wrappedValue.foodItems
+            .filter({ !$0.isSoftDeleted }).isEmpty
+        _shouldShowEmptyCell = State(initialValue: shouldShowEmptyCell)
+        
+        _energyValueInKcal = State(initialValue: mealBinding.wrappedValue.energyValueInKcal)
     }
 
-    @State var showingDropOptions: Bool = false
-//    @State var droppedFoodItem: MealFoodItem? = nil
-    
     var body: some View {
 //        mealContent
         content
@@ -94,20 +102,34 @@ struct MealView: View {
                 viewModel.dragTargetFoodItemId = newValue
             }
             .onChange(of: viewModel.targetId, perform: targetIdChanged)
+            .onChange(of: viewModel.dropRecipient, perform: dropRecipientChanged)
+            .onChange(of: foodItems, perform: foodItemsChanged)
+            .onAppear {
+                updateShouldShowEmptyCell()
+            }
+    }
+    
+    func foodItemsChanged(_ newValue: [MealFoodItem]) {
+        updateShouldShowEmptyCell()
+    }
+    
+    func dropRecipientChanged(_ newValue: MealFoodItem?) {
+        updateShouldShowEmptyCell()
     }
     
     func targetIdChanged(_ newValue: UUID?) {
         updateShouldShowDropTargetForMeal()
+        updateShouldShowEmptyCell()
     }
     
     func updateShouldShowDropTargetForMeal() {
         if isMovingItem {
-            print("🔅 NOT animating")
             self.shouldShowDropTargetViewForMeal = getShouldShowDropTargetViewForMeal()
+            print("🔅 \(shouldShowDropTargetViewForMeal)")
         } else {
-            print("🔅 Animating")
             withAnimation(.interactiveSpring()) {
                 self.shouldShowDropTargetViewForMeal = getShouldShowDropTargetViewForMeal()
+                print("🔅 \(shouldShowDropTargetViewForMeal)")
             }
         }
     }
@@ -267,15 +289,16 @@ struct MealView: View {
                         .opacity(colorScheme == .light ? 0.75 : 0.5)
                 )
                 .transition(.opacity)
+                .opacity(shouldShowDropTargetViewForMeal ? 0 : 1)
         }
     }
     
-    var shouldShowEmptyCell: Bool {
+    func getShouldShowEmptyCell() -> Bool {
         guard foodItems.filter({ !$0.isSoftDeleted }).isEmpty,
               viewModel.targetId == nil else {
             return false
         }
-        
+
         /// If we're showing drop options for the meal header (ie. empty meal), which we
         /// infer by checking if the dropReceipient is nil
         if showingDropOptions, viewModel.dropRecipient == nil {
@@ -284,7 +307,6 @@ struct MealView: View {
         
         return true
     }
-    @State var isMovingItem = false
     
     func cell(for mealFoodItem: MealFoodItem) -> some View {
         
@@ -390,6 +412,13 @@ struct MealView: View {
         }
         
         updateShouldShowDropTargetForMeal()
+        updateShouldShowEmptyCell()
+    }
+    
+    func updateShouldShowEmptyCell() {
+        withAnimation(.interactiveSpring()) {
+            shouldShowEmptyCell = getShouldShowEmptyCell()
+        }
     }
     
 
@@ -526,7 +555,6 @@ struct MealView: View {
         Haptics.selectionFeedback()
         withAnimation(.interactiveSpring()) {
             viewModel.targetId = isTargeted ? viewModel.meal.id : nil
-            
         }
     }
 }

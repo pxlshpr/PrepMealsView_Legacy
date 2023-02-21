@@ -102,15 +102,21 @@ extension MealView {
     }
 
     var nutrientsButton: some View {
+        
         var energyLabel: some View {
+            Color.clear
+                .animatedFooterEnergyValue(value: meal.energyValueInKcal)
+        }
+        
+        var energyLabel_legacy: some View {
             HStack(alignment: .firstTextBaseline, spacing: 2) {
-                Text("\(Int(viewModel.meal.energyValueInKcal))")
+                Text("\(Int(meal.energyValueInKcal))")
                     .foregroundColor(Color(.secondaryLabel))
+                    .font(.footnote)
                 Text("kcal")
                     .foregroundColor(Color(.tertiaryLabel))
                     .font(.caption2)
             }
-            .font(.footnote)
         }
         
         //TODO: Look into why this binding of the width still doesn't fix it? Maybe the calculation is wrong
@@ -171,4 +177,48 @@ extension MealView {
         Haptics.feedback(style: .soft)
     }
 
+}
+
+struct AnimatableFooterEnergyValue: AnimatableModifier {
+    
+    @Environment(\.colorScheme) var colorScheme
+    @State var size: CGSize = .zero
+    
+    var value: Double
+    
+    var animatableData: Double {
+        get { value }
+        set { value = newValue }
+    }
+    
+    func body(content: Content) -> some View {
+        content
+            .frame(width: size.width, height: size.height)
+            .overlay(
+                animatedLabel
+                    .readSize { size in
+                        self.size = size
+                    }
+            )
+    }
+    
+    var animatedLabel: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 2) {
+            Text(value.formattedEnergy)
+                .foregroundColor(Color(.secondaryLabel))
+                .font(.footnote)
+            Text("kcal")
+                .foregroundColor(Color(.tertiaryLabel))
+                .font(.caption2)
+        }
+        .frame(maxWidth: .infinity)
+        .multilineTextAlignment(.trailing)
+        .fixedSize(horizontal: true, vertical: false)
+    }
+}
+
+extension View {
+    func animatedFooterEnergyValue(value: Double) -> some View {
+        modifier(AnimatableFooterEnergyValue(value: value))
+    }
 }
