@@ -16,7 +16,9 @@ public struct DayView: View {
     @State var showingEmpty: Bool
     
     @State var isAnimatingItemChange = false
-    
+
+    @State var id = UUID()
+
     let actionHandler: (LogAction) -> ()
 
     public init(
@@ -49,6 +51,9 @@ public struct DayView: View {
         withAnimation {
             showingEmpty = newValue
         }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            viewModel.animatingMeal = false
+        }
     }
     
     func viewModelDayMealsChanged(to newValue: [DayMeal]) {
@@ -60,8 +65,6 @@ public struct DayView: View {
         }
     }
     
-    @State var id = UUID()
-
     func dateChanged(to newDate: Date) {
         self.nextTransitionIsForward = newDate > viewModel.date
         viewModel.date = date
@@ -131,6 +134,8 @@ public struct DayView: View {
     
     var emptyViewLayer: some View {
         EmptyLayer(date: $date, actionHandler: actionHandler, initialShowingEmpty: showingEmpty)
+//            .id(id)
+//            .transition(.move(edge: .leading))
     }
     
     func mealView(for meal: Binding<DayMeal>) -> some View {

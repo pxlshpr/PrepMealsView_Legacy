@@ -65,12 +65,15 @@ extension DayView.EmptyLayer {
     func load(for date: Date) {
         let current = DataManager.shared.isDateEmpty(date)
         
-        guard currentShowingEmpty != current else {
-            return
-        }
+        /// Removed this for now as having it stopped empty views from animating their transition between each other
+//        guard currentShowingEmpty != current else {
+//            animatingMeal = false
+//            return
+//        }
         
         self.previousShowingEmpty = self.currentShowingEmpty
         self.currentShowingEmpty = false
+        
         withAnimation {
             self.currentShowingEmpty = current
             self.previousShowingEmpty = false
@@ -109,6 +112,7 @@ extension DayView.EmptyLayer {
                 return transitioningForwards ? .leading : .trailing
             }
             
+            print("🈸 Transitioning: \(edge)")
             return .move(edge: edge)
         }
         
