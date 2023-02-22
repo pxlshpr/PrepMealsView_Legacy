@@ -243,7 +243,16 @@ extension DayView.ViewModel {
     }
     
     func availableMealTime(after meal: DayMeal) -> Date? {
-        return nil
+        guard let timeSlot = nextAvailableTimeSlot(
+            to: meal.timeDate,
+            within: date,
+            ignoring: nil,
+            existingMealTimes: dayMeals.map { $0.timeDate },
+            searchBackwardsIfNotFound: false,
+            skippingFirstTimeSlot: true,
+            doNotPassExistingTimeSlots: true
+        ) else { return nil }
+        return date.timeForTimeSlot(timeSlot)
     }
 }
 
@@ -284,21 +293,38 @@ extension DayMeal {
 }
 extension DayView.ViewModel {
     
-    func copyMeal(_ dayMeal: DayMeal, after targetMeal: DayMeal? = nil) {
-        print("☎️ Copying meal: \(dayMeal.description)")
-        let dayMealCopy = dayMeal.copy
-        withAnimation {
-            self.dayMeals = [dayMealCopy]
+    func copyMeal(_ dayMeal: DayMeal, to time: Date? = nil) {
+        print("☎️ Copying meal: \(dayMeal.description), time: \(time?.timeStringAtGMT5 ?? "nil")")
+        var dayMealCopy = dayMeal.copy
+        if let time {
+            dayMealCopy.time = time.timeIntervalSince1970
         }
-        DataManager.shared.insertMealCopy(dayMealCopy, to: self.date, originalMealId: dayMeal.id)
+        withAnimation {
+            self.dayMeals.append(dayMealCopy)
+            /// Sort it by time to replicate what we'll be getting with the backend refresh
+            self.dayMeals.sort { $0.time < $1.time }
+        }
+        DataManager.shared.insertMealCopy(dayMealCopy, to: time, on: self.date, originalMealId: dayMeal.id)
     }
 
-    func moveMeal(_ dayMeal: DayMeal, after targetMeal: DayMeal? = nil) {
-        print("☎️ Moving meal: \(dayMeal.description)")
-        withAnimation {
-            self.dayMeals = [dayMeal]
+    func moveMeal(_ dayMeal: DayMeal, to time: Date? = nil) {
+        print("☎️ Moving meal: \(dayMeal.description), time: \(time?.timeStringAtGMT5 ?? "nil")")
+        
+        var newMeal = dayMeal
+        if let time {
+            newMeal.time = time.timeIntervalSince1970
         }
-        DataManager.shared.moveMeal(dayMeal, to: self.date)
+        
+        withAnimation {
+            
+            /// Remove it in case we're moving it within the same `Day`
+            self.dayMeals.removeAll(where: { $0.id == newMeal.id })
+            self.dayMeals.append(newMeal)
+            /// Sort it by time to replicate what we'll be getting with the backend refresh
+            self.dayMeals.sort { $0.time < $1.time }
+        }
+        
+        DataManager.shared.moveMeal(newMeal, to: time, on: self.date)
     }
 
     func moveItem(_ foodItem: MealFoodItem, to targetMeal: DayMeal, after targetFoodItem: MealFoodItem?) {

@@ -630,26 +630,41 @@ struct MealView: View {
         }
     }
     
-    func tappedMoveForDrop() {
+    func tappedConfirmationButtonForDrop(toMove: Bool) {
         if let foodItem = viewModel.droppedFoodItem {
             isMovingItem = true
-            dayViewModel.moveItem(
-                foodItem,
-                to: viewModel.meal,
-                after: viewModel.dropRecipient
-            )
+            if toMove {
+                dayViewModel.moveItem(
+                    foodItem,
+                    to: viewModel.meal,
+                    after: viewModel.dropRecipient
+                )
+            } else {
+                //TODO: Revisit this
+                viewModel.tappedDuplicateForDrop()
+            }
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                 isMovingItem = false
             }
-        } else if let dropItem = viewModel.droppedFooterItem {
-            isMovingItem = true
-//            dayViewModel.moveItem(
-//                foodItem,
-//                to: viewModel.meal,
-//                after: viewModel.dropRecipient
-//            )
+        } else if let dropItem = viewModel.droppedFooterItem,
+                  let newMealTime = dayViewModel.availableMealTime(after: meal)
+        {
+            isMovingItemForFooter = true
+            switch dropItem {
+            case .meal(let dayMeal):
+                if toMove {
+                    dayViewModel.moveMeal(dayMeal, to: newMealTime)
+                } else {
+                    dayViewModel.copyMeal(dayMeal, to: newMealTime)
+                }
+            case .foodItem(let _):
+                //TODO: Create a new meal with food item
+                break
+            default:
+                break
+            }
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                isMovingItem = false
+                isMovingItemForFooter = false
             }
         }
     }
@@ -657,10 +672,10 @@ struct MealView: View {
     @ViewBuilder
     func dropConfirmationActions() -> some View {
         Button("Move") {
-            tappedMoveForDrop()
+            tappedConfirmationButtonForDrop(toMove: true)
         }
         Button("Duplicate") {
-            viewModel.tappedDuplicateForDrop()
+            tappedConfirmationButtonForDrop(toMove: false)
         }
     }
     
