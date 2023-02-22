@@ -19,7 +19,7 @@ extension UTType {
 import CoreTransferable
 
 /// From: https://stackoverflow.com/questions/74290721/how-do-you-mark-a-single-container-as-a-dropdestination-for-multiple-transferabl
-enum DropItem: Codable, Transferable {
+enum DropItem: Codable, Transferable, Equatable {
     case none
     case meal(DayMeal)
     case foodItem(MealFoodItem)

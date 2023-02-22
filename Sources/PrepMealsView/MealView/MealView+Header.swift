@@ -226,6 +226,9 @@ extension MealView {
             label
         }
         .contentShape(Rectangle())
+        .simultaneousGesture(TapGesture().onEnded {
+            Haptics.selectionFeedback()
+        })
     }
     
     func tappedEditMeal() {

@@ -7,8 +7,7 @@ public struct DayView: View {
     @Environment(\.colorScheme) var colorScheme
     @Binding var date: Date
     @Binding var dragTargetFoodItemId: UUID?
-//    @StateObject var viewModel: ViewModel
-    @ObservedObject var viewModel: ViewModel
+    @StateObject var viewModel: ViewModel
 
     @State var dayMeals: [DayMeal] = []
     
@@ -23,15 +22,14 @@ public struct DayView: View {
     let actionHandler: (LogAction) -> ()
 
     public init(
-        viewModel: ViewModel,
         date: Binding<Date>,
         dragTargetFoodItemId: Binding<UUID?>,
         actionHandler: @escaping (LogAction) -> ()
     ) {
         _date = date
         _dragTargetFoodItemId = dragTargetFoodItemId
-        self.viewModel = viewModel
-//        _viewModel = StateObject(wrappedValue: ViewModel(date: date.wrappedValue))
+//        self.viewModel = viewModel
+        _viewModel = StateObject(wrappedValue: ViewModel(date: date.wrappedValue))
         self.actionHandler = actionHandler
         
         let dayMeals = DataManager.shared.day(for: date.wrappedValue)?.meals ?? []

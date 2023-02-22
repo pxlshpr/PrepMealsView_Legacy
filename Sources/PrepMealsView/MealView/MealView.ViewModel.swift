@@ -16,6 +16,9 @@ extension MealView {
         @Published var dropRecipient: MealFoodItem? = nil
         @Published var targetId: UUID? = nil
         
+        @Published var footerIsTargeted: Bool = false
+        @Published var droppedFooterItem: DropItem? = nil
+
 //        @Published var mealMacrosIndicatorWidth: CGFloat = FoodBadge.DefaultWidth
         @Published var dateIsChanging: Bool = false
         @Published var isUpcomingMeal: Bool
@@ -385,6 +388,7 @@ extension MealView.ViewModel {
     
     func resetDrop() {
         droppedFoodItem = nil
+        droppedFooterItem = nil
         dropRecipient = nil
     }
     
