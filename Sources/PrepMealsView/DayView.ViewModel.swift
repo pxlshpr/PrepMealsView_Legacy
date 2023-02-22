@@ -237,6 +237,14 @@ extension DayView.ViewModel {
             self.previousDate = newValue
         }
     }
+    
+    func shouldAllowFooterDrop(for meal: DayMeal) -> Bool {
+        availableMealTime(after: meal) != nil
+    }
+    
+    func availableMealTime(after meal: DayMeal) -> Date? {
+        return nil
+    }
 }
 
 extension Array where Element == MealFoodItem {

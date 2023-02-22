@@ -228,7 +228,7 @@ struct MealView: View {
             var footerHeight: CGFloat {
                 let base: CGFloat = 50
                 if shouldShowFooterDropTargetView {
-                    return base + dropTargetViewHeight
+                    return base + dropTargetViewHeight + 9
                 } else {
                     return base
                 }
@@ -256,7 +256,7 @@ struct MealView: View {
                 footer
                 if shouldShowFooterDropTargetView {
                     footerDropTargetView
-//                        .padding(.top, 12)
+                        .padding(.top, 9)
                 }
             }
         }
@@ -429,11 +429,14 @@ struct MealView: View {
     var footer: some View {
         footerView
             .contentShape(Rectangle())
-            .dropDestination(
-                for: DropItem.self,
-                action: handleFooterDrop,
-                isTargeted: handleFooterDropIsTargeted
-            )
+            .if(dayViewModel.shouldAllowFooterDrop(for: meal), transform: { view in
+                view
+                    .dropDestination(
+                        for: DropItem.self,
+                        action: handleFooterDrop,
+                        isTargeted: handleFooterDropIsTargeted
+                    )
+            })
     }
     
     
