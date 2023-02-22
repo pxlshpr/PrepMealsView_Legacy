@@ -4,10 +4,10 @@ import PrepCoreDataStack
 import SwiftHaptics
 
 extension DayView {
-    class ViewModel: ObservableObject {
+    public class ViewModel: ObservableObject {
         
-        @Published var day: Day?
-        @Published var dayMeals: [DayMeal]
+        @Published public var day: Day?
+        @Published public var dayMeals: [DayMeal]
         @Published var markedAsFasted: Bool = false
         
         @Published var emptyContentHeight: CGFloat = 0
@@ -23,7 +23,18 @@ extension DayView {
             }
         }
         
-        init(date: Date) {
+        public init(date: Date) {
+            self.date = date
+            self.previousDate = date
+            let day = DataManager.shared.day(for: date)
+            self.day = day
+            self.dayMeals = day?.meals ?? []
+            self.showingEmpty = dayMeals.isEmpty
+            
+            addObservers()
+        }
+        
+        public func reset(for date: Date) {
             self.date = date
             self.previousDate = date
             let day = DataManager.shared.day(for: date)
@@ -57,11 +68,13 @@ extension DayView.ViewModel {
     }
     
     @objc func shouldRefreshDay(notification: Notification) {
+        print("↔️ shouldRefreshDay → DayView — animatingMeal = true")
         animatingMeal = true
         self.reload()
     }
     
     @objc func initialSyncCompleted(notification: Notification) {
+        print("↔️ initialSyncCompleted → DayView — animatingMeal = true")
         animatingMeal = true
         reload()
     }
@@ -71,10 +84,12 @@ extension DayView.ViewModel {
               let date = userInfo[Notification.Keys.date] as? Date,
               date == self.date
         else { return }
+        cprint("📩 didSetBadgeWidths → DayView")
         reload()
     }
 
     @objc func didAddFoodItemToMeal(notification: Notification) {
+        print("↔️ didAddFoodItemToMeal → DayView — animatingMeal = true")
         animatingMeal = true
         reload()
     }
@@ -83,6 +98,7 @@ extension DayView.ViewModel {
         guard let userInfo = notification.userInfo as? [String: AnyObject],
               let id = userInfo[Notification.Keys.uuid] as? UUID
         else { return }
+        print("↔️ didDeleteFoodItemFromMeal → DayView — animatingMeal = true")
         resetSortPositions(afterDeletingId: id)
         animatingMeal = true
         reload()
@@ -92,22 +108,20 @@ extension DayView.ViewModel {
         guard let userInfo = notification.userInfo as? [String: AnyObject],
               let updatedFoodItem = userInfo[Notification.Keys.foodItem] as? FoodItem
         else { return }
+        print("↔️ didDeleteFoodItemFromMeal → DayView — animatingMeal = true")
         resetSortPositions(afterUpdating: updatedFoodItem)
         animatingMeal = true
         reload()
     }
 
-    //TODO: Remove this
     func resetSortPositions(afterUpdating updatedFoodItem: FoodItem) {
         resetSortPositions(updatedFoodItem: updatedFoodItem)
     }
 
-    //TODO: Remove this
     func resetSortPositions(afterDeletingId deletedFoodItemId: UUID) {
         resetSortPositions(deletedFoodItemId: deletedFoodItemId)
     }
     
-    //TODO: Remove this
     private func resetSortPositions(updatedFoodItem: FoodItem? = nil, deletedFoodItemId: UUID? = nil) {
         let id = updatedFoodItem?.id ?? deletedFoodItemId
         for meal in dayMeals {
@@ -116,6 +130,11 @@ extension DayView.ViewModel {
             else { continue }
 
             let before = mealCopy.foodItems
+            
+            cprint("🔀-- Before (2) setting updated item:")
+            for foodItem in mealCopy.foodItems {
+                cprint("🔀    \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name)")
+            }
             
             var movingForwards: Bool = false
             if let updatedFoodItem {
@@ -127,43 +146,63 @@ extension DayView.ViewModel {
                 mealCopy.foodItems.removeAll(where: { $0.id == deletedFoodItemId })
             }
             
+            cprint("🔀-- Before sorting:")
+            for foodItem in mealCopy.foodItems {
+                cprint("🔀    \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name)")
+            }
+
             mealCopy.foodItems.resetSortPositions(
                 aroundFoodItemWithId: updatedFoodItem?.id,
                 movingForwards: movingForwards
             )
             mealCopy.foodItems.sort { $0.sortPosition < $1.sortPosition }
 
+            cprint("🔀-- After sorting:")
+            for foodItem in mealCopy.foodItems {
+                cprint("🔀    \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name)")
+            }
+
             for oldItem in before {
                 guard let newItem = mealCopy.foodItems.first(where: { $0.id == oldItem.id }) else {
                     continue
                 }
-                do {
-                    try DataManager.shared.silentlyUpdateSortPosition(for: newItem)
-                } catch {
-                }
+//                if newItem.sortPosition != oldItem.sortPosition {
+                    do {
+                        cprint("🔀-- Silently updating: \(newItem.sortPosition) \(newItem.food.emoji) \(newItem.food.name)")
+                        try DataManager.shared.silentlyUpdateSortPosition(for: newItem)
+                    } catch {
+                        cprint("🔀 Error updating sort position: \(error)")
+                    }
+//                }
             }
+            cprint(" ")
         }
     }
     
     @objc func didUpdateFoodItems(notification: Notification) {
+        print("↔️ didUpdateFoodItems → DayView — animatingMeal = true")
         animatingMeal = true
         reload()
     }
     
     @objc func didUpdateMeal() {
+        print("↔️ didUpdateMeal → DayView — animatingMeal = true")
         animatingMeal = true
         reload()
     }
 
     @objc func didAddMeal() {
+        print("↔️ didAddMeal → DayView — animatingMeal = true, calling reload() in 2s")
         animatingMeal = true
         reload()
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            cprint("📩     (2s later) calling reload() again")
             self.reload()
         }
     }
 
     @objc func didDeleteMeal() {
+        print("↔️ didDeleteMeal → DayView — animatingMeal = true")
         animatingMeal = true
         reload()
     }
@@ -176,8 +215,20 @@ extension DayView.ViewModel {
         let day = DataManager.shared.day(for: date)
         self.day = day
         self.dayMeals = day?.meals ?? []
+        cprint("🧨 ----------")
+        cprint("🧨 DayView.load(for: \(date.calendarDayString)) — \(dayMeals.count) meals")
+        for meal in dayMeals {
+            cprint("🧨    Meal: \(meal.name) @ \(meal.timeString)")
+            for foodItem in meal.foodItems {
+                cprint("🧨        \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name) - \(foodItem.badgeWidth)")
+            }
+        }
         self.showingEmpty = dayMeals.isEmpty
+        cprint("🧨 ")
+        
+        print("↔️ DayView.load() — animatingMeal = false")
         animatingMeal = false
+
     }
 
     func dateChanged(_ newValue: Date) {
@@ -188,7 +239,60 @@ extension DayView.ViewModel {
     }
 }
 
+extension Array where Element == MealFoodItem {
+    func copy(withNewMealId newMealId: UUID) -> [MealFoodItem] {
+        self.map { $0.copy(withNewMealId: newMealId) }
+    }
+}
+
+extension MealFoodItem {
+    func copy(withNewMealId newMealId: UUID) -> MealFoodItem {
+        MealFoodItem(
+            id: UUID(),
+            food: food,
+            amount: amount,
+            markedAsEatenAt: markedAsEatenAt,
+            sortPosition: sortPosition,
+            isSoftDeleted: isSoftDeleted,
+            badgeWidth: badgeWidth,
+            mealId: newMealId
+        )
+    }
+}
+extension DayMeal {
+    var copy: DayMeal {
+        let newMealId = UUID()
+        let foodItemsCopy = foodItems.copy(withNewMealId: newMealId)
+        return DayMeal(
+            id: newMealId,
+            name: name,
+            time: time,
+            markedAsEatenAt: markedAsEatenAt,
+            goalSet: goalSet,
+            foodItems: foodItemsCopy,
+            badgeWidth: badgeWidth
+        )
+    }
+}
 extension DayView.ViewModel {
+    
+    func copyMeal(_ dayMeal: DayMeal, after targetMeal: DayMeal? = nil) {
+        print("☎️ Copying meal: \(dayMeal.description)")
+        let dayMealCopy = dayMeal.copy
+        withAnimation {
+            self.dayMeals = [dayMealCopy]
+        }
+        DataManager.shared.insertMealCopy(dayMealCopy, to: self.date, originalMealId: dayMeal.id)
+    }
+
+    func moveMeal(_ dayMeal: DayMeal, after targetMeal: DayMeal? = nil) {
+        print("☎️ Moving meal: \(dayMeal.description)")
+        withAnimation {
+            self.dayMeals = [dayMeal]
+        }
+        DataManager.shared.moveMeal(dayMeal, to: self.date)
+    }
+
     func moveItem(_ foodItem: MealFoodItem, to targetMeal: DayMeal, after targetFoodItem: MealFoodItem?) {
      
         guard let sourceMealId = foodItem.mealId else {
@@ -209,7 +313,7 @@ extension DayView.ViewModel {
 
         if sourceMealId == targetMeal.id {
             
-            print("☎️ Moving within same meal from: \(sourcePosition) to: \(targetPosition)")
+            cprint("☎️ Moving within same meal from: \(sourcePosition) to: \(targetPosition)")
             
             NotificationCenter.default.post(name: .swapMealFoodItemPositions, object: nil, userInfo: [
                 Notification.Keys.mealId: sourceMealId,
@@ -227,7 +331,7 @@ extension DayView.ViewModel {
 
         } else {
             
-            print("☎️ Moving to another meal from: \(sourcePosition) to: \(targetPosition)")
+            cprint("☎️ Moving to another meal from: \(sourcePosition) to: \(targetPosition)")
 
             NotificationCenter.default.post(name: .removeMealFoodItemForMove, object: nil, userInfo: [
                 Notification.Keys.mealId: sourceMealId,

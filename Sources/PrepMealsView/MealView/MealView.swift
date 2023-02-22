@@ -492,7 +492,7 @@ struct MealView: View {
     }
     
     var dropTargetView: some View {
-        Text("Drop food here")
+        Text("Move or Duplicate Here")
             .bold()
             .foregroundColor(.primary)
             .padding(.vertical, 12)
@@ -558,6 +558,12 @@ struct MealView: View {
 extension MealFoodItem {
     var description: String {
         "\(food.name) • \(quantityDescription)"
+    }
+}
+
+extension DayMeal {
+    var description: String {
+        "\(timeString) • \(name)"
     }
 }
 

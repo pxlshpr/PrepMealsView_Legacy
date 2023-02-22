@@ -387,6 +387,7 @@ extension MealView.ViewModel {
         droppedFoodItem = nil
         dropRecipient = nil
     }
+    
     func tappedMoveForDrop() {
         guard let droppedFoodItem else { return }
         do {

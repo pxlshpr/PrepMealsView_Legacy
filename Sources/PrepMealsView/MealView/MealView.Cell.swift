@@ -107,7 +107,7 @@ extension MealView.Cell {
     }
     
     var dropTargetView: some View {
-        Text("Drop food here")
+        Text("Move or Duplicate Here")
             .bold()
             .foregroundColor(.primary)
             .padding(.vertical, 12)

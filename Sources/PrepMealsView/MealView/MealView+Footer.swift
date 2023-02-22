@@ -36,12 +36,30 @@ extension MealView {
             .background(listRowBackground)
             HStack(spacing: 0) {
                 addFoodButton
+                quickItemButton
                 Spacer()
             }
             .frame(height: 65)
         }
     }
     
+    var quickItemButton: some View {
+        Image(systemName: "square.and.pencil")
+            .font(.footnote)
+            .fontWeight(.semibold)
+            .foregroundColor(.accentColor)
+            .frame(width: 30, height: 30)
+            .background(
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(Color.accentColor.opacity(
+                        colorScheme == .dark ? 0.1 : 0.15
+                    ))
+            )
+            .frame(maxHeight: .infinity)
+            .padding(.leading, 10)
+            .padding(.top, 22.75)
+    }
+
     var addFoodButton: some View {
         var label: some View {
             Text(viewModel.isInFuture ? "Prep Food" : "Log Food")
@@ -89,7 +107,7 @@ extension MealView {
 //        return label
             .onTapGesture { tappedAddFood() }
             .contentShape(Rectangle())
-            .padding(.trailing)
+//            .padding(.trailing)
             .buttonStyle(.borderless)
     }
     

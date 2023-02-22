@@ -7,7 +7,9 @@ import SwiftHaptics
 
 extension DayView {
     struct EmptyLayer: View {
+        
         @Environment(\.colorScheme) var colorScheme
+        @ObservedObject var viewModel: DayView.ViewModel
         @Binding var date: Date
         let actionHandler: (LogAction) -> ()
 
@@ -16,14 +18,22 @@ extension DayView {
         @State var currentShowingEmpty: Bool = true
         @State var animatingMeal: Bool = false
         
+        @State var droppedItem: DropItem? = nil
         @State var isTargetedForDrop: Bool = false
+        @State var showingDropOptions: Bool = false
         
         let shouldRefreshDay = NotificationCenter.default.publisher(for: .shouldRefreshDay)
         let didAddMeal = NotificationCenter.default.publisher(for: .didAddMeal)
         let didDeleteMeal = NotificationCenter.default.publisher(for: .didDeleteMeal)
         let initialSyncCompleted = NotificationCenter.default.publisher(for: .initialSyncCompleted)
         
-        init(date: Binding<Date>, actionHandler: @escaping (LogAction) -> (), initialShowingEmpty: Bool = false) {
+        init(
+            viewModel: DayView.ViewModel,
+            date: Binding<Date>,
+            actionHandler: @escaping (LogAction) -> (),
+            initialShowingEmpty: Bool = false
+        ) {
+            self.viewModel = viewModel
             _date = date
             self.actionHandler = actionHandler
             _currentShowingEmpty = State(initialValue: initialShowingEmpty)
@@ -41,19 +51,33 @@ extension DayView.EmptyLayer {
             .onReceive(didDeleteMeal, perform: animateMealInsertionOrRemoval)
             .onReceive(initialSyncCompleted, perform: initialSyncCompleted)
             .onReceive(shouldRefreshDay, perform: shouldRefreshDay)
+            .confirmationDialog(
+                dropConfirmationTitle,
+                isPresented: $showingDropOptions,
+                titleVisibility: .visible,
+                actions: dropConfirmationActions
+            )
+            .onChange(of: showingDropOptions) { newValue in
+                if !newValue {
+                    droppedItem = nil
+                }
+            }
     }
     
     func shouldRefreshDay(_ notification: Notification) {
+        cprint("↔️ shouldRefreshDay → DayView.Empty — animatingMeal = true")
         animatingMeal = true
         reload()
     }
     
     func initialSyncCompleted(_ notification: Notification) {
+        cprint("↔️ initialSyncCompleted → DayView.Empty — animatingMeal = true")
         animatingMeal = true
         reload()
     }
     
     func animateMealInsertionOrRemoval(_ notification: Notification) {
+        cprint("↔️ animateMealInsertionOrRemoval → DayView.Empty — animatingMeal = true")
         animatingMeal = true
         reload()
     }
@@ -66,19 +90,35 @@ extension DayView.EmptyLayer {
         let current = DataManager.shared.isDateEmpty(date)
         
         /// Removed this for now as having it stopped empty views from animating their transition between each other
+        /// **This is now causing issues when**
+        /// [ ] adding first meal to a day and transitioning away immediately (waiting a while doesn't cause it)
+        /// [ ] deleting last meal to a day and waiting for a few seconds
 //        guard currentShowingEmpty != current else {
+//            print("↔️ DayView.Empty.load() — animatingMeal = false")
 //            animatingMeal = false
 //            return
 //        }
+        /// Replaced previous check with this to stop transitions when deleting and adding only meal on day`
+        if currentShowingEmpty == current, previousDate == date {
+            animatingMeal = false
+            return
+        }
         
+        cprint("↔️🈸 load(for: \(date.calendarDayString)) – previousDate \(previousDate.calendarDayString)")
+        cprint("↔️🈸     - previousShowingEmpty: \(previousShowingEmpty) → \(self.currentShowingEmpty)")
+        cprint("↔️🈸     - currentShowingEmpty: \(currentShowingEmpty) → false")
         self.previousShowingEmpty = self.currentShowingEmpty
         self.currentShowingEmpty = false
         
         withAnimation {
+            cprint("↔️🈸     (Animating)")
+            cprint("↔️🈸       - currentShowingEmpty: \(currentShowingEmpty) → \(current)")
+            cprint("↔️🈸       - previousShowingEmpty: \(previousShowingEmpty) → false")
             self.currentShowingEmpty = current
             self.previousShowingEmpty = false
         }
         self.previousDate = date
+        cprint("↔️ DayView.Empty.load() — animatingMeal = false")
         animatingMeal = false
     }
     
@@ -92,17 +132,12 @@ extension DayView.EmptyLayer {
             currentContent
         }
         .dropDestination(
-            for: MealFoodItem.self,
-            action: { items, location in
-                return true
-            }, isTargeted: { isTargeted in
-                Haptics.selectionFeedback()
-                withAnimation {
-                    isTargetedForDrop = isTargeted
-                }
-            })
+            for: DropItem.self,
+            action: handleDrop,
+            isTargeted: handleDropIsTargeted
+        )
     }
-    
+
     var previousContent: some View {
         var transition: AnyTransition {
             var edge: Edge {
@@ -112,16 +147,21 @@ extension DayView.EmptyLayer {
                 return transitioningForwards ? .leading : .trailing
             }
             
-            print("🈸 Transitioning: \(edge)")
+            cprint("🈸 Transitioning: \(edge)")
             return .move(edge: edge)
         }
         
         return Group {
             if previousShowingEmpty {
-                DayView.EmptyMessage(date: previousDate, isTargetedForDrop: $isTargetedForDrop, actionHandler: actionHandler)
-//                Text("Previous")
-                    .frame(maxWidth: .infinity)
-                    .transition(transition)
+                DayView.EmptyMessage(
+                    date: previousDate,
+                    isTargetedForDrop: $isTargetedForDrop,
+                    showingDropOptions: $showingDropOptions,
+//                    shouldShowDropDestination: shouldShowDropDestinationBinding,
+                    actionHandler: actionHandler
+                )
+                .frame(maxWidth: .infinity)
+                .transition(transition)
             }
         }
     }
@@ -144,10 +184,70 @@ extension DayView.EmptyLayer {
                 DayView.EmptyMessage(
                     date: date,
                     isTargetedForDrop: $isTargetedForDrop,
+                    showingDropOptions: $showingDropOptions,
+//                    shouldShowDropDestination: shouldShowDropDestinationBinding,
                     actionHandler: actionHandler
                 )
                 .frame(maxWidth: .infinity)
                 .transition(transition)
+            }
+        }
+    }
+    
+    //MARK: - Drop Related
+    
+    func handleDrop(_ items: [DropItem], location: CGPoint) -> Bool {
+        showingDropOptions = true
+        droppedItem = items.first
+        return true
+    }
+
+    func handleDropIsTargeted(_ isTargeted: Bool) {
+        Haptics.selectionFeedback()
+        withAnimation {
+            isTargetedForDrop = isTargeted
+        }
+    }
+    
+    var dropConfirmationTitle: String {
+        guard let droppedItem else { return "" }
+        return droppedItem.description
+    }
+    
+    @ViewBuilder
+    func dropConfirmationActions() -> some View {
+        Button("Move") {
+            guard let droppedItem else { return }
+            switch droppedItem {
+            case .meal(let meal):
+                animatingMeal = true
+                withAnimation {
+                    previousShowingEmpty = false
+                    currentShowingEmpty = false
+                }
+                viewModel.moveMeal(meal)
+                break
+            case .foodItem(let foodItem):
+                break
+            default:
+                break
+            }
+        }
+        Button("Duplicate") {
+            guard let droppedItem else { return }
+            switch droppedItem {
+            case .meal(let meal):
+                animatingMeal = true
+                withAnimation {
+                    previousShowingEmpty = false
+                    currentShowingEmpty = false
+                }
+                viewModel.copyMeal(meal)
+                break
+            case .foodItem(let foodItem):
+                break
+            default:
+                break
             }
         }
     }
@@ -164,10 +264,19 @@ extension DayView {
         @State var messageSize: CGSize = .zero
         
         let actionHandler: (LogAction) -> ()
+        
         @Binding var isTargetedForDrop: Bool
+        @Binding var showingDropOptions: Bool
+        @State var animatedShowDropDestination: Bool = false
 
-        init(date: Date, isTargetedForDrop: Binding<Bool>, actionHandler: @escaping (LogAction) -> ()) {
+        init(
+            date: Date,
+            isTargetedForDrop: Binding<Bool>,
+            showingDropOptions: Binding<Bool>,
+            actionHandler: @escaping (LogAction) -> ()
+        ) {
             _isTargetedForDrop = isTargetedForDrop
+            _showingDropOptions = showingDropOptions
             self.date = date
             self.actionHandler = actionHandler
         }
@@ -184,6 +293,31 @@ extension DayView.EmptyMessage {
         /// This is essential to make sure it doesn't shift vertically when we're resigning focus from the
         /// proxy text field (which we use to mitigate the tap target movement bug with sheets)
         .ignoresSafeArea(.keyboard)
+        .onChange(of: isTargetedForDrop, perform: isTargetedForDropChanged)
+        .onChange(of: showingDropOptions, perform: showingDropOptionsChanged)
+    }
+    
+    func isTargetedForDropChanged(_ newValue: Bool) {
+        /// Delay the hiding of the drop destination slightly when `isTargetedForDrop` becomes `false`,
+        /// to account for the slight gap in time between it becoming `false` and the `showingDropOptions` being set to `true`.
+        /// This removes the sudden flash of the drop target disappearing and then reappearing when we release our finger.
+        DispatchQueue.main.asyncAfter(deadline: .now() + (newValue ? 0 : 0.5)) {
+            withAnimation(.interactiveSpring()) {
+                self.animatedShowDropDestination = isTargetedForDrop || showingDropOptions
+            }
+        }
+    }
+    
+    func showingDropOptionsChanged(_ newValue: Bool) {
+        withAnimation(.interactiveSpring()) {
+            self.animatedShowDropDestination = isTargetedForDrop || showingDropOptions
+        }
+    }
+    
+    func shouldShowDropDestination(_ newValue: Bool) {
+        withAnimation(.interactiveSpring()) {
+            self.animatedShowDropDestination = newValue
+        }
     }
     
     var background: Color {
@@ -199,7 +333,7 @@ extension DayView.EmptyMessage {
 //                    .readSize { size in
 //                        messageSize = size
 //                    }
-                if isTargetedForDrop {
+                if animatedShowDropDestination {
                     dropTargetView
                 } else {
                     emptyMessage
@@ -214,7 +348,7 @@ extension DayView.EmptyMessage {
     }
     
     var dropTargetView: some View {
-        Text("Drop food here")
+        Text("Move or Duplicate Here")
             .bold()
             .foregroundColor(.primary)
 //            .padding(.vertical, 12)
