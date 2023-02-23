@@ -22,7 +22,10 @@ public struct DayView: View {
 
     @State var showingPreHeaderDropTarget = false
     @State var droppedPreHeaderItem: DropItem? = nil
-    
+
+    @State var showingBottomDropTarget = false
+    @State var droppedBottomItem: DropItem? = nil
+
     let actionHandler: (LogAction) -> ()
 
     public init(
@@ -129,19 +132,85 @@ public struct DayView: View {
         }
         
         var scrollView: some View {
-            ScrollView(showsIndicators: false) {
-//                metricsView
-                ForEach(Array(dayMeals.enumerated()), id: \.element.id) { (index, item) in
-                    mealView(for: $dayMeals[index])
-                        .transition(transition)
-                }
-                Color.clear
-                    .frame(height: 1)
-                    .frame(maxWidth: .infinity)
+            func handleDrop(_ items: [DropItem], location: CGPoint) -> Bool {
+                droppedBottomItem = items.first
+                return true
             }
-            .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 55) }
-            .scrollContentBackground(.hidden)
-            .background(backgroundLayer)
+            
+            func handleDropIsTargeted(_ isTargeted: Bool) {
+                Haptics.selectionFeedback()
+                withAnimation(.interactiveSpring()) {
+                    showingBottomDropTarget = isTargeted
+                }
+            }
+            
+            var largeDropTargetView: some View {
+                Text("Drop Here")
+                    .bold()
+                    .foregroundColor(.secondary)
+                    .padding(.vertical, 50)
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 15, style: .continuous)
+                            .foregroundColor(
+                                Color.accentColor.opacity(colorScheme == .dark ? 0.4 : 0.2)
+                            )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 15, style: .continuous)
+                            .stroke(
+                                Color(.tertiaryLabel),
+                                style: StrokeStyle(lineWidth: 1, dash: [5])
+                            )
+                    )
+                    .padding(.horizontal, 12)
+                    .transition(.scale)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            func actualScrollView(_ proxy: GeometryProxy) -> some View {
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 0) {
+                        ForEach(Array(dayMeals.enumerated()), id: \.element.id) { (index, item) in
+                            mealView(for: $dayMeals[index])
+                                .transition(transition)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Color.clear
+                            .frame(height: 1)
+                            .frame(maxWidth: .infinity)
+                        Group {
+                            if showingBottomDropTarget {
+                                VStack {
+                                    largeDropTargetView
+                                        .padding(.top, 8)
+                                    Spacer()
+                                }
+                            } else {
+                                Color.clear
+                            }
+                        }
+                        .contentShape(Rectangle())
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .dropDestination(
+                            for: DropItem.self,
+                            action: handleDrop,
+                            isTargeted: handleDropIsTargeted
+                        )
+                    }
+                    /// Using this to ensure we always have the scroll fill up the entire height,
+                    /// so that the bottom drop target covers the entire blank space
+                    .frame(minHeight: proxy.size.height - 55 - 8)
+                }
+                .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 55) }
+                .scrollContentBackground(.hidden)
+                .background(backgroundLayer)
+            }
+            
+            return GeometryReader { proxy in
+                actualScrollView(proxy)
+            }
         }
         
 //        return scrollView
@@ -181,21 +250,40 @@ public struct DayView: View {
         
         let droppedPreHeaderItemBinding = Binding<DropItem?>(
             get: {
-                guard dayMeals.first?.id == meal.wrappedValue.id else {
-                    return nil
-                }
+                guard dayMeals.first?.id == meal.wrappedValue.id else { return nil }
                 return droppedPreHeaderItem
             },
             set: { newValue in
                 self.droppedPreHeaderItem = newValue
             }
         )
+        
+        let showingBottomDropTargetBinding = Binding<Bool>(
+            get: {
+                showingBottomDropTarget
+                && dayMeals.last?.id == meal.wrappedValue.id
+            },
+            set: { _ in }
+        )
+        
+        let droppedBottomItemBinding = Binding<DropItem?>(
+            get: {
+                guard dayMeals.last?.id == meal.wrappedValue.id else { return nil }
+                return droppedBottomItem
+            },
+            set: { newValue in
+                self.droppedBottomItem = newValue
+            }
+        )
+        
         return MealView(
             date: date,
             dayViewModel: viewModel,
             dragTargetFoodItemId: $dragTargetFoodItemId,
             showingPreHeaderDropTarget: showingPreHeaderDropTargetBinding,
             droppedPreHeaderItem: droppedPreHeaderItemBinding,
+            showingBottomDropTarget: showingBottomDropTargetBinding,
+            droppedBottomItem: droppedBottomItemBinding,
             mealBinding: meal,
             isUpcomingMeal: isUpcomingMealBinding,
             isAnimatingItemChange: $isAnimatingItemChange,

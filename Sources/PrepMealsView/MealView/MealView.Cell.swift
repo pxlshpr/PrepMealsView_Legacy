@@ -243,7 +243,8 @@ extension MealView.Cell {
     }
     
     var fontWeight: Font.Weight {
-        viewModel.hasPassed ? .medium : .semibold
+        .medium
+//        viewModel.hasPassed ? .medium : .semibold
     }
     
     var amountColor: Color {
@@ -251,7 +252,9 @@ extension MealView.Cell {
     }
     
     var detailFontWeight: Font.Weight {
-        viewModel.hasPassed ? .medium : .semibold
+        .regular
+//        .medium
+//        viewModel.hasPassed ? .medium : .semibold
     }
     
     var nameTexts: some View {

@@ -31,6 +31,10 @@ struct MealView: View {
     @Binding var showingPreHeaderDropTarget: Bool
     @Binding var droppedPreHeaderItem: DropItem?
     @State var shouldShowPreHeaderDropTarget: Bool = false
+
+    @Binding var showingBottomDropTarget: Bool
+    @Binding var droppedBottomItem: DropItem?
+
     
     @State var isMovingItem = false
 
@@ -40,6 +44,8 @@ struct MealView: View {
         dragTargetFoodItemId: Binding<UUID?>,
         showingPreHeaderDropTarget: Binding<Bool>,
         droppedPreHeaderItem: Binding<DropItem?>,
+        showingBottomDropTarget: Binding<Bool>,
+        droppedBottomItem: Binding<DropItem?>,
         mealBinding: Binding<DayMeal>,
         isUpcomingMeal: Binding<Bool>,
         isAnimatingItemChange: Binding<Bool>,
@@ -48,6 +54,8 @@ struct MealView: View {
         self.dayViewModel = dayViewModel
         _dragTargetFoodItemId = dragTargetFoodItemId
         _showingPreHeaderDropTarget = showingPreHeaderDropTarget
+        _showingBottomDropTarget = showingBottomDropTarget
+        _droppedBottomItem = droppedBottomItem
         _droppedPreHeaderItem = droppedPreHeaderItem
         _meal = mealBinding
         _foodItems = State(initialValue: mealBinding.wrappedValue.foodItems)
@@ -115,9 +123,22 @@ struct MealView: View {
             .onChange(of: foodItems, perform: foodItemsChanged)
             .onChange(of: showingPreHeaderDropTarget, perform: showingPreHeaderDropTargetChanged)
             .onChange(of: droppedPreHeaderItem, perform: droppedPreHeaderItemChanged)
+            .onChange(of: showingBottomDropTarget, perform: showingBottomDropTargetChanged)
+            .onChange(of: droppedBottomItem, perform: droppedBottomItemChanged)
             .onAppear {
                 updateShouldShowEmptyCell()
             }
+    }
+    
+    func droppedBottomItemChanged(_ newValue: DropItem?) {
+        updateShouldShowFooterDropTarget()
+        if newValue != nil {
+            showingDropOptions = true
+        }
+    }
+    
+    func showingBottomDropTargetChanged(_ newValue: Bool) {
+//        updateShouldShowFooterDropTarget()
     }
     
     func showingPreHeaderDropTargetChanged(_ newValue: Bool) {
@@ -127,13 +148,12 @@ struct MealView: View {
     func droppedPreHeaderItemChanged(_ newValue: DropItem?) {
         updateShouldShowPreHeaderDropTarget()
         if newValue != nil {
-            print("🔹 droppedPreHeaderItemChanged - showingDropOptions")
             showingDropOptions = true
         }
     }
     
     func showingDropOptionsChanged(to newValue: Bool) {
-        if viewModel.droppedFooterItem == nil, droppedPreHeaderItem == nil {
+        if viewModel.droppedFooterItem == nil, droppedPreHeaderItem == nil, droppedBottomItem == nil {
             updateShouldShowDropTargetForMeal()
             updateShouldShowEmptyCell()
         }
@@ -141,8 +161,10 @@ struct MealView: View {
         if !newValue {
             viewModel.resetDrop()
             droppedPreHeaderItem = nil
+            droppedBottomItem = nil
         }
         updateShouldShowPreHeaderDropTarget()
+        updateShouldShowFooterDropTarget()
     }
     
     func droppedFooterItemChanged(_ newValue: DropItem?) {
@@ -241,10 +263,13 @@ struct MealView: View {
               let target = userInfo[Notification.Keys.targetItemPosition] as? Int
         else { return }
         
+        guard source < foodItems.count, target < foodItems.count else {
+            print("☎️ Abandoning moving \(source) to \(target) in \(meal.name) since we only have \(foodItems.count) items")
+            return
+        }
         print("☎️ Moving \(source) to \(target) in \(meal.name)")
         withAnimation {
             foodItems.move(from: source, to: target)
-//            foodItems.swapAt(source-1, target-1)
         }
         
         for i in foodItems.indices {
@@ -383,6 +408,12 @@ struct MealView: View {
             }
         }
         if shouldShowEmptyCell {
+            emptyCell
+        }
+    }
+    
+    var emptyCell: some View {
+        var label: some View {
             Text("Empty")
                 .font(.body)
                 .fontWeight(.light)
@@ -402,6 +433,21 @@ struct MealView: View {
                 .transition(.opacity)
                 .opacity(shouldShowDropTargetForMeal ? 0 : 1)
         }
+        
+        var button: some View {
+            Button {
+                viewModel.actionHandler(.addFood(viewModel.meal))
+            } label: {
+                label
+            }
+        }
+        
+        return button
+//            .dropDestination(
+//                for: MealFoodItem.self,
+//                action: handleDrop,
+//                isTargeted: handleDropIsTargeted
+//            )
     }
     
     func getShouldShowEmptyCell() -> Bool {
@@ -569,7 +615,11 @@ struct MealView: View {
     }
     
     func getShouldShowFooterDropTarget() -> Bool {
+        if showingBottomDropTarget { return false}
+        
         if viewModel.footerIsTargeted { return true }
+        if showingBottomDropTarget { return true }
+        if droppedBottomItem != nil { return true }
         if viewModel.droppedFooterItem != nil { return true }
         return false
     }
@@ -652,6 +702,7 @@ struct MealView: View {
     var dropConfirmationTitle: String {
         viewModel.droppedFoodItem?.description
         ?? viewModel.droppedFooterItem?.description
+        ?? droppedBottomItem?.description
         ?? droppedPreHeaderItem?.description
         ?? ""
     }
@@ -660,8 +711,9 @@ struct MealView: View {
         
         func handle(_ dropItem: DropItem, withNewMealTime newMealTime: Date) {
             droppedPreHeaderItem = nil
-
-            isMovingItem = true
+            droppedBottomItem = nil
+            
+//            isMovingItem = true
             switch dropItem {
             case .meal(let meal):
                 if toMove {
@@ -679,9 +731,9 @@ struct MealView: View {
             default:
                 break
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                isMovingItem = false
-            }
+//            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+//                isMovingItem = false
+//            }
         }
         
         if let foodItem = viewModel.droppedFoodItem {
@@ -707,6 +759,11 @@ struct MealView: View {
             let newMealTime = dayViewModel.availableMealTime(after: meal)
         {
             handle(dropItem, withNewMealTime: newMealTime)
+        } else if
+            let droppedBottomItem,
+            let newMealTime = dayViewModel.availableMealTime(after: meal)
+        {
+            handle(droppedBottomItem, withNewMealTime: newMealTime)
         } else if
             let droppedPreHeaderItem,
             let newMealTime = dayViewModel.availableMealTimeBeforeFirstMeal
