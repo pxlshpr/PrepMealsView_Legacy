@@ -20,8 +20,21 @@ struct MetricsView: View {
     let didUpdateFoodItems = NotificationCenter.default.publisher(for: .didUpdateFoodItems)
     let didDeleteMeal = NotificationCenter.default.publisher(for: .didDeleteMeal)
     
-    init(date: Binding<Date>) {
+    @ObservedObject var dayViewModel: DayView.ViewModel
+    
+    let handleDropIsTargeted: (Bool) -> ()
+    let handleDrop: ([DropItem], CGPoint) -> Bool
+    
+    init(
+        date: Binding<Date>,
+        dayViewModel: DayView.ViewModel,
+        handleDropIsTargeted: @escaping (Bool) -> (),
+        handleDrop: @escaping ([DropItem], CGPoint) -> Bool
+    ) {
         _date = date
+        self.dayViewModel = dayViewModel
+        self.handleDropIsTargeted = handleDropIsTargeted
+        self.handleDrop = handleDrop
 //        let nutrients: MetricsData
 //        if let dayNutrients = DataManager.shared.nutrients(for: date.wrappedValue) {
 //            nutrients = dayNutrients
@@ -29,8 +42,10 @@ struct MetricsView: View {
 //            nutrients = .zero
 //        }
         _data = State(initialValue: .zero)
+        _shouldAllowPreHeaderDrop = State(initialValue: dayViewModel.shouldAllowPreHeaderDrop)
     }
     
+    @State var shouldAllowPreHeaderDrop: Bool
     var body: some View {
         TabView(selection: $lastSelectedMetricsTab) {
             energyAndMacrosPage.tag(1)
@@ -46,6 +61,25 @@ struct MetricsView: View {
         .onReceive(didUpdateMealFoodItem, perform: update)
         .onReceive(didUpdateFoodItems, perform: update)
         .onReceive(didDeleteMeal, perform: update)
+        .onChange(of: dayViewModel.shouldAllowPreHeaderDrop, perform: dayViewModelShouldAllowPreHeaderDropChanged)
+        .animation(.none, value: dayViewModel.shouldAllowPreHeaderDrop)
+        /// It's crucial to place this conditional drop destination here,
+        /// otherwise the entire `DayView` gets redrawn causing the meter view filling up animation to restart
+        .if(shouldAllowPreHeaderDrop, transform: { view in
+            /// Only adds the drop destination if the first meal is essentially not at 12am (in which case we couldn't add a meal before that)
+            view
+                .dropDestination(
+                    for: DropItem.self,
+                    action: handleDrop,
+                    isTargeted: handleDropIsTargeted
+                )
+        })
+    }
+    
+    func dayViewModelShouldAllowPreHeaderDropChanged(_ newValue: Bool) {
+        withAnimation(.none) {
+            self.shouldAllowPreHeaderDrop = newValue
+        }
     }
     
     

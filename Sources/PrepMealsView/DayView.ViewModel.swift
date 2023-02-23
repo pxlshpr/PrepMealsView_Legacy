@@ -241,18 +241,40 @@ extension DayView.ViewModel {
     func shouldAllowFooterDrop(for meal: DayMeal) -> Bool {
         availableMealTime(after: meal) != nil
     }
-    
+
+    var shouldAllowPreHeaderDrop: Bool {
+        availableMealTimeBeforeFirstMeal != nil
+    }
+
     func availableMealTime(after meal: DayMeal) -> Date? {
-        guard let timeSlot = nextAvailableTimeSlot(
+        guard let timeSlot = nearestAvailableTimeSlot(
             to: meal.timeDate,
             within: date,
             ignoring: nil,
             existingMealTimes: dayMeals.map { $0.timeDate },
-            searchBackwardsIfNotFound: false,
+            searchingBothDirections: false,
             skippingFirstTimeSlot: true,
             doNotPassExistingTimeSlots: true
         ) else { return nil }
         return date.timeForTimeSlot(timeSlot)
+    }
+    
+    var availableMealTimeBeforeFirstMeal: Date? {
+        guard
+            let firstMeal = dayMeals.first,
+            let timeSlot = nearestAvailableTimeSlot(
+            to: firstMeal.timeDate,
+            within: date,
+            ignoring: nil,
+            existingMealTimes: dayMeals.map { $0.timeDate },
+            startSearchBackwards: true,
+            searchingBothDirections: false,
+            skippingFirstTimeSlot: false,
+            doNotPassExistingTimeSlots: true
+        ) else { return nil }
+        let date = date.timeForTimeSlot(timeSlot)
+        print("🟨 availableMealTimeBeforeFirstMeal: timeslot \(timeSlot) - \(date.shortTime)")
+        return date
     }
 }
 
@@ -263,7 +285,7 @@ extension Array where Element == MealFoodItem {
 }
 
 extension MealFoodItem {
-    func copy(withNewMealId newMealId: UUID) -> MealFoodItem {
+    func copy(withNewMealId newMealId: UUID? = nil) -> MealFoodItem {
         MealFoodItem(
             id: UUID(),
             food: food,
@@ -272,7 +294,7 @@ extension MealFoodItem {
             sortPosition: sortPosition,
             isSoftDeleted: isSoftDeleted,
             badgeWidth: badgeWidth,
-            mealId: newMealId
+            mealId: newMealId ?? mealId
         )
     }
 }
@@ -294,7 +316,6 @@ extension DayMeal {
 extension DayView.ViewModel {
     
     func copyMeal(_ dayMeal: DayMeal, to time: Date? = nil) {
-        print("☎️ Copying meal: \(dayMeal.description), time: \(time?.timeStringAtGMT5 ?? "nil")")
         var dayMealCopy = dayMeal.copy
         if let time {
             dayMealCopy.time = time.timeIntervalSince1970
@@ -308,32 +329,156 @@ extension DayView.ViewModel {
     }
 
     func moveMeal(_ dayMeal: DayMeal, to time: Date? = nil) {
-        print("☎️ Moving meal: \(dayMeal.description), time: \(time?.timeStringAtGMT5 ?? "nil")")
-        
         var newMeal = dayMeal
         if let time {
             newMeal.time = time.timeIntervalSince1970
         }
         
         withAnimation {
-            
             /// Remove it in case we're moving it within the same `Day`
             self.dayMeals.removeAll(where: { $0.id == newMeal.id })
             self.dayMeals.append(newMeal)
-            /// Sort it by time to replicate what we'll be getting with the backend refresh
             self.dayMeals.sort { $0.time < $1.time }
         }
         
         DataManager.shared.moveMeal(newMeal, to: time, on: self.date)
     }
 
-    func moveItem(_ foodItem: MealFoodItem, to targetMeal: DayMeal, after targetFoodItem: MealFoodItem?) {
-     
-        guard let sourceMealId = foodItem.mealId else {
-            return
+    func moveItem(_ foodItem: MealFoodItem, toNewMealAt time: Date) {
+        
+        guard let sourceMealId = foodItem.mealId else { return }
+        let sourcePosition = foodItem.sortPosition
+        
+        NotificationCenter.default.post(name: .removeMealFoodItemForMove, object: nil, userInfo: [
+            Notification.Keys.mealId: sourceMealId,
+            Notification.Keys.sourceItemPosition: sourcePosition
+        ])
+        
+        let newMealId = UUID()
+        var newFoodItem = foodItem
+        newFoodItem.mealId = newMealId
+        newFoodItem.sortPosition = 1
+        
+        let newMeal = DayMeal(
+            id: newMealId,
+            name: newMealName(for: time),
+            time: time.timeIntervalSince1970,
+            foodItems: [newFoodItem]
+        )
+        withAnimation {
+            self.dayMeals.append(newMeal)
+            self.dayMeals.sort { $0.time < $1.time }
         }
         
+        DataManager.shared.moveMealItem(
+            at: sourcePosition - 1,
+            inMealWithId: sourceMealId,
+            toNewMeal: newMeal,
+            on: date
+        )
+    }
+    
+    func moveItemToCurrentDay(_ foodItem: MealFoodItem) {
+        
+        guard let sourceMealId = foodItem.mealId,
+              let meal = DataManager.shared.meal(with: sourceMealId)
+        else { return }
         let sourcePosition = foodItem.sortPosition
+        
+        NotificationCenter.default.post(name: .removeMealFoodItemForMove, object: nil, userInfo: [
+            Notification.Keys.mealId: sourceMealId,
+            Notification.Keys.sourceItemPosition: sourcePosition
+        ])
+        
+        let newMealId = UUID()
+        var newFoodItem = foodItem
+        newFoodItem.mealId = newMealId
+        newFoodItem.sortPosition = 1
+        
+        let timeOnCurrentDate = date.relativeTimeFor(meal)
+        
+        let newMeal = DayMeal(
+            id: newMealId,
+            name: meal.name,
+            time: timeOnCurrentDate,
+            foodItems: [newFoodItem]
+        )
+        withAnimation {
+            self.dayMeals.append(newMeal)
+            self.dayMeals.sort { $0.time < $1.time }
+        }
+        
+        DataManager.shared.moveMealItem(
+            at: sourcePosition - 1,
+            inMealWithId: sourceMealId,
+            toNewMeal: newMeal,
+            on: date
+        )
+    }
+    
+    func copyItemToCurrentDay(_ foodItem: MealFoodItem) {
+        guard let sourceMealId = foodItem.mealId,
+              let meal = DataManager.shared.meal(with: sourceMealId)
+        else { return }
+
+        let newMealId = UUID()
+        var newFoodItem = foodItem.copy(withNewMealId: newMealId)
+        newFoodItem.sortPosition = 1
+
+        let timeOnCurrentDate = date.relativeTimeFor(meal)
+
+        let newMeal = DayMeal(
+            id: newMealId,
+            name: meal.name,
+            time: timeOnCurrentDate,
+            foodItems: [newFoodItem]
+        )
+        
+        withAnimation {
+            self.dayMeals.append(newMeal)
+            self.dayMeals.sort { $0.time < $1.time }
+        }
+        
+        DataManager.shared.copyNewMealItem(
+            newFoodItem,
+            fromMealWithId: sourceMealId,
+            toNewMeal: newMeal,
+            on: date
+        )
+    }
+
+    func copyItem(_ foodItem: MealFoodItem, toNewMealAt time: Date) {
+        guard let sourceMealId = foodItem.mealId else { return }
+
+        let newMealId = UUID()
+        var newFoodItem = foodItem.copy(withNewMealId: newMealId)
+        newFoodItem.sortPosition = 1
+
+        let newMeal = DayMeal(
+            id: newMealId,
+            name: newMealName(for: time),
+            time: time.timeIntervalSince1970,
+            foodItems: [newFoodItem]
+        )
+        
+        withAnimation {
+            self.dayMeals.append(newMeal)
+            self.dayMeals.sort { $0.time < $1.time }
+        }
+        
+        DataManager.shared.copyNewMealItem(
+            newFoodItem,
+            fromMealWithId: sourceMealId,
+            toNewMeal: newMeal,
+            on: date
+        )
+    }
+
+    func moveItem(_ foodItem: MealFoodItem, to targetMeal: DayMeal, after targetFoodItem: MealFoodItem?) {
+     
+        guard let sourceMealId = foodItem.mealId else { return }
+        let sourcePosition = foodItem.sortPosition
+        
         let targetPosition: Int
         if let targetFoodItem {
             if targetMeal.id == sourceMealId {
@@ -365,7 +510,7 @@ extension DayView.ViewModel {
 
         } else {
             
-            cprint("☎️ Moving to another meal from: \(sourcePosition) to: \(targetPosition)")
+            print("☎️ Moving to another meal from: \(sourcePosition) to: \(targetPosition)")
 
             NotificationCenter.default.post(name: .removeMealFoodItemForMove, object: nil, userInfo: [
                 Notification.Keys.mealId: sourceMealId,
@@ -385,5 +530,35 @@ extension DayView.ViewModel {
                 )
             }
         }
+    }
+    
+    func copyItem(_ foodItem: MealFoodItem, to targetMeal: DayMeal, after targetFoodItem: MealFoodItem?) {
+     
+        guard let sourceMealId = foodItem.mealId else { return }
+//        let sourcePosition = foodItem.sortPosition
+        
+        let targetPosition: Int
+        if let targetFoodItem {
+            targetPosition = targetFoodItem.sortPosition + 1
+        } else {
+            targetPosition = 1
+        }
+
+        var newFoodItem = foodItem.copy()
+        newFoodItem.sortPosition = targetPosition
+
+        withAnimation {
+            for i in dayMeals.indices {
+                if dayMeals[i].id == targetMeal.id {
+                    if targetPosition-1 < dayMeals[i].foodItems.count {
+                        dayMeals[i].foodItems.insert(newFoodItem, at: targetPosition-1)
+                    } else {
+                        dayMeals[i].foodItems.append(newFoodItem)
+                    }
+                }
+            }
+        }
+
+        DataManager.shared.copyNewMealItem(newFoodItem, fromMealWithId: sourceMealId, toMealWithId: targetMeal.id, atIndex: targetPosition-1)
     }
 }

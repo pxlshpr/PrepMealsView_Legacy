@@ -22,18 +22,24 @@ struct MealView: View {
     @Binding var dragTargetFoodItemId: UUID?
     @ObservedObject var dayViewModel: DayView.ViewModel
     
-    @State var shouldShowDropTargetViewForMeal: Bool = false
+    @State var shouldShowDropTargetForMeal: Bool = false
     @State var shouldShowEmptyCell: Bool
-    @State var isMovingItem = false
     @State var showingDropOptions: Bool = false
 
-    @State var shouldShowFooterDropTargetView: Bool = false
-    @State var isMovingItemForFooter = false
+    @State var shouldShowFooterDropTarget: Bool = false
+
+    @Binding var showingPreHeaderDropTarget: Bool
+    @Binding var droppedPreHeaderItem: DropItem?
+    @State var shouldShowPreHeaderDropTarget: Bool = false
+    
+    @State var isMovingItem = false
 
     init(
         date: Date,
         dayViewModel: DayView.ViewModel,
         dragTargetFoodItemId: Binding<UUID?>,
+        showingPreHeaderDropTarget: Binding<Bool>,
+        droppedPreHeaderItem: Binding<DropItem?>,
         mealBinding: Binding<DayMeal>,
         isUpcomingMeal: Binding<Bool>,
         isAnimatingItemChange: Binding<Bool>,
@@ -41,6 +47,8 @@ struct MealView: View {
     ) {
         self.dayViewModel = dayViewModel
         _dragTargetFoodItemId = dragTargetFoodItemId
+        _showingPreHeaderDropTarget = showingPreHeaderDropTarget
+        _droppedPreHeaderItem = droppedPreHeaderItem
         _meal = mealBinding
         _foodItems = State(initialValue: mealBinding.wrappedValue.foodItems)
         let viewModel = ViewModel(
@@ -67,14 +75,14 @@ struct MealView: View {
             .onChange(of: viewModel.footerIsTargeted, perform: footerIsTargetedChanged)
             .onChange(of: showingDropOptions, perform: showingDropOptionsChanged)
             .onChange(of: isUpcomingMeal, perform: isUpcomingMealChanged)
-            .if(viewModel.isEmpty) { view in
-                view
-                    .dropDestination(
-                        for: MealFoodItem.self,
-                        action: handleDrop,
-                        isTargeted: handleDropIsTargeted
-                    )
-            }
+//            .if(viewModel.isEmpty) { view in
+//                view
+//                    .dropDestination(
+//                        for: MealFoodItem.self,
+//                        action: handleDrop,
+//                        isTargeted: handleDropIsTargeted
+//                    )
+//            }
             .confirmationDialog(
                 dropConfirmationTitle,
                 isPresented: $showingDropOptions,
@@ -105,9 +113,36 @@ struct MealView: View {
             .onChange(of: viewModel.targetId, perform: targetIdChanged)
             .onChange(of: viewModel.dropRecipient, perform: dropRecipientChanged)
             .onChange(of: foodItems, perform: foodItemsChanged)
+            .onChange(of: showingPreHeaderDropTarget, perform: showingPreHeaderDropTargetChanged)
+            .onChange(of: droppedPreHeaderItem, perform: droppedPreHeaderItemChanged)
             .onAppear {
                 updateShouldShowEmptyCell()
             }
+    }
+    
+    func showingPreHeaderDropTargetChanged(_ newValue: Bool) {
+        updateShouldShowPreHeaderDropTarget()
+    }
+    
+    func droppedPreHeaderItemChanged(_ newValue: DropItem?) {
+        updateShouldShowPreHeaderDropTarget()
+        if newValue != nil {
+            print("🔹 droppedPreHeaderItemChanged - showingDropOptions")
+            showingDropOptions = true
+        }
+    }
+    
+    func showingDropOptionsChanged(to newValue: Bool) {
+        if viewModel.droppedFooterItem == nil, droppedPreHeaderItem == nil {
+            updateShouldShowDropTargetForMeal()
+            updateShouldShowEmptyCell()
+        }
+        
+        if !newValue {
+            viewModel.resetDrop()
+            droppedPreHeaderItem = nil
+        }
+        updateShouldShowPreHeaderDropTarget()
     }
     
     func droppedFooterItemChanged(_ newValue: DropItem?) {
@@ -133,24 +168,30 @@ struct MealView: View {
     
     func updateShouldShowDropTargetForMeal() {
         if isMovingItem {
-            self.shouldShowDropTargetViewForMeal = getShouldShowDropTargetViewForMeal()
-            print("🔅 \(shouldShowDropTargetViewForMeal)")
+            self.shouldShowDropTargetForMeal = getShouldShowDropTargetForMeal()
         } else {
             withAnimation(.interactiveSpring()) {
-                self.shouldShowDropTargetViewForMeal = getShouldShowDropTargetViewForMeal()
-                print("🔅 \(shouldShowDropTargetViewForMeal)")
+                self.shouldShowDropTargetForMeal = getShouldShowDropTargetForMeal()
             }
         }
     }
     
     func updateShouldShowFooterDropTarget() {
-        if isMovingItemForFooter {
-            self.shouldShowFooterDropTargetView = getShouldShowFooterDropTargetView()
-            print("🔅 \(shouldShowFooterDropTargetView)")
+        if isMovingItem {
+            self.shouldShowFooterDropTarget = getShouldShowFooterDropTarget()
         } else {
             withAnimation(.interactiveSpring()) {
-                self.shouldShowFooterDropTargetView = getShouldShowFooterDropTargetView()
-                print("🔅 \(shouldShowFooterDropTargetView)")
+                self.shouldShowFooterDropTarget = getShouldShowFooterDropTarget()
+            }
+        }
+    }
+
+    func updateShouldShowPreHeaderDropTarget() {
+        if isMovingItem {
+            self.shouldShowPreHeaderDropTarget = getShouldShowPreHeaderDropTarget()
+        } else {
+            withAnimation(.interactiveSpring()) {
+                self.shouldShowPreHeaderDropTarget = getShouldShowPreHeaderDropTarget()
             }
         }
     }
@@ -227,8 +268,17 @@ struct MealView: View {
         var cellsLayer: some View {
             var footerHeight: CGFloat {
                 let base: CGFloat = 50
-                if shouldShowFooterDropTargetView {
-                    return base + dropTargetViewHeight + 9
+                if shouldShowFooterDropTarget {
+                    return base + largeDropTargetHeight + 9
+                } else {
+                    return base
+                }
+            }
+            
+            var headerHeight: CGFloat {
+                let base: CGFloat = 44
+                if shouldShowPreHeaderDropTarget {
+                    return base + largeDropTargetHeight + 12
                 } else {
                     return base
                 }
@@ -236,7 +286,7 @@ struct MealView: View {
             
             return VStack(spacing: 0) {
                 Color.clear
-                    .frame(height: 44)
+                    .frame(height: headerHeight)
                 dropTargetForMeal
                 itemRows
                 Color.clear
@@ -246,6 +296,10 @@ struct MealView: View {
         
         var headerLayer: some View {
             VStack(spacing: 0) {
+                if shouldShowPreHeaderDropTarget {
+                    largeDropTargetView
+                        .padding(.top, 12)
+                }
                 header
                 Spacer()
             }
@@ -254,8 +308,8 @@ struct MealView: View {
             VStack(spacing: 0) {
                 Spacer()
                 footer
-                if shouldShowFooterDropTargetView {
-                    footerDropTargetView
+                if shouldShowFooterDropTarget {
+                    largeDropTargetView
                         .padding(.top, 9)
                 }
             }
@@ -266,6 +320,29 @@ struct MealView: View {
             headerLayer
             footerLayer
         }
+    }
+    
+    var header: some View {
+        headerView
+            .contentShape(Rectangle())
+            .dropDestination(
+                for: MealFoodItem.self,
+                action: handleDrop,
+                isTargeted: handleDropIsTargeted
+            )
+    }
+    
+    var footer: some View {
+        footerView
+            .contentShape(Rectangle())
+            .if(dayViewModel.shouldAllowFooterDrop(for: meal), transform: { view in
+                view
+                    .dropDestination(
+                        for: DropItem.self,
+                        action: handleFooterDrop,
+                        isTargeted: handleFooterDropIsTargeted
+                    )
+            })
     }
     
     var content_latest_legacy: some View {
@@ -323,7 +400,7 @@ struct MealView: View {
                         .opacity(colorScheme == .light ? 0.75 : 0.5)
                 )
                 .transition(.opacity)
-                .opacity(shouldShowDropTargetViewForMeal ? 0 : 1)
+                .opacity(shouldShowDropTargetForMeal ? 0 : 1)
         }
     }
     
@@ -405,43 +482,9 @@ struct MealView: View {
             })
     }
     
-    var header: some View {
-        var shouldShowDropDestination: Bool {
-            if !viewModel.isEmpty {
-                return true
-            }
-            
-            return false
-        }
-
-        return headerView
-            .contentShape(Rectangle())
-            .if(shouldShowDropDestination, transform: { view in
-                view
-                    .dropDestination(
-                        for: MealFoodItem.self,
-                        action: handleDrop,
-                        isTargeted: handleDropIsTargeted
-                    )
-            })
-    }
-    
-    var footer: some View {
-        footerView
-            .contentShape(Rectangle())
-            .if(dayViewModel.shouldAllowFooterDrop(for: meal), transform: { view in
-                view
-                    .dropDestination(
-                        for: DropItem.self,
-                        action: handleFooterDrop,
-                        isTargeted: handleFooterDropIsTargeted
-                    )
-            })
-    }
-    
-    
     func handleFooterDrop(_ items: [DropItem], location: CGPoint) -> Bool {
         viewModel.droppedFooterItem = items.first
+        print("🔹 handleFooterDrop - showingDropOptions")
         showingDropOptions = true
         return true
     }
@@ -461,17 +504,6 @@ struct MealView: View {
         showingDropOptions = droppedFoodItem != nil
     }
 
-    func showingDropOptionsChanged(to newValue: Bool) {
-        if !showingDropOptions {
-            viewModel.resetDrop()
-        }
-        
-        if viewModel.droppedFooterItem == nil {
-            updateShouldShowDropTargetForMeal()
-            updateShouldShowEmptyCell()
-        }
-    }
-    
     func updateShouldShowEmptyCell() {
         withAnimation(.interactiveSpring()) {
             shouldShowEmptyCell = getShouldShowEmptyCell()
@@ -530,33 +562,27 @@ struct MealView: View {
     
     //MARK: - Drag and Drop related
 
-    func getShouldShowFooterDropTargetView() -> Bool {
-        if viewModel.footerIsTargeted {
-            return true
-        }
-        
-        if viewModel.droppedFooterItem != nil {
-            return true
-        }
-        
+    func getShouldShowPreHeaderDropTarget() -> Bool {
+        if showingPreHeaderDropTarget { return true }
+        if droppedPreHeaderItem != nil { return true }
+        return false
+    }
+    
+    func getShouldShowFooterDropTarget() -> Bool {
+        if viewModel.footerIsTargeted { return true }
+        if viewModel.droppedFooterItem != nil { return true }
         return false
     }
 
-    func getShouldShowDropTargetViewForMeal() -> Bool {
-        if viewModel.targetId == viewModel.meal.id {
-            return true
-        }
-        
-        if showingDropOptions, viewModel.dropRecipient == nil {
-            return true
-        }
-        
+    func getShouldShowDropTargetForMeal() -> Bool {
+        if viewModel.targetId == viewModel.meal.id { return true }
+        if showingDropOptions, viewModel.dropRecipient == nil { return true }
         return false
     }
     
     @ViewBuilder
     var dropTargetForMeal: some View {
-        if shouldShowDropTargetViewForMeal {
+        if shouldShowDropTargetForMeal {
             dropTargetView
                 .if(!viewModel.isEmpty) { view in
                     view.padding(.bottom, 12)
@@ -565,9 +591,11 @@ struct MealView: View {
     }
     
     var dropTargetView: some View {
-        Text("Move or Duplicate Here")
+//        Text("Move or Duplicate Here")
+        Text("Drop Here")
             .bold()
-            .foregroundColor(.primary)
+//            .foregroundColor(.primary)
+            .foregroundColor(.secondary)
             .padding(.vertical, 12)
             .frame(maxWidth: .infinity)
             .padding(.horizontal, 20)
@@ -587,14 +615,15 @@ struct MealView: View {
             .padding(.horizontal, 12)
             .transition(.opacity)
             .readSize { size in
-                dropTargetViewHeight = size.height
+                largeDropTargetHeight = size.height
             }
     }
     
-    var footerDropTargetView: some View {
-        Text("Move or Duplicate After Meal")
+    var largeDropTargetView: some View {
+        Text("Drop Here")
+//        Text("Move or Duplicate After Meal")
             .bold()
-            .foregroundColor(.primary)
+            .foregroundColor(.secondary)
             .padding(.vertical, 50)
             .frame(maxWidth: .infinity)
             .padding(.horizontal, 20)
@@ -614,23 +643,47 @@ struct MealView: View {
             .padding(.horizontal, 12)
             .transition(.opacity)
             .readSize { size in
-                dropTargetViewHeight = size.height
+                largeDropTargetHeight = size.height
             }
     }
     
-    @State var dropTargetViewHeight: CGFloat = 0
+    @State var largeDropTargetHeight: CGFloat = 0
     
     var dropConfirmationTitle: String {
-        if let droppedFoodItem = viewModel.droppedFoodItem {
-            return droppedFoodItem.description
-        } else if let droppedFooterItem = viewModel.droppedFooterItem {
-            return droppedFooterItem.description
-        } else {
-            return ""
-        }
+        viewModel.droppedFoodItem?.description
+        ?? viewModel.droppedFooterItem?.description
+        ?? droppedPreHeaderItem?.description
+        ?? ""
     }
     
     func tappedConfirmationButtonForDrop(toMove: Bool) {
+        
+        func handle(_ dropItem: DropItem, withNewMealTime newMealTime: Date) {
+            droppedPreHeaderItem = nil
+
+            isMovingItem = true
+            switch dropItem {
+            case .meal(let meal):
+                if toMove {
+                    dayViewModel.moveMeal(meal, to: newMealTime)
+                } else {
+                    dayViewModel.copyMeal(meal, to: newMealTime)
+                }
+            case .foodItem(let foodItem):
+                if toMove {
+                    dayViewModel.moveItem(foodItem, toNewMealAt: newMealTime)
+                } else {
+                    dayViewModel.copyItem(foodItem, toNewMealAt: newMealTime)
+                }
+                break
+            default:
+                break
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                isMovingItem = false
+            }
+        }
+        
         if let foodItem = viewModel.droppedFoodItem {
             isMovingItem = true
             if toMove {
@@ -640,32 +693,25 @@ struct MealView: View {
                     after: viewModel.dropRecipient
                 )
             } else {
-                //TODO: Revisit this
-                viewModel.tappedDuplicateForDrop()
+                dayViewModel.copyItem(
+                    foodItem,
+                    to: viewModel.meal,
+                    after: viewModel.dropRecipient
+                )
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                 isMovingItem = false
             }
-        } else if let dropItem = viewModel.droppedFooterItem,
-                  let newMealTime = dayViewModel.availableMealTime(after: meal)
+        } else if
+            let dropItem = viewModel.droppedFooterItem,
+            let newMealTime = dayViewModel.availableMealTime(after: meal)
         {
-            isMovingItemForFooter = true
-            switch dropItem {
-            case .meal(let dayMeal):
-                if toMove {
-                    dayViewModel.moveMeal(dayMeal, to: newMealTime)
-                } else {
-                    dayViewModel.copyMeal(dayMeal, to: newMealTime)
-                }
-            case .foodItem(let _):
-                //TODO: Create a new meal with food item
-                break
-            default:
-                break
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                isMovingItemForFooter = false
-            }
+            handle(dropItem, withNewMealTime: newMealTime)
+        } else if
+            let droppedPreHeaderItem,
+            let newMealTime = dayViewModel.availableMealTimeBeforeFirstMeal
+        {
+            handle(droppedPreHeaderItem, withNewMealTime: newMealTime)
         }
     }
     

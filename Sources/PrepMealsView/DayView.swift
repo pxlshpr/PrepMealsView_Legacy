@@ -1,6 +1,7 @@
 import SwiftUI
 import PrepDataTypes
 import PrepCoreDataStack
+import SwiftHaptics
 
 public struct DayView: View {
     
@@ -19,6 +20,9 @@ public struct DayView: View {
 
     @State var id = UUID()
 
+    @State var showingPreHeaderDropTarget = false
+    @State var droppedPreHeaderItem: DropItem? = nil
+    
     let actionHandler: (LogAction) -> ()
 
     public init(
@@ -98,7 +102,24 @@ public struct DayView: View {
         }
         
         var metricsView: some View {
-            MetricsView(date: $date)
+            func handleDrop(_ items: [DropItem], location: CGPoint) -> Bool {
+                droppedPreHeaderItem = items.first
+                return true
+            }
+            
+            func handleDropIsTargeted(_ isTargeted: Bool) {
+                Haptics.selectionFeedback()
+                withAnimation(.interactiveSpring()) {
+                    showingPreHeaderDropTarget = isTargeted
+                }
+            }
+            
+            return MetricsView(
+                date: $date,
+                dayViewModel: viewModel,
+                handleDropIsTargeted: handleDropIsTargeted,
+                handleDrop: handleDrop
+            )
 //            .padding(.horizontal, 20)
 //            /// ** Important ** This explicit height on the encompassing `ZStack` is crucial to ensure that
 //            /// the separator heights of the `MealView`'s don't get messed up (it's a wierd bug that's device dependent).
@@ -149,10 +170,32 @@ public struct DayView: View {
             get: { meal.wrappedValue.id == upcomingMealId },
             set: { _ in }
         )
+        
+        let showingPreHeaderDropTargetBinding = Binding<Bool>(
+            get: {
+                showingPreHeaderDropTarget
+                && dayMeals.first?.id == meal.wrappedValue.id
+            },
+            set: { _ in }
+        )
+        
+        let droppedPreHeaderItemBinding = Binding<DropItem?>(
+            get: {
+                guard dayMeals.first?.id == meal.wrappedValue.id else {
+                    return nil
+                }
+                return droppedPreHeaderItem
+            },
+            set: { newValue in
+                self.droppedPreHeaderItem = newValue
+            }
+        )
         return MealView(
             date: date,
             dayViewModel: viewModel,
             dragTargetFoodItemId: $dragTargetFoodItemId,
+            showingPreHeaderDropTarget: showingPreHeaderDropTargetBinding,
+            droppedPreHeaderItem: droppedPreHeaderItemBinding,
             mealBinding: meal,
             isUpcomingMeal: isUpcomingMealBinding,
             isAnimatingItemChange: $isAnimatingItemChange,

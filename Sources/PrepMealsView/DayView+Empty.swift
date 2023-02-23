@@ -226,9 +226,15 @@ extension DayView.EmptyLayer {
                     currentShowingEmpty = false
                 }
                 viewModel.moveMeal(meal)
-                break
+                
             case .foodItem(let foodItem):
-                break
+                animatingMeal = true
+                withAnimation {
+                    previousShowingEmpty = false
+                    currentShowingEmpty = false
+                }
+                viewModel.moveItemToCurrentDay(foodItem)
+
             default:
                 break
             }
@@ -243,9 +249,15 @@ extension DayView.EmptyLayer {
                     currentShowingEmpty = false
                 }
                 viewModel.copyMeal(meal)
-                break
+                
             case .foodItem(let foodItem):
-                break
+                animatingMeal = true
+                withAnimation {
+                    previousShowingEmpty = false
+                    currentShowingEmpty = false
+                }
+                viewModel.copyItemToCurrentDay(foodItem)
+
             default:
                 break
             }
@@ -348,9 +360,11 @@ extension DayView.EmptyMessage {
     }
     
     var dropTargetView: some View {
-        Text("Move or Duplicate Here")
+//        Text("Move or Duplicate Here")
+        Text("Drop Here")
             .bold()
-            .foregroundColor(.primary)
+//            .foregroundColor(.primary)
+            .foregroundColor(.secondary)
 //            .padding(.vertical, 12)
             .frame(maxWidth: .infinity)
             .frame(height: messageSize.height)
