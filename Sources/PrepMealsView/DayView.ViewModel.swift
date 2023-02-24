@@ -64,7 +64,6 @@ extension DayView.ViewModel {
         NotificationCenter.default.addObserver(self, selector: #selector(initialSyncCompleted), name: .initialSyncCompleted, object: nil)
 
         NotificationCenter.default.addObserver(self, selector: #selector(shouldRefreshDay), name: .shouldRefreshDay, object: nil)
-
     }
     
     @objc func shouldRefreshDay(notification: Notification) {
@@ -114,6 +113,64 @@ extension DayView.ViewModel {
         reload()
     }
 
+    @objc func didUpdateFoodItems(notification: Notification) {
+        print("↔️ didUpdateFoodItems → DayView — animatingMeal = true")
+        animatingMeal = true
+        reload()
+    }
+    
+    @objc func didUpdateMeal() {
+        print("↔️ didUpdateMeal → DayView — animatingMeal = true")
+        animatingMeal = true
+        reload()
+    }
+
+    @objc func didAddMeal() {
+        print("↔️ didAddMeal → DayView — animatingMeal = true, calling reload() in 2s")
+        animatingMeal = true
+        reload()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            cprint("📩     (2s later) calling reload() again")
+            self.reload()
+        }
+    }
+
+    @objc func didDeleteMeal() {
+        print("↔️ didDeleteMeal → DayView — animatingMeal = true")
+        animatingMeal = true
+        reload()
+    }
+
+    func reload() {
+        load(for: date)
+    }
+    
+    func load(for date: Date) {
+        let day = DataManager.shared.day(for: date)
+        self.day = day
+        self.dayMeals = day?.meals ?? []
+        cprint("🧨 ----------")
+        cprint("🧨 DayView.load(for: \(date.calendarDayString)) — \(dayMeals.count) meals")
+        for meal in dayMeals {
+            cprint("🧨    Meal: \(meal.name) @ \(meal.timeString)")
+            for foodItem in meal.foodItems {
+                cprint("🧨        \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name) - \(foodItem.badgeWidth)")
+            }
+        }
+        self.showingEmpty = dayMeals.isEmpty
+        cprint("🧨 ")
+        
+        print("↔️ DayView.load() — animatingMeal = false")
+        animatingMeal = false
+    }
+
+    func dateChanged(_ newValue: Date) {
+        load(for: newValue)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.previousDate = newValue
+        }
+    }
+    
     func resetSortPositions(afterUpdating updatedFoodItem: FoodItem) {
         resetSortPositions(updatedFoodItem: updatedFoodItem)
     }
@@ -176,65 +233,6 @@ extension DayView.ViewModel {
 //                }
             }
             cprint(" ")
-        }
-    }
-    
-    @objc func didUpdateFoodItems(notification: Notification) {
-        print("↔️ didUpdateFoodItems → DayView — animatingMeal = true")
-        animatingMeal = true
-        reload()
-    }
-    
-    @objc func didUpdateMeal() {
-        print("↔️ didUpdateMeal → DayView — animatingMeal = true")
-        animatingMeal = true
-        reload()
-    }
-
-    @objc func didAddMeal() {
-        print("↔️ didAddMeal → DayView — animatingMeal = true, calling reload() in 2s")
-        animatingMeal = true
-        reload()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            cprint("📩     (2s later) calling reload() again")
-            self.reload()
-        }
-    }
-
-    @objc func didDeleteMeal() {
-        print("↔️ didDeleteMeal → DayView — animatingMeal = true")
-        animatingMeal = true
-        reload()
-    }
-
-    func reload() {
-        load(for: date)
-    }
-    
-    func load(for date: Date) {
-        let day = DataManager.shared.day(for: date)
-        self.day = day
-        self.dayMeals = day?.meals ?? []
-        cprint("🧨 ----------")
-        cprint("🧨 DayView.load(for: \(date.calendarDayString)) — \(dayMeals.count) meals")
-        for meal in dayMeals {
-            cprint("🧨    Meal: \(meal.name) @ \(meal.timeString)")
-            for foodItem in meal.foodItems {
-                cprint("🧨        \(foodItem.sortPosition) \(foodItem.food.emoji) \(foodItem.food.name) - \(foodItem.badgeWidth)")
-            }
-        }
-        self.showingEmpty = dayMeals.isEmpty
-        cprint("🧨 ")
-        
-        print("↔️ DayView.load() — animatingMeal = false")
-        animatingMeal = false
-
-    }
-
-    func dateChanged(_ newValue: Date) {
-        load(for: newValue)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.previousDate = newValue
         }
     }
     
